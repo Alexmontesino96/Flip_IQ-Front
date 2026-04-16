@@ -84,6 +84,7 @@ export async function runAnalysis(
     cost_price: costPrice,
     condition,
     marketplace: "ebay",
+    lang: "en",
   };
 
   if (isBarcode) {
