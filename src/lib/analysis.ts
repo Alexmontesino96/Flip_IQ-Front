@@ -13,6 +13,7 @@ export interface Channel {
   label: string;
   icon: string;
   fees: string;
+  ship: string;
   profit: string;
   roi: string;
   margin: string;
@@ -127,6 +128,13 @@ function transformResponse(data: any): AnalysisResult {
     trend_price: primaryAnalysis?.trend?.price_trend || 0,
   };
 
+  const DEFAULT_SHIP: Record<string, number> = {
+    ebay: 12,
+    amazon_fba: 0,
+    facebook_marketplace: 0,
+    mercadolibre: 10,
+  };
+
   // Channels sorted by profit
   const channels: Channel[] = (data.channels || [])
     .map((ch: any) => {
@@ -134,12 +142,15 @@ function transformResponse(data: any): AnalysisResult {
         label: ch.marketplace,
         icon: "🏬",
       };
-      const totalFees = (ch.estimated_sale_price || 0) - (ch.net_proceeds || 0);
+      const ship = ch.shipping_cost ?? DEFAULT_SHIP[ch.marketplace] ?? 0;
+      const totalFees =
+        (ch.estimated_sale_price || 0) - (ch.net_proceeds || 0) - ship;
       return {
         id: ch.marketplace,
         label: meta.label,
         icon: meta.icon,
-        fees: totalFees.toFixed(2),
+        fees: Math.max(0, totalFees).toFixed(2),
+        ship: ship.toFixed(2),
         profit: ch.profit.toFixed(2),
         roi: ch.roi_pct.toFixed(1),
         margin: ch.margin_pct.toFixed(1),

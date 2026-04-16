@@ -19,11 +19,11 @@ const BarcodeScanner = dynamic(() => import("./BarcodeScanner"), {
 });
 
 const SAMPLE_QUERIES = [
-  { query: "AirPods Pro", name: "AirPods Pro" },
-  { query: "Nintendo Switch OLED", name: "Switch OLED" },
-  { query: "Nike Dunk Low", name: "Nike Dunk" },
-  { query: "PS5 Console", name: "PS5" },
-  { query: "Stanley Cup 40oz", name: "Stanley Cup" },
+  { query: "AirPods Pro", name: "AirPods Pro", cost: "105" },
+  { query: "Nintendo Switch OLED", name: "Switch OLED", cost: "160" },
+  { query: "Nike Dunk Low", name: "Nike Dunk", cost: "65" },
+  { query: "PS5 Console", name: "PS5", cost: "220" },
+  { query: "Stanley Cup 40oz", name: "Stanley Cup", cost: "25" },
 ];
 
 export default function FlipIQCalculator() {
@@ -101,8 +101,9 @@ export default function FlipIQCalculator() {
     if (email.includes("@")) setEmailSent(true);
   };
 
-  const pickSample = (q: string) => {
+  const pickSample = (q: string, cost?: string) => {
     setQuery(q);
+    if (cost) setCostPrice(cost);
     setShowSamples(false);
   };
 
@@ -317,7 +318,7 @@ export default function FlipIQCalculator() {
                   <button
                     key={s.query}
                     className="sample-chip"
-                    onClick={() => pickSample(s.query)}
+                    onClick={() => pickSample(s.query, s.cost)}
                   >
                     {s.name}
                   </button>
@@ -471,7 +472,7 @@ export default function FlipIQCalculator() {
                 <button
                   key={s.query}
                   className="sample-chip"
-                  onClick={() => pickSample(s.query)}
+                  onClick={() => pickSample(s.query, s.cost)}
                 >
                   {s.name}
                 </button>
@@ -722,6 +723,52 @@ export default function FlipIQCalculator() {
               </div>
             )}
 
+            {/* AI Explanation */}
+            {result.aiExplanation && (
+              <div
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: 14,
+                  background:
+                    "linear-gradient(135deg, rgba(139,92,246,0.06), rgba(14,165,233,0.04))",
+                  border: "1px solid rgba(139,92,246,0.12)",
+                  marginBottom: 12,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    marginBottom: 8,
+                  }}
+                >
+                  <span style={{ fontSize: 14 }}>&#x1F9E0;</span>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: "#c4b5fd",
+                      textTransform: "uppercase",
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    AI Analysis
+                  </span>
+                </div>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "#94a3b8",
+                    lineHeight: 1.6,
+                    margin: 0,
+                  }}
+                >
+                  {result.aiExplanation}
+                </p>
+              </div>
+            )}
+
             {/* Channel Comparison */}
             <div
               style={{
@@ -737,7 +784,9 @@ export default function FlipIQCalculator() {
               </div>
               {result.channels.map((ch, i) => {
                 const profit = parseFloat(ch.profit);
-                const best = i === 0;
+                const best = result.bestMarketplace
+                  ? ch.id === result.bestMarketplace
+                  : i === 0;
                 return (
                   <div
                     key={ch.id}
@@ -784,7 +833,9 @@ export default function FlipIQCalculator() {
                         )}
                       </div>
                       <div style={{ fontSize: 11, color: "#64748b" }}>
-                        Fees: ${ch.fees}
+                        {parseFloat(ch.ship) > 0
+                          ? `Fees: $${ch.fees} + $${ch.ship} ship`
+                          : `Fees: $${ch.fees}`}
                       </div>
                     </div>
                     <div style={{ textAlign: "right" }}>
