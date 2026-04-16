@@ -690,9 +690,12 @@ export default function FlipIQCalculator() {
                     },
                     { l: "ROI", v: `${result.mainROI}%`, c: "#a78bfa" },
                     {
-                      l: "Days to sell",
+                      l:
+                        result.confidence < 60
+                          ? "Days to sell *"
+                          : "Days to sell",
                       v: `~${result.estDaysToSell}d`,
-                      c: "#38bdf8",
+                      c: result.confidence < 60 ? "#fbbf24" : "#38bdf8",
                     },
                   ];
                 })().map((s, i) => (
@@ -1128,6 +1131,19 @@ export default function FlipIQCalculator() {
                     }}
                   />
                 </div>
+                {parseFloat(result.headroom) < 0 && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      fontSize: 12,
+                      color: "#fbbf24",
+                      textAlign: "center",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Pay ${result.maxBuy} or less to profit on this item
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1204,7 +1220,7 @@ export default function FlipIQCalculator() {
               </div>
             </div>
 
-            {/* Marketplace Details Tabs */}
+            {/* Marketplace Deep Dive */}
             {result.marketplaceDetails &&
               result.marketplaceDetails.length > 1 && (
                 <div
@@ -1216,6 +1232,11 @@ export default function FlipIQCalculator() {
                     marginBottom: 12,
                   }}
                 >
+                  <div
+                    style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}
+                  >
+                    Marketplace deep dive
+                  </div>
                   <div
                     style={{
                       display: "flex",
