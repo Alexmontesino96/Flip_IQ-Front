@@ -613,6 +613,46 @@ export default function FlipIQCalculator() {
                 </div>
               </div>
 
+              {/* Condition Banner */}
+              {(() => {
+                const ci = result.conditionInfo;
+                if (!ci) return null;
+                let text = "";
+                if (ci.subsetCount > 0 && ci.subsetMedian != null) {
+                  text = `Based on all conditions. Only ${ci.subsetCount} '${ci.requestedCondition}' sales found (median $${ci.subsetMedian.toFixed(2)}). Prices may differ for '${ci.requestedCondition}'.`;
+                } else if (ci.subsetCount === 0 && ci.matchRate < 0.5) {
+                  text = `No '${ci.requestedCondition}' sales found. Prices based on all conditions.`;
+                }
+                if (!text) return null;
+                return (
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 8,
+                      alignItems: "flex-start",
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      background: "rgba(56,189,248,0.06)",
+                      border: "1px solid rgba(56,189,248,0.15)",
+                      marginBottom: 12,
+                    }}
+                  >
+                    <span style={{ fontSize: 14, flexShrink: 0 }}>
+                      &#x2139;&#xFE0F;
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        color: "#7dd3fc",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {text}
+                    </span>
+                  </div>
+                );
+              })()}
+
               {/* Score Rings */}
               <div
                 style={{

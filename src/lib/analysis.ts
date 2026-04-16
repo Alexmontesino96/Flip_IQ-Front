@@ -46,6 +46,14 @@ export interface ResultProduct {
   trend_price: number;
 }
 
+export interface ConditionInfo {
+  requestedCondition: string;
+  mixedConditions: boolean;
+  subsetCount: number;
+  subsetMedian: number | null;
+  matchRate: number;
+}
+
 export interface AnalysisResult {
   product: ResultProduct;
   channels: Channel[];
@@ -69,6 +77,7 @@ export interface AnalysisResult {
   bestMarketplace?: string;
   bestMarketplaceReason?: string;
   marketplaceDetails?: MarketplaceDetail[];
+  conditionInfo?: ConditionInfo;
 }
 
 export interface MarketplaceDetail {
@@ -205,6 +214,18 @@ function collectWarnings(data: any): string[] {
   return warnings;
 }
 
+function extractConditionInfo(analysis: any): ConditionInfo | undefined {
+  const ca = analysis?.condition_analysis;
+  if (!ca || ca.requested_condition === "any") return undefined;
+  return {
+    requestedCondition: ca.requested_condition || "unknown",
+    mixedConditions: ca.mixed_conditions ?? false,
+    subsetCount: ca.condition_subset_count ?? 0,
+    subsetMedian: ca.condition_subset_median ?? null,
+    matchRate: ca.condition_match_rate ?? 1,
+  };
+}
+
 function transformResponse(data: any): AnalysisResult {
   const primaryAnalysis = data.ebay_analysis || data.amazon_analysis;
 
@@ -306,5 +327,6 @@ function transformResponse(data: any): AnalysisResult {
     bestMarketplace: data.best_marketplace || undefined,
     bestMarketplaceReason: data.best_marketplace_reason || undefined,
     marketplaceDetails: buildMarketplaceDetails(data),
+    conditionInfo: extractConditionInfo(primaryAnalysis),
   };
 }
