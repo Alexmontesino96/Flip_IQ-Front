@@ -188,14 +188,19 @@ function collectWarnings(data: any): string[] {
   for (const w of data.summary?.warnings || []) add(w);
   // Top-level warnings array
   for (const w of data.warnings || []) add(w);
-  // Per-analysis warnings (ebay, amazon, etc.)
-  for (const key of [
-    "ebay_analysis",
-    "amazon_analysis",
-    "facebook_analysis",
-    "mercadolibre_analysis",
-  ]) {
-    for (const w of data[key]?.warnings || []) add(w);
+  // Per-analysis warnings — prefix with marketplace name for context
+  const analysisKeys: [string, string][] = [
+    ["ebay_analysis", "eBay"],
+    ["amazon_analysis", "Amazon"],
+    ["facebook_analysis", "FB Marketplace"],
+    ["mercadolibre_analysis", "MercadoLibre"],
+  ];
+  for (const [key, label] of analysisKeys) {
+    for (const w of data[key]?.warnings || []) {
+      // Prefix generic warnings with the marketplace so they aren't confusing
+      const prefixed = w.startsWith(label) ? w : `${label}: ${w}`;
+      add(prefixed);
+    }
   }
   return warnings;
 }
