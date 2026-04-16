@@ -30,6 +30,7 @@ export interface Channel {
   profit: string;
   roi: string;
   margin: string;
+  estimated: boolean;
 }
 
 export interface ResultProduct {
@@ -174,6 +175,31 @@ function buildMarketplaceDetails(data: any): MarketplaceDetail[] {
   return details;
 }
 
+function collectWarnings(data: any): string[] {
+  const seen = new Set<string>();
+  const warnings: string[] = [];
+  const add = (w: string) => {
+    if (!seen.has(w)) {
+      seen.add(w);
+      warnings.push(w);
+    }
+  };
+  // Top-level summary warnings
+  for (const w of data.summary?.warnings || []) add(w);
+  // Top-level warnings array
+  for (const w of data.warnings || []) add(w);
+  // Per-analysis warnings (ebay, amazon, etc.)
+  for (const key of [
+    "ebay_analysis",
+    "amazon_analysis",
+    "facebook_analysis",
+    "mercadolibre_analysis",
+  ]) {
+    for (const w of data[key]?.warnings || []) add(w);
+  }
+  return warnings;
+}
+
 function transformResponse(data: any): AnalysisResult {
   const primaryAnalysis = data.ebay_analysis || data.amazon_analysis;
 
@@ -199,6 +225,8 @@ function transformResponse(data: any): AnalysisResult {
     mercadolibre: 10,
   };
 
+  const ESTIMATED_CHANNELS = new Set(["facebook_marketplace", "mercadolibre"]);
+
   // Channels sorted by profit
   const channels: Channel[] = (data.channels || [])
     .map((ch: any) => {
@@ -219,6 +247,7 @@ function transformResponse(data: any): AnalysisResult {
         profit: ch.profit.toFixed(2),
         roi: ch.roi_pct.toFixed(1),
         margin: ch.margin_pct.toFixed(1),
+        estimated: ESTIMATED_CHANNELS.has(ch.marketplace),
       };
     })
     .sort(
@@ -266,7 +295,7 @@ function transformResponse(data: any): AnalysisResult {
       data.estimated_sale_price?.toFixed(2) ||
       "0.00",
     stretchPrice: pricing?.stretch_list?.toFixed(2) || "0.00",
-    warnings: data.summary?.warnings || [],
+    warnings: collectWarnings(data),
     estDaysToSell,
     aiExplanation: data.ai_explanation || undefined,
     bestMarketplace: data.best_marketplace || undefined,

@@ -854,12 +854,11 @@ export default function FlipIQCalculator() {
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>
                 Profit by channel
               </div>
-              {result.channels.map((ch, i) => {
+              {result.channels.map((ch) => {
                 const profit = parseFloat(ch.profit);
                 const isBest = result.bestMarketplace
                   ? ch.id === result.bestMarketplace
-                  : i === 0;
-                const isTopProfit = i === 0 && !isBest;
+                  : false;
 
                 let badgeText = "";
                 let badgeBg = "";
@@ -875,14 +874,10 @@ export default function FlipIQCalculator() {
                     badgeBg = "rgba(250,204,21,0.12)";
                     badgeColor = "#facc15";
                   } else {
-                    badgeText = "BEST PROFIT";
+                    badgeText = "BEST";
                     badgeBg = "rgba(34,197,94,0.12)";
                     badgeColor = "#4ade80";
                   }
-                } else if (isTopProfit) {
-                  badgeText = "TOP PROFIT";
-                  badgeBg = "rgba(34,197,94,0.08)";
-                  badgeColor = "#4ade80";
                 }
 
                 return (
@@ -912,6 +907,7 @@ export default function FlipIQCalculator() {
                           display: "flex",
                           alignItems: "center",
                           gap: 6,
+                          flexWrap: "wrap",
                         }}
                       >
                         {ch.label}
@@ -927,6 +923,20 @@ export default function FlipIQCalculator() {
                             }}
                           >
                             {badgeText}
+                          </span>
+                        )}
+                        {ch.estimated && (
+                          <span
+                            style={{
+                              fontSize: 9,
+                              fontWeight: 600,
+                              padding: "2px 6px",
+                              borderRadius: 4,
+                              background: "rgba(251,191,36,0.10)",
+                              color: "#fbbf24",
+                            }}
+                          >
+                            EST.
                           </span>
                         )}
                       </div>
