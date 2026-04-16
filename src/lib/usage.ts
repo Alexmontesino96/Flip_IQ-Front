@@ -1,63 +1,45 @@
-const STORAGE_KEY = "flipiq_usage";
-const DAILY_LIMIT = 3;
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://flip-iq-fastapi.onrender.com";
 
-interface UsageData {
-  count: number;
-  date: string;
-  email: string | null;
-}
+const CLIENT_ID_KEY = "flipiq_client_id";
 
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function read(): UsageData {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return { count: 0, date: today(), email: null };
-}
-
-function write(data: UsageData) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-export function getUsage(): UsageData {
-  const data = read();
-  if (data.date !== today()) {
-    const reset = { count: 0, date: today(), email: data.email };
-    write(reset);
-    return reset;
+export function getClientId(): string {
+  if (typeof window === "undefined") return "";
+  let id = localStorage.getItem(CLIENT_ID_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(CLIENT_ID_KEY, id);
   }
-  return data;
+  return id;
 }
 
-export function incrementUsage(): void {
-  const data = getUsage();
-  data.count += 1;
-  write(data);
+export async function checkStatus(): Promise<{
+  remaining: number;
+  tier: string;
+  verified: boolean;
+}> {
+  try {
+    const res = await fetch(`${API_URL}/api/v1/waitlist/status`, {
+      credentials: "include",
+      headers: { "X-Client-ID": getClientId() },
+    });
+    if (!res.ok) {
+      return { remaining: 3, tier: "anonymous", verified: false };
+    }
+    return await res.json();
+  } catch {
+    return { remaining: 3, tier: "anonymous", verified: false };
+  }
 }
 
-export function setEmail(email: string): void {
-  const data = getUsage();
-  data.email = email;
-  write(data);
+export async function submitEmail(email: string): Promise<void> {
+  await fetch(`${API_URL}/api/v1/waitlist/`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Client-ID": getClientId(),
+    },
+    body: JSON.stringify({ email, source: "calculator" }),
+  });
 }
-
-export function canAnalyze(): {
-  allowed: boolean;
-  reason: "needs_email" | "limit_reached" | null;
-} {
-  const data = getUsage();
-  // First analysis is always free
-  if (data.count === 0) return { allowed: true, reason: null };
-  // After first, need email
-  if (!data.email) return { allowed: false, reason: "needs_email" };
-  // Check daily limit
-  if (data.count >= DAILY_LIMIT)
-    return { allowed: false, reason: "limit_reached" };
-  return { allowed: true, reason: null };
-}
-
-export { DAILY_LIMIT };

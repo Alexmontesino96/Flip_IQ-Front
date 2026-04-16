@@ -68,7 +68,7 @@ export default function EmailGate({ onSubmit, onClose }: EmailGateProps) {
         >
           Enter your email to unlock{" "}
           <span style={{ color: "#c4b5fd", fontWeight: 600 }}>
-            3 free analyses per day
+            100 free analyses per day
           </span>
           . No spam, ever.
         </p>

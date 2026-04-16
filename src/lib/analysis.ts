@@ -1,5 +1,17 @@
+import { getClientId } from "./usage";
+
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://flip-iq-fastapi.onrender.com";
+
+export class ApiError extends Error {
+  status: number;
+  reason?: string;
+  constructor(status: number, message: string, reason?: string) {
+    super(message);
+    this.status = status;
+    this.reason = reason;
+  }
+}
 
 const MARKETPLACE_META: Record<string, { label: string; icon: string }> = {
   facebook_marketplace: { label: "FB Marketplace", icon: "🏪" },
@@ -113,13 +125,21 @@ export async function runAnalysis(
 
   const res = await fetch(`${API_URL}/api/v1/analysis/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Client-ID": getClientId(),
+    },
     body: JSON.stringify(body),
   });
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || `Error ${res.status}`);
+    throw new ApiError(
+      res.status,
+      error.detail || `Error ${res.status}`,
+      error.reason
+    );
   }
 
   const data = await res.json();

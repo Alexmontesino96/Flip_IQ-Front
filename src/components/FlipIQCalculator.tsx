@@ -4,14 +4,13 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 import ScoreRing from "./ScoreRing";
-import { runAnalysis, AnalysisResult, MarketplaceDetail } from "@/lib/analysis";
 import {
-  canAnalyze,
-  incrementUsage,
-  setEmail as saveEmail,
-  getUsage,
-  DAILY_LIMIT,
-} from "@/lib/usage";
+  runAnalysis,
+  AnalysisResult,
+  MarketplaceDetail,
+  ApiError,
+} from "@/lib/analysis";
+import { checkStatus, submitEmail } from "@/lib/usage";
 import EmailGate from "./EmailGate";
 import { trackEvent, getUtmSource } from "@/lib/tracking";
 
@@ -38,10 +37,8 @@ export default function FlipIQCalculator() {
   const [emailSent, setEmailSent] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [showEmailGate, setShowEmailGate] = useState(false);
-  const [usageCount, setUsageCount] = useState(() => {
-    if (typeof window === "undefined") return 0;
-    return getUsage().count;
-  });
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const [tier, setTier] = useState("anonymous");
   const [loadingStep, setLoadingStep] = useState(0);
   const [activeTab, setActiveTab] = useState(0);
   const resultRef = useRef<HTMLDivElement>(null);
@@ -52,6 +49,13 @@ export default function FlipIQCalculator() {
     "Calculating fees across 4 channels...",
     "Generating recommendation...",
   ];
+
+  useEffect(() => {
+    checkStatus().then((s) => {
+      setRemaining(s.remaining);
+      setTier(s.tier);
+    });
+  }, []);
 
   useEffect(() => {
     if (!loading) return;
@@ -70,13 +74,16 @@ export default function FlipIQCalculator() {
       trackEvent("analysis_started", { query: q, cost });
       try {
         const r = await runAnalysis(q.trim(), parseFloat(cost), cond);
-        incrementUsage();
-        setUsageCount(getUsage().count);
         setResult(r);
         trackEvent("analysis_completed", {
           query: q,
           recommendation: r.recommendation,
           flipScore: r.flipScore,
+        });
+        // Refresh remaining count from backend
+        checkStatus().then((s) => {
+          setRemaining(s.remaining);
+          setTier(s.tier);
         });
         setTimeout(
           () =>
@@ -87,9 +94,13 @@ export default function FlipIQCalculator() {
           100
         );
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Error analyzing product"
-        );
+        if (err instanceof ApiError && err.reason === "free_limit_reached") {
+          setShowEmailGate(true);
+        } else {
+          setError(
+            err instanceof Error ? err.message : "Error analyzing product"
+          );
+        }
       } finally {
         setLoading(false);
       }
@@ -99,25 +110,17 @@ export default function FlipIQCalculator() {
 
   const handleAnalyze = async () => {
     if (!query || !costPrice) return;
-    const check = canAnalyze();
-    if (!check.allowed) {
-      if (check.reason === "needs_email") {
-        setShowEmailGate(true);
-        return;
-      }
-      if (check.reason === "limit_reached") {
-        setError(
-          `Daily limit reached (${DAILY_LIMIT}/${DAILY_LIMIT}). Come back tomorrow for more free analyses!`
-        );
-        return;
-      }
-    }
     executeAnalysis(query, costPrice, condition);
   };
 
-  const handleEmailSubmit = (emailValue: string) => {
-    saveEmail(emailValue);
+  const handleEmailSubmit = async (emailValue: string) => {
+    await submitEmail(emailValue);
     setShowEmailGate(false);
+    // Refresh status — now verified with 100/day
+    const s = await checkStatus();
+    setRemaining(s.remaining);
+    setTier(s.tier);
+    // Retry the analysis automatically
     executeAnalysis(query, costPrice, condition);
   };
 
@@ -125,20 +128,10 @@ export default function FlipIQCalculator() {
     if (!email.includes("@")) return;
     setEmailSent(true);
     trackEvent("email_submitted", { source: "waitlist" });
-    const url =
-      process.env.NEXT_PUBLIC_API_URL || "https://flip-iq-fastapi.onrender.com";
     try {
-      await fetch(`${url}/api/v1/waitlist/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          source: "calculator",
-          ref: getUtmSource(),
-        }),
-      });
+      await submitEmail(email);
     } catch {
-      // Endpoint may not exist yet — email gate already stores locally
+      // best-effort
     }
   };
 
@@ -447,7 +440,7 @@ export default function FlipIQCalculator() {
               "Analyze product"
             )}
           </button>
-          {usageCount > 0 && (
+          {remaining !== null && (
             <div
               style={{
                 textAlign: "center",
@@ -456,7 +449,8 @@ export default function FlipIQCalculator() {
                 color: "#475569",
               }}
             >
-              {usageCount}/{DAILY_LIMIT} analyses today
+              {remaining} analyses remaining
+              {tier !== "anonymous" ? "" : " (free)"}
             </div>
           )}
         </div>
