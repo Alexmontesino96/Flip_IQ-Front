@@ -1,8 +1,22 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "FlipIQ",
-  description: "FlipIQ - Is it worth flipping?",
+  title: "FlipIQ — Free Flip Profit Calculator",
+  description:
+    "Compare flip profit across eBay, Amazon, FBMP and MercadoLibre in seconds. Free calculator for resellers.",
+  openGraph: {
+    title: "FlipIQ — Free Flip Profit Calculator",
+    description:
+      "Compare flip profit across eBay, Amazon, FBMP and MercadoLibre in seconds",
+    siteName: "FlipIQ",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FlipIQ — Free Flip Profit Calculator",
+    description:
+      "Compare flip profit across eBay, Amazon, FBMP and MercadoLibre in seconds",
+  },
 };
 
 export default function RootLayout({

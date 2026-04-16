@@ -35,7 +35,6 @@ export default function FlipIQCalculator() {
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [emailSent, setEmailSent] = useState(false);
-  const [showSamples, setShowSamples] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [showEmailGate, setShowEmailGate] = useState(false);
   const [usageCount, setUsageCount] = useState(() => {
@@ -97,14 +96,25 @@ export default function FlipIQCalculator() {
     executeAnalysis(query, costPrice, condition);
   };
 
-  const handleWaitlist = () => {
-    if (email.includes("@")) setEmailSent(true);
+  const handleWaitlist = async () => {
+    if (!email.includes("@")) return;
+    setEmailSent(true);
+    const url =
+      process.env.NEXT_PUBLIC_API_URL || "https://flip-iq-fastapi.onrender.com";
+    try {
+      await fetch(`${url}/api/v1/waitlist/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, source: "calculator" }),
+      });
+    } catch {
+      // Endpoint may not exist yet — email gate already stores locally
+    }
   };
 
   const pickSample = (q: string, cost?: string) => {
     setQuery(q);
     if (cost) setCostPrice(cost);
-    setShowSamples(false);
   };
 
   return (
@@ -196,8 +206,11 @@ export default function FlipIQCalculator() {
             Is it worth flipping?
           </h1>
           <p style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.6 }}>
-            Enter a product name or barcode + your cost. Get instant profit
-            analysis across 4 marketplaces.
+            The only tool that compares profit across{" "}
+            <span style={{ color: "#c4b5fd", fontWeight: 600 }}>
+              eBay + Amazon + FBMP + MercadoLibre
+            </span>{" "}
+            in one search.
           </p>
         </div>
 
@@ -288,43 +301,35 @@ export default function FlipIQCalculator() {
             </div>
           </div>
 
-          {/* Sample products */}
+          {/* Sample products — always visible */}
           <div style={{ marginBottom: 14 }}>
-            <button
-              onClick={() => setShowSamples(!showSamples)}
+            <div
               style={{
-                background: "none",
-                border: "none",
-                color: "#8b5cf6",
-                fontSize: 12,
+                fontSize: 11,
+                color: "#64748b",
                 fontWeight: 600,
-                cursor: "pointer",
-                fontFamily: "inherit",
-                padding: 0,
+                marginBottom: 6,
               }}
             >
-              {showSamples ? "Hide examples ▲" : "Try example searches ▼"}
-            </button>
-            {showSamples && (
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 6,
-                  marginTop: 8,
-                }}
-              >
-                {SAMPLE_QUERIES.map((s) => (
-                  <button
-                    key={s.query}
-                    className="sample-chip"
-                    onClick={() => pickSample(s.query, s.cost)}
-                  >
-                    {s.name}
-                  </button>
-                ))}
-              </div>
-            )}
+              Quick start — tap to try:
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 6,
+              }}
+            >
+              {SAMPLE_QUERIES.map((s) => (
+                <button
+                  key={s.query}
+                  className="sample-chip"
+                  onClick={() => pickSample(s.query, s.cost)}
+                >
+                  {s.name}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Cost + Condition Row */}
@@ -696,30 +701,72 @@ export default function FlipIQCalculator() {
                   marginBottom: 12,
                 }}
               >
-                {result.warnings.map((w, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: "flex",
-                      gap: 8,
-                      alignItems: "flex-start",
-                      marginBottom: i < result.warnings.length - 1 ? 6 : 0,
-                    }}
-                  >
-                    <span style={{ fontSize: 11, flexShrink: 0, marginTop: 1 }}>
-                      ⚠️
-                    </span>
-                    <span
+                {result.warnings.map((w, i) => {
+                  const wl = w.toLowerCase();
+                  let icon = "⚠️";
+                  let color = "#fb923c";
+                  if (
+                    wl.includes("cost") ||
+                    wl.includes("exceeds") ||
+                    wl.includes("max")
+                  ) {
+                    icon = "🔴";
+                    color = "#f87171";
+                  } else if (
+                    wl.includes("spike") ||
+                    wl.includes("temporary") ||
+                    wl.includes("burstiness")
+                  ) {
+                    icon = "⚡";
+                    color = "#fbbf24";
+                  } else if (
+                    wl.includes("seller") ||
+                    wl.includes("dominant") ||
+                    wl.includes("buy box")
+                  ) {
+                    icon = "👤";
+                    color = "#fb923c";
+                  } else if (
+                    wl.includes("confidence") ||
+                    wl.includes("insufficient") ||
+                    wl.includes("limited data")
+                  ) {
+                    icon = "📊";
+                    color = "#facc15";
+                  } else if (
+                    wl.includes("bimodal") ||
+                    wl.includes("distribution")
+                  ) {
+                    icon = "📈";
+                    color = "#f59e0b";
+                  }
+                  return (
+                    <div
+                      key={i}
                       style={{
-                        fontSize: 12,
-                        color: "#fb923c",
-                        lineHeight: 1.5,
+                        display: "flex",
+                        gap: 8,
+                        alignItems: "flex-start",
+                        marginBottom: i < result.warnings.length - 1 ? 6 : 0,
                       }}
                     >
-                      {w}
-                    </span>
-                  </div>
-                ))}
+                      <span
+                        style={{ fontSize: 11, flexShrink: 0, marginTop: 1 }}
+                      >
+                        {icon}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          color,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {w}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -833,9 +880,8 @@ export default function FlipIQCalculator() {
                         )}
                       </div>
                       <div style={{ fontSize: 11, color: "#64748b" }}>
-                        {parseFloat(ch.ship) > 0
-                          ? `Fees: $${ch.fees} + $${ch.ship} ship`
-                          : `Fees: $${ch.fees}`}
+                        Sells ~${ch.salePrice} &middot; Fees: ${ch.fees}
+                        {parseFloat(ch.ship) > 0 ? ` + $${ch.ship} ship` : ""}
                       </div>
                     </div>
                     <div style={{ textAlign: "right" }}>

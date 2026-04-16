@@ -12,6 +12,7 @@ export interface Channel {
   id: string;
   label: string;
   icon: string;
+  salePrice: string;
   fees: string;
   ship: string;
   profit: string;
@@ -149,6 +150,7 @@ function transformResponse(data: any): AnalysisResult {
         id: ch.marketplace,
         label: meta.label,
         icon: meta.icon,
+        salePrice: (ch.estimated_sale_price || 0).toFixed(2),
         fees: Math.max(0, totalFees).toFixed(2),
         ship: ship.toFixed(2),
         profit: ch.profit.toFixed(2),
