@@ -54,6 +54,22 @@ export interface AnalysisResult {
   estDaysToSell: number;
   aiExplanation?: string;
   bestMarketplace?: string;
+  bestMarketplaceReason?: string;
+  marketplaceDetails?: MarketplaceDetail[];
+}
+
+export interface MarketplaceDetail {
+  marketplace: string;
+  label: string;
+  salePrice: string;
+  profit: string;
+  roi: string;
+  flipScore: number;
+  recommendation: string;
+  comps: number;
+  median: string;
+  salesPerDay: string;
+  confidence: number;
 }
 
 function getRecStyle(recommendation: string) {
@@ -111,6 +127,33 @@ export async function runAnalysis(
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+function buildMarketplaceDetails(data: any): MarketplaceDetail[] {
+  const details: MarketplaceDetail[] = [];
+  const analyses: [string, string][] = [
+    ["ebay_analysis", "eBay"],
+    ["amazon_analysis", "Amazon"],
+  ];
+  for (const [key, label] of analyses) {
+    const a = data[key];
+    if (!a) continue;
+    const rec = getRecStyle(a.recommendation || "watch");
+    details.push({
+      marketplace: a.marketplace || key.replace("_analysis", ""),
+      label,
+      salePrice: (a.estimated_sale_price || 0).toFixed(2),
+      profit: (a.net_profit || 0).toFixed(2),
+      roi: (a.roi_pct || 0).toFixed(1),
+      flipScore: a.flip_score ?? 0,
+      recommendation: rec.text,
+      comps: a.comps?.total_sold || 0,
+      median: (a.comps?.median_price || 0).toFixed(2),
+      salesPerDay: (a.comps?.sales_per_day || 0).toFixed(2),
+      confidence: a.confidence?.score ?? 0,
+    });
+  }
+  return details;
+}
+
 function transformResponse(data: any): AnalysisResult {
   const primaryAnalysis = data.ebay_analysis || data.amazon_analysis;
 
@@ -207,5 +250,7 @@ function transformResponse(data: any): AnalysisResult {
     estDaysToSell,
     aiExplanation: data.ai_explanation || undefined,
     bestMarketplace: data.best_marketplace || undefined,
+    bestMarketplaceReason: data.best_marketplace_reason || undefined,
+    marketplaceDetails: buildMarketplaceDetails(data),
   };
 }

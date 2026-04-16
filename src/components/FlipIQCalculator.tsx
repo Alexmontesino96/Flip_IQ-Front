@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 import ScoreRing from "./ScoreRing";
-import { runAnalysis, AnalysisResult } from "@/lib/analysis";
+import { runAnalysis, AnalysisResult, MarketplaceDetail } from "@/lib/analysis";
 import {
   canAnalyze,
   incrementUsage,
@@ -13,6 +13,7 @@ import {
   DAILY_LIMIT,
 } from "@/lib/usage";
 import EmailGate from "./EmailGate";
+import { trackEvent, getUtmSource } from "@/lib/tracking";
 
 const BarcodeScanner = dynamic(() => import("./BarcodeScanner"), {
   ssr: false,
@@ -41,18 +42,42 @@ export default function FlipIQCalculator() {
     if (typeof window === "undefined") return 0;
     return getUsage().count;
   });
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [activeTab, setActiveTab] = useState(0);
   const resultRef = useRef<HTMLDivElement>(null);
+
+  const LOADING_STEPS = [
+    "Searching eBay sold items...",
+    "Checking Amazon prices...",
+    "Calculating fees across 4 channels...",
+    "Generating recommendation...",
+  ];
+
+  useEffect(() => {
+    if (!loading) return;
+    setLoadingStep(0);
+    const interval = setInterval(() => {
+      setLoadingStep((s) => (s < 3 ? s + 1 : s));
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const executeAnalysis = useCallback(
     async (q: string, cost: string, cond: string) => {
       setLoading(true);
       setError(null);
       setResult(null);
+      trackEvent("analysis_started", { query: q, cost });
       try {
         const r = await runAnalysis(q.trim(), parseFloat(cost), cond);
         incrementUsage();
         setUsageCount(getUsage().count);
         setResult(r);
+        trackEvent("analysis_completed", {
+          query: q,
+          recommendation: r.recommendation,
+          flipScore: r.flipScore,
+        });
         setTimeout(
           () =>
             resultRef.current?.scrollIntoView({
@@ -99,13 +124,18 @@ export default function FlipIQCalculator() {
   const handleWaitlist = async () => {
     if (!email.includes("@")) return;
     setEmailSent(true);
+    trackEvent("email_submitted", { source: "waitlist" });
     const url =
       process.env.NEXT_PUBLIC_API_URL || "https://flip-iq-fastapi.onrender.com";
     try {
       await fetch(`${url}/api/v1/waitlist/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, source: "calculator" }),
+        body: JSON.stringify({
+          email,
+          source: "calculator",
+          ref: getUtmSource(),
+        }),
       });
     } catch {
       // Endpoint may not exist yet — email gate already stores locally
@@ -115,6 +145,7 @@ export default function FlipIQCalculator() {
   const pickSample = (q: string, cost?: string) => {
     setQuery(q);
     if (cost) setCostPrice(cost);
+    trackEvent("example_clicked", { product: q });
   };
 
   return (
@@ -410,7 +441,7 @@ export default function FlipIQCalculator() {
                     display: "inline-block",
                   }}
                 />
-                Analyzing...
+                {LOADING_STEPS[loadingStep]}
               </span>
             ) : (
               "Analyze product"
@@ -831,9 +862,35 @@ export default function FlipIQCalculator() {
               </div>
               {result.channels.map((ch, i) => {
                 const profit = parseFloat(ch.profit);
-                const best = result.bestMarketplace
+                const isBest = result.bestMarketplace
                   ? ch.id === result.bestMarketplace
                   : i === 0;
+                const isTopProfit = i === 0 && !isBest;
+
+                let badgeText = "";
+                let badgeBg = "";
+                let badgeColor = "";
+                if (isBest) {
+                  const reason = result.bestMarketplaceReason || "best_profit";
+                  if (reason === "safest" || reason === "lowest_risk") {
+                    badgeText = "SAFEST";
+                    badgeBg = "rgba(56,189,248,0.12)";
+                    badgeColor = "#38bdf8";
+                  } else if (reason === "fastest_sell") {
+                    badgeText = "FASTEST";
+                    badgeBg = "rgba(250,204,21,0.12)";
+                    badgeColor = "#facc15";
+                  } else {
+                    badgeText = "BEST PROFIT";
+                    badgeBg = "rgba(34,197,94,0.12)";
+                    badgeColor = "#4ade80";
+                  }
+                } else if (isTopProfit) {
+                  badgeText = "TOP PROFIT";
+                  badgeBg = "rgba(34,197,94,0.08)";
+                  badgeColor = "#4ade80";
+                }
+
                 return (
                   <div
                     key={ch.id}
@@ -844,10 +901,10 @@ export default function FlipIQCalculator() {
                       padding: "10px 12px",
                       borderRadius: 12,
                       marginBottom: 6,
-                      background: best
+                      background: isBest
                         ? "rgba(34,197,94,0.04)"
                         : "rgba(255,255,255,0.01)",
-                      border: `1px solid ${best ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.04)"}`,
+                      border: `1px solid ${isBest ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.04)"}`,
                     }}
                   >
                     <span style={{ fontSize: 20, flexShrink: 0 }}>
@@ -864,18 +921,18 @@ export default function FlipIQCalculator() {
                         }}
                       >
                         {ch.label}
-                        {best && (
+                        {badgeText && (
                           <span
                             style={{
                               fontSize: 9,
                               fontWeight: 700,
                               padding: "2px 6px",
                               borderRadius: 4,
-                              background: "rgba(34,197,94,0.12)",
-                              color: "#4ade80",
+                              background: badgeBg,
+                              color: badgeColor,
                             }}
                           >
-                            BEST
+                            {badgeText}
                           </span>
                         )}
                       </div>
@@ -1132,6 +1189,118 @@ export default function FlipIQCalculator() {
                 ))}
               </div>
             </div>
+
+            {/* Marketplace Details Tabs */}
+            {result.marketplaceDetails &&
+              result.marketplaceDetails.length > 1 && (
+                <div
+                  style={{
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: 20,
+                    padding: 16,
+                    marginBottom: 12,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 4,
+                      marginBottom: 12,
+                    }}
+                  >
+                    {result.marketplaceDetails.map(
+                      (md: MarketplaceDetail, idx: number) => (
+                        <button
+                          key={md.marketplace}
+                          onClick={() => setActiveTab(idx)}
+                          style={{
+                            flex: 1,
+                            padding: "8px 12px",
+                            borderRadius: 10,
+                            border: `1px solid ${activeTab === idx ? "rgba(139,92,246,0.3)" : "rgba(255,255,255,0.08)"}`,
+                            background:
+                              activeTab === idx
+                                ? "rgba(139,92,246,0.12)"
+                                : "transparent",
+                            color: activeTab === idx ? "#c4b5fd" : "#94a3b8",
+                            fontSize: 13,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                          }}
+                        >
+                          {md.label}
+                        </button>
+                      )
+                    )}
+                  </div>
+                  {(() => {
+                    const md = result.marketplaceDetails![activeTab];
+                    if (!md) return null;
+                    return (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr 1fr",
+                          gap: 8,
+                        }}
+                      >
+                        {[
+                          {
+                            l: "Sale price",
+                            v: `$${md.salePrice}`,
+                          },
+                          {
+                            l: "Profit",
+                            v: `$${md.profit}`,
+                          },
+                          { l: "ROI", v: `${md.roi}%` },
+                          {
+                            l: "Flip score",
+                            v: md.flipScore,
+                          },
+                          { l: "Comps", v: md.comps },
+                          {
+                            l: "Sales/day",
+                            v: md.salesPerDay,
+                          },
+                        ].map((s, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              padding: "8px 6px",
+                              borderRadius: 8,
+                              background: "rgba(255,255,255,0.02)",
+                              textAlign: "center",
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: 9,
+                                color: "#475569",
+                                marginBottom: 2,
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              {s.l}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 13,
+                                fontWeight: 600,
+                                color: "#94a3b8",
+                              }}
+                            >
+                              {s.v}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
 
             {/* CTA: Full Version */}
             <div
