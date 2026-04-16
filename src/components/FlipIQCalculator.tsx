@@ -1,9 +1,22 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
+import dynamic from "next/dynamic";
 import ScoreRing from "./ScoreRing";
 import { runAnalysis, AnalysisResult } from "@/lib/analysis";
+import {
+  canAnalyze,
+  incrementUsage,
+  setEmail as saveEmail,
+  getUsage,
+  DAILY_LIMIT,
+} from "@/lib/usage";
+import EmailGate from "./EmailGate";
+
+const BarcodeScanner = dynamic(() => import("./BarcodeScanner"), {
+  ssr: false,
+});
 
 const SAMPLE_QUERIES = [
   { query: "AirPods Pro", name: "AirPods Pro" },
@@ -23,33 +36,65 @@ export default function FlipIQCalculator() {
   const [email, setEmail] = useState("");
   const [emailSent, setEmailSent] = useState(false);
   const [showSamples, setShowSamples] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [showEmailGate, setShowEmailGate] = useState(false);
+  const [usageCount, setUsageCount] = useState(() => {
+    if (typeof window === "undefined") return 0;
+    return getUsage().count;
+  });
   const resultRef = useRef<HTMLDivElement>(null);
+
+  const executeAnalysis = useCallback(
+    async (q: string, cost: string, cond: string) => {
+      setLoading(true);
+      setError(null);
+      setResult(null);
+      try {
+        const r = await runAnalysis(q.trim(), parseFloat(cost), cond);
+        incrementUsage();
+        setUsageCount(getUsage().count);
+        setResult(r);
+        setTimeout(
+          () =>
+            resultRef.current?.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            }),
+          100
+        );
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Error analyzing product"
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   const handleAnalyze = async () => {
     if (!query || !costPrice) return;
-    setLoading(true);
-    setError(null);
-    setResult(null);
-    try {
-      const r = await runAnalysis(
-        query.trim(),
-        parseFloat(costPrice),
-        condition
-      );
-      setResult(r);
-      setTimeout(
-        () =>
-          resultRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          }),
-        100
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error analyzing product");
-    } finally {
-      setLoading(false);
+    const check = canAnalyze();
+    if (!check.allowed) {
+      if (check.reason === "needs_email") {
+        setShowEmailGate(true);
+        return;
+      }
+      if (check.reason === "limit_reached") {
+        setError(
+          `Daily limit reached (${DAILY_LIMIT}/${DAILY_LIMIT}). Come back tomorrow for more free analyses!`
+        );
+        return;
+      }
     }
+    executeAnalysis(query, costPrice, condition);
+  };
+
+  const handleEmailSubmit = (emailValue: string) => {
+    saveEmail(emailValue);
+    setShowEmailGate(false);
+    executeAnalysis(query, costPrice, condition);
   };
 
   const handleWaitlist = () => {
@@ -155,6 +200,17 @@ export default function FlipIQCalculator() {
           </p>
         </div>
 
+        {/* ── BARCODE SCANNER ── */}
+        {scanning && (
+          <BarcodeScanner
+            onScan={(barcode) => {
+              setQuery(barcode);
+              setScanning(false);
+            }}
+            onClose={() => setScanning(false)}
+          />
+        )}
+
         {/* ── INPUT FORM ── */}
         <div
           style={{
@@ -191,18 +247,43 @@ export default function FlipIQCalculator() {
                   fontSize: 14,
                 }}
               />
-              <span
+              <button
+                type="button"
+                onClick={() => setScanning(true)}
                 style={{
                   position: "absolute",
-                  right: 14,
+                  right: 6,
                   top: "50%",
                   transform: "translateY(-50%)",
-                  fontSize: 18,
-                  opacity: 0.3,
+                  width: 34,
+                  height: 34,
+                  borderRadius: 8,
+                  border: "1px solid rgba(139,92,246,0.2)",
+                  background: "rgba(139,92,246,0.08)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.2s",
+                  padding: 0,
                 }}
+                aria-label="Scan barcode"
+                title="Scan barcode with camera"
               >
-                🔍
-              </span>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#a78bfa"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -329,7 +410,27 @@ export default function FlipIQCalculator() {
               "Analyze product"
             )}
           </button>
+          {usageCount > 0 && (
+            <div
+              style={{
+                textAlign: "center",
+                marginTop: 8,
+                fontSize: 12,
+                color: "#475569",
+              }}
+            >
+              {usageCount}/{DAILY_LIMIT} analyses today
+            </div>
+          )}
         </div>
+
+        {/* ── EMAIL GATE ── */}
+        {showEmailGate && (
+          <EmailGate
+            onSubmit={handleEmailSubmit}
+            onClose={() => setShowEmailGate(false)}
+          />
+        )}
 
         {/* ── ERROR ── */}
         {error && (
