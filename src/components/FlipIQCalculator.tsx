@@ -672,20 +672,30 @@ export default function FlipIQCalculator() {
                   marginTop: 16,
                 }}
               >
-                {[
-                  {
-                    l: "Best profit",
-                    v: `$${result.mainProfit}`,
-                    c:
-                      parseFloat(result.mainProfit) > 0 ? "#4ade80" : "#ef4444",
-                  },
-                  { l: "ROI", v: `${result.mainROI}%`, c: "#a78bfa" },
-                  {
-                    l: "Days to sell",
-                    v: `~${result.estDaysToSell}d`,
-                    c: "#38bdf8",
-                  },
-                ].map((s, i) => (
+                {(() => {
+                  const profitNum = parseFloat(result.mainProfit);
+                  const isBuyRec =
+                    result.recommendation === "BUY" ||
+                    result.recommendation === "BUY SMALL";
+                  const profitLabel = isBuyRec
+                    ? "Best profit"
+                    : profitNum > 0
+                      ? "Top channel"
+                      : "Best case";
+                  return [
+                    {
+                      l: profitLabel,
+                      v: `$${result.mainProfit}`,
+                      c: profitNum > 0 ? "#4ade80" : "#ef4444",
+                    },
+                    { l: "ROI", v: `${result.mainROI}%`, c: "#a78bfa" },
+                    {
+                      l: "Days to sell",
+                      v: `~${result.estDaysToSell}d`,
+                      c: "#38bdf8",
+                    },
+                  ];
+                })().map((s, i) => (
                   <div
                     key={i}
                     style={{
