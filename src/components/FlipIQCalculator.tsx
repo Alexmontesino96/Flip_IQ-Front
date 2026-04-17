@@ -67,7 +67,7 @@ export default function FlipIQCalculator() {
   }, [loading]);
 
   const executeAnalysis = useCallback(
-    async (q: string, cost: string, cond: string) => {
+    async (q: string, cost: string, cond: string, isRetry = false) => {
       setLoading(true);
       setError(null);
       setResult(null);
@@ -94,7 +94,11 @@ export default function FlipIQCalculator() {
           100
         );
       } catch (err) {
-        if (err instanceof ApiError && err.reason === "free_limit_reached") {
+        if (
+          !isRetry &&
+          err instanceof ApiError &&
+          err.reason === "free_limit_reached"
+        ) {
           setShowEmailGate(true);
         } else {
           setError(
@@ -114,14 +118,18 @@ export default function FlipIQCalculator() {
   };
 
   const handleEmailSubmit = async (emailValue: string) => {
-    await submitEmail(emailValue);
+    try {
+      await submitEmail(emailValue);
+    } catch {
+      // best-effort — email saved to localStorage regardless
+    }
     setShowEmailGate(false);
     // Refresh status — now verified with 100/day
     const s = await checkStatus();
     setRemaining(s.remaining);
     setTier(s.tier);
-    // Retry the analysis automatically
-    executeAnalysis(query, costPrice, condition);
+    // Retry the analysis (isRetry=true prevents re-showing gate)
+    executeAnalysis(query, costPrice, condition, true);
   };
 
   const handleWaitlist = async () => {

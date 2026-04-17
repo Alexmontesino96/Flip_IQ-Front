@@ -1,4 +1,4 @@
-import { getClientId } from "./usage";
+import { getClientId, getVerifiedEmail } from "./usage";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://flip-iq-fastapi.onrender.com";
@@ -147,13 +147,17 @@ export async function runAnalysis(
     body.keyword = query.trim();
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "X-Client-ID": getClientId(),
+  };
+  const email = getVerifiedEmail();
+  if (email) headers["X-Verified-Email"] = email;
+
   const res = await fetch(`${API_URL}/api/v1/analysis/`, {
     method: "POST",
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Client-ID": getClientId(),
-    },
+    headers,
     body: JSON.stringify(body),
   });
 
