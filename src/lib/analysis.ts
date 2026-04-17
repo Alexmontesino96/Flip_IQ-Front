@@ -94,22 +94,36 @@ export interface MarketplaceDetail {
   confidence: number;
 }
 
-function getRecStyle(recommendation: string) {
+const SIGNAL_COLORS: Record<string, { color: string; icon: string }> = {
+  positive: { color: "#22c55e", icon: "✅" },
+  caution: { color: "#eab308", icon: "👁️" },
+  negative: { color: "#ef4444", icon: "✋" },
+};
+
+const REC_LABELS: Record<string, string> = {
+  buy: "BUY",
+  buy_small: "BUY SMALL",
+  watch: "WATCH",
+  pass: "PASS",
+};
+
+function getRecStyle(recommendation: string, signal?: string) {
+  const text =
+    REC_LABELS[recommendation] || recommendation?.toUpperCase() || "—";
+  const s = signal && SIGNAL_COLORS[signal];
+  if (s) return { text, color: s.color, icon: s.icon };
+  // Fallback when signal is missing (old backend)
   switch (recommendation) {
     case "buy":
-      return { text: "BUY", color: "#22c55e", icon: "✅" };
+      return { text, color: "#22c55e", icon: "✅" };
     case "buy_small":
-      return { text: "BUY SMALL", color: "#eab308", icon: "🟡" };
+      return { text, color: "#eab308", icon: "🟡" };
     case "watch":
-      return { text: "WATCH", color: "#f97316", icon: "👁️" };
+      return { text, color: "#f97316", icon: "👁️" };
     case "pass":
-      return { text: "PASS", color: "#ef4444", icon: "✋" };
+      return { text, color: "#ef4444", icon: "✋" };
     default:
-      return {
-        text: recommendation?.toUpperCase() || "—",
-        color: "#94a3b8",
-        icon: "❓",
-      };
+      return { text, color: "#94a3b8", icon: "❓" };
   }
 }
 
@@ -280,7 +294,7 @@ function transformResponse(data: any): AnalysisResult {
       (a: Channel, b: Channel) => parseFloat(b.profit) - parseFloat(a.profit)
     );
 
-  const rec = getRecStyle(data.recommendation || "watch");
+  const rec = getRecStyle(data.recommendation || "watch", data.summary?.signal);
 
   // API risk_score: higher = safer. UI shows Safety = 100 - risk.
   // So we invert: risk = 100 - api_risk_score, then UI does 100 - risk = api_risk_score.
