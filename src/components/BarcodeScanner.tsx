@@ -13,7 +13,12 @@ export default function BarcodeScanner({
   onClose,
 }: BarcodeScannerProps) {
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const onScanRef = useRef(onScan);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    onScanRef.current = onScan;
+  }, [onScan]);
   const reactId = useId();
   const containerId = "barcode-reader-" + reactId.replace(/:/g, "");
 
@@ -24,6 +29,9 @@ export default function BarcodeScanner({
         Html5QrcodeSupportedFormats.UPC_E,
         Html5QrcodeSupportedFormats.EAN_8,
         Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.ITF,
       ],
       verbose: false,
     });
@@ -33,12 +41,13 @@ export default function BarcodeScanner({
       .start(
         { facingMode: "environment" },
         {
-          fps: 10,
-          qrbox: { width: 280, height: 160 },
+          fps: 15,
+          qrbox: { width: 280, height: 180 },
+          aspectRatio: 1,
         },
         (decodedText) => {
           scanner.stop().catch(() => {});
-          onScan(decodedText);
+          onScanRef.current(decodedText);
         },
         () => {} // ignore scan failures (no match yet)
       )
@@ -56,7 +65,7 @@ export default function BarcodeScanner({
     return () => {
       scanner.stop().catch(() => {});
     };
-  }, [onScan]);
+  }, [containerId]);
 
   return (
     <div
