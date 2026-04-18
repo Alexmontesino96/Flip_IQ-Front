@@ -137,13 +137,23 @@ export interface AiCompleteUpdate {
   recIcon?: string;
 }
 
+export interface AnalysisProgress {
+  stage: string;
+  status: string;
+  message: string;
+  progress: number;
+  elapsedMs?: number;
+  details?: Record<string, unknown>;
+}
+
 export async function runAnalysisStream(
   query: string,
   costPrice: number,
   condition: string,
   onAnalysis: (result: AnalysisResult) => void,
   onAiComplete: (updates: AiCompleteUpdate) => void,
-  onError: (error: ApiError) => void
+  onError: (error: ApiError) => void,
+  onProgress?: (progress: AnalysisProgress) => void
 ): Promise<void> {
   const isBarcode = /^\d{8,14}$/.test(query.trim());
 
@@ -190,6 +200,7 @@ export async function runAnalysisStream(
   const decoder = new TextDecoder();
   let buffer = "";
   let receivedAnalysis = false;
+  let currentEvent = "";
 
   try {
     while (true) {
@@ -200,7 +211,6 @@ export async function runAnalysisStream(
       const lines = buffer.split("\n");
       buffer = lines.pop() || "";
 
-      let currentEvent = "";
       for (const line of lines) {
         if (line.startsWith("event: ")) {
           currentEvent = line.slice(7).trim();
@@ -223,6 +233,25 @@ export async function runAnalysisStream(
             const result = transformResponse(data);
             receivedAnalysis = true;
             onAnalysis(result);
+          } else if (currentEvent === "progress") {
+            const data = JSON.parse(dataStr);
+            onProgress?.({
+              stage: data.stage || "start",
+              status: data.status || "active",
+              message: data.message || "Analyzing product",
+              progress:
+                typeof data.progress === "number"
+                  ? Math.max(0, Math.min(100, data.progress))
+                  : 0,
+              elapsedMs:
+                typeof data.elapsed_ms === "number"
+                  ? data.elapsed_ms
+                  : undefined,
+              details:
+                data.details && typeof data.details === "object"
+                  ? data.details
+                  : undefined,
+            });
           } else if (currentEvent === "ai_complete") {
             const data = JSON.parse(dataStr);
             const updates: AiCompleteUpdate = {};

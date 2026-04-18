@@ -9,6 +9,7 @@ import {
   runAnalysisStream,
   AnalysisResult,
   AiCompleteUpdate,
+  AnalysisProgress,
   MarketplaceDetail,
   ApiError,
 } from "@/lib/analysis";
@@ -28,6 +29,399 @@ const SAMPLE_QUERIES = [
   { query: "Stanley Cup 40oz", name: "Stanley Cup", cost: "25" },
 ];
 
+const ANALYSIS_PHASES = ["Product", "Market", "Comps", "Scores", "Brief"];
+
+const STAGE_INDEX: Record<string, number> = {
+  start: 0,
+  identify: 0,
+  category: 0,
+  fetch: 1,
+  matching: 2,
+  scoring: 3,
+  analysis: 3,
+  ai: 4,
+};
+
+function formatElapsed(seconds: number) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function getFallbackProgress(seconds: number) {
+  if (seconds < 3) return 8;
+  if (seconds < 10) return 24;
+  if (seconds < 20) return 46;
+  if (seconds < 32) return 64;
+  return 78;
+}
+
+function getFallbackMessage(seconds: number) {
+  if (seconds < 4) return "Starting live market scan";
+  if (seconds < 12) return "Pulling sold comps and marketplace signals";
+  if (seconds < 24) return "Matching relevant listings";
+  if (seconds < 36) return "Building the profit model";
+  return "Still working through live marketplace data";
+}
+
+function getNumberDetail(
+  details: Record<string, unknown>,
+  keys: string[]
+): number | null {
+  for (const key of keys) {
+    const value = details[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+  }
+  return null;
+}
+
+function AnalysisProgressPanel({
+  query,
+  costPrice,
+  condition,
+  progress,
+  elapsedSeconds,
+}: {
+  query: string;
+  costPrice: string;
+  condition: string;
+  progress: AnalysisProgress | null;
+  elapsedSeconds: number;
+}) {
+  const details = progress?.details || {};
+  const activeIndex = progress
+    ? (STAGE_INDEX[progress.stage] ?? 0)
+    : Math.min(3, Math.floor(elapsedSeconds / 8));
+  const progressPct = progress?.progress ?? getFallbackProgress(elapsedSeconds);
+  const message = progress?.message || getFallbackMessage(elapsedSeconds);
+  const ebayCount = getNumberDetail(details, [
+    "ebay_clean_count",
+    "ebay_count",
+    "ebay_raw_count",
+  ]);
+  const amazonCount = getNumberDetail(details, [
+    "amazon_clean_count",
+    "amazon_count",
+    "amazon_raw_count",
+  ]);
+  const fallbackUsed = Boolean(details.fallback_used);
+  const slowNote =
+    elapsedSeconds >= 18 && progress?.stage !== "analysis"
+      ? "Live sources can take a few extra seconds."
+      : null;
+
+  const lanes = [
+    {
+      label: "eBay comps",
+      value:
+        ebayCount !== null
+          ? `${ebayCount} found`
+          : activeIndex >= 1
+            ? "Scanning"
+            : "Queued",
+      tone: activeIndex >= 1 ? "#38bdf8" : "#64748b",
+    },
+    {
+      label: "Amazon data",
+      value:
+        amazonCount !== null
+          ? `${amazonCount} found`
+          : activeIndex >= 1
+            ? "Checking"
+            : "Queued",
+      tone: activeIndex >= 1 ? "#a78bfa" : "#64748b",
+    },
+    {
+      label: "Comp match",
+      value:
+        activeIndex > 2
+          ? "Selected"
+          : activeIndex === 2
+            ? "Filtering"
+            : "Queued",
+      tone: activeIndex >= 2 ? "#fbbf24" : "#64748b",
+    },
+    {
+      label: "Deal model",
+      value:
+        activeIndex > 3 ? "Ready" : activeIndex === 3 ? "Scoring" : "Queued",
+      tone: activeIndex >= 3 ? "#4ade80" : "#64748b",
+    },
+  ];
+
+  return (
+    <div
+      className="fade-up"
+      style={{
+        background: "rgba(255,255,255,0.025)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: 20,
+        padding: 16,
+        marginBottom: 14,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 12,
+          alignItems: "flex-start",
+          marginBottom: 14,
+        }}
+      >
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 4,
+            }}
+          >
+            <span className="pulse-dot" />
+            <span style={{ fontSize: 13, fontWeight: 800 }}>Live analysis</span>
+          </div>
+          <div
+            style={{
+              fontSize: 12,
+              color: "#94a3b8",
+              lineHeight: 1.4,
+              wordBreak: "break-word",
+            }}
+          >
+            {query || "Product"} · ${costPrice || "0"} · {condition}
+          </div>
+        </div>
+        <div
+          style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 12,
+            color: "#c4b5fd",
+            padding: "5px 8px",
+            borderRadius: 8,
+            background: "rgba(139,92,246,0.08)",
+            border: "1px solid rgba(139,92,246,0.18)",
+            flexShrink: 0,
+          }}
+        >
+          {formatElapsed(elapsedSeconds)}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 14 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 10,
+            marginBottom: 8,
+          }}
+        >
+          <div style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 700 }}>
+            {message}
+          </div>
+          <div
+            style={{
+              fontSize: 11,
+              color: "#64748b",
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            {progressPct}%
+          </div>
+        </div>
+        <div
+          style={{
+            height: 6,
+            borderRadius: 999,
+            background: "rgba(255,255,255,0.06)",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              width: `${progressPct}%`,
+              height: "100%",
+              borderRadius: 999,
+              background: "linear-gradient(90deg, #38bdf8, #8b5cf6, #22c55e)",
+              transition: "width 0.5s ease",
+            }}
+          />
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(5, 1fr)",
+          gap: 6,
+          marginBottom: 14,
+        }}
+      >
+        {ANALYSIS_PHASES.map((phase, index) => {
+          const complete =
+            index < activeIndex ||
+            (progress?.status === "complete" && index === activeIndex);
+          const active = index === activeIndex && !complete;
+          return (
+            <div key={phase} style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  height: 5,
+                  borderRadius: 999,
+                  background: complete
+                    ? "#22c55e"
+                    : active
+                      ? "#8b5cf6"
+                      : "rgba(255,255,255,0.08)",
+                  marginBottom: 6,
+                  transition: "background 0.3s ease",
+                }}
+              />
+              <div
+                style={{
+                  fontSize: 10,
+                  color: complete || active ? "#cbd5e1" : "#475569",
+                  fontWeight: 700,
+                  textAlign: "center",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {phase}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: 8,
+        }}
+      >
+        {lanes.map((lane) => (
+          <div
+            key={lane.label}
+            style={{
+              padding: "10px 11px",
+              borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.06)",
+              background: "rgba(255,255,255,0.025)",
+              minHeight: 58,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 10,
+                color: "#64748b",
+                fontWeight: 700,
+                marginBottom: 5,
+                textTransform: "uppercase",
+              }}
+            >
+              {lane.label}
+            </div>
+            <div style={{ fontSize: 13, color: lane.tone, fontWeight: 800 }}>
+              {lane.value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {(fallbackUsed || slowNote) && (
+        <div
+          style={{
+            marginTop: 10,
+            fontSize: 11,
+            color: "#fbbf24",
+            lineHeight: 1.5,
+          }}
+        >
+          {fallbackUsed
+            ? "UPC fallback is using the resolved product title."
+            : slowNote}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ResultPreviewSkeleton() {
+  return (
+    <div
+      className="fade-up"
+      style={{
+        background: "rgba(255,255,255,0.02)",
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: 20,
+        padding: 16,
+        marginBottom: 14,
+      }}
+    >
+      <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+        <div className="skeleton-block" style={{ width: 58, height: 58 }} />
+        <div style={{ flex: 1, paddingTop: 4 }}>
+          <div className="skeleton-line" style={{ width: "46%" }} />
+          <div className="skeleton-line" style={{ width: "86%" }} />
+          <div className="skeleton-line" style={{ width: "36%" }} />
+        </div>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+          gap: 10,
+          marginBottom: 16,
+        }}
+      >
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} style={{ textAlign: "center" }}>
+            <div
+              className="skeleton-block"
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: "50%",
+                margin: "0 auto 7px",
+              }}
+            />
+            <div
+              className="skeleton-line"
+              style={{ width: "70%", margin: "0 auto" }}
+            />
+          </div>
+        ))}
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: 8,
+        }}
+      >
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            style={{
+              borderRadius: 10,
+              background: "rgba(255,255,255,0.03)",
+              padding: "12px 8px",
+            }}
+          >
+            <div className="skeleton-line" style={{ width: "58%" }} />
+            <div className="skeleton-line" style={{ width: "88%" }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function FlipIQCalculator() {
   const [query, setQuery] = useState("");
   const [costPrice, setCostPrice] = useState("");
@@ -44,7 +438,14 @@ export default function FlipIQCalculator() {
   const [loadingStep, setLoadingStep] = useState(0);
   const [aiLoading, setAiLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+  const [analysisProgress, setAnalysisProgress] =
+    useState<AnalysisProgress | null>(null);
+  const [analysisStartedAt, setAnalysisStartedAt] = useState<number | null>(
+    null
+  );
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const resultRef = useRef<HTMLDivElement>(null);
+  const analysisActive = loading || aiLoading;
 
   const LOADING_STEPS = [
     "Searching eBay sold items...",
@@ -68,12 +469,35 @@ export default function FlipIQCalculator() {
     return () => clearInterval(interval);
   }, [loading]);
 
+  useEffect(() => {
+    if (!analysisActive || !analysisStartedAt) return;
+
+    const updateElapsed = () => {
+      setElapsedSeconds(
+        Math.max(0, Math.floor((Date.now() - analysisStartedAt) / 1000))
+      );
+    };
+
+    updateElapsed();
+    const interval = setInterval(updateElapsed, 1000);
+    return () => clearInterval(interval);
+  }, [analysisActive, analysisStartedAt]);
+
   const executeAnalysisFallback = useCallback(
     async (q: string, cost: string, cond: string, isRetry: boolean) => {
       try {
+        setAnalysisStartedAt(Date.now());
+        setElapsedSeconds(0);
+        setAnalysisProgress(null);
         const r = await runAnalysis(q.trim(), parseFloat(cost), cond);
         setResult(r);
         setLoading(false);
+        setAnalysisProgress({
+          stage: "analysis",
+          status: "complete",
+          message: "Decision ready",
+          progress: 100,
+        });
         trackEvent("analysis_completed", {
           query: q,
           recommendation: r.recommendation,
@@ -93,6 +517,7 @@ export default function FlipIQCalculator() {
         );
       } catch (err) {
         setLoading(false);
+        setAnalysisProgress(null);
         if (
           !isRetry &&
           err instanceof ApiError &&
@@ -116,6 +541,14 @@ export default function FlipIQCalculator() {
       setError(null);
       setResult(null);
       setAiLoading(false);
+      setAnalysisStartedAt(Date.now());
+      setElapsedSeconds(0);
+      setAnalysisProgress({
+        stage: "start",
+        status: "active",
+        message: "Starting live market scan",
+        progress: 3,
+      });
       trackEvent("analysis_started", { query: q, cost });
 
       try {
@@ -127,6 +560,12 @@ export default function FlipIQCalculator() {
             setResult(r);
             setLoading(false);
             setAiLoading(true);
+            setAnalysisProgress({
+              stage: "analysis",
+              status: "complete",
+              message: "Decision ready",
+              progress: 88,
+            });
             trackEvent("analysis_completed", {
               query: q,
               recommendation: r.recommendation,
@@ -148,21 +587,32 @@ export default function FlipIQCalculator() {
           (updates: AiCompleteUpdate) => {
             setResult((prev) => (prev ? { ...prev, ...updates } : prev));
             setAiLoading(false);
+            setAnalysisProgress({
+              stage: "ai",
+              status: "complete",
+              message: "AI brief ready",
+              progress: 100,
+            });
           },
           (err: ApiError) => {
             setLoading(false);
             setAiLoading(false);
+            setAnalysisProgress(null);
             if (!isRetry && err.reason === "free_limit_reached") {
               setShowEmailGate(true);
             } else {
               setError(err.message);
             }
+          },
+          (progress: AnalysisProgress) => {
+            setAnalysisProgress(progress);
           }
         );
       } catch (err) {
         // Stream endpoint failed (e.g. 404, network error) — fallback
         if (err instanceof ApiError && err.reason === "free_limit_reached") {
           setLoading(false);
+          setAnalysisProgress(null);
           if (!isRetry) {
             setShowEmailGate(true);
           } else {
@@ -229,7 +679,11 @@ export default function FlipIQCalculator() {
         @keyframes fadeUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
         @keyframes spin { to { transform: rotate(360deg) } }
         @keyframes shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
+        @keyframes pulseDot { 0%, 100% { opacity: 0.45; transform: scale(0.85) } 50% { opacity: 1; transform: scale(1) } }
         .fade-up { animation: fadeUp 0.5s ease both; }
+        .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 4px rgba(34,197,94,0.12); display: inline-block; animation: pulseDot 1.2s ease-in-out infinite; flex-shrink: 0; }
+        .skeleton-line { height: 12px; border-radius: 6px; margin-bottom: 8px; background: linear-gradient(90deg, rgba(255,255,255,0.045) 25%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.045) 75%); background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; }
+        .skeleton-block { border-radius: 12px; background: linear-gradient(90deg, rgba(255,255,255,0.045) 25%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.045) 75%); background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; }
         .input-field { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: #e2e8f0; font-size: 15px; font-family: inherit; outline: none; transition: border-color 0.3s; }
         .input-field:focus { border-color: rgba(139,92,246,0.5); }
         .input-field::placeholder { color: #475569; }
@@ -583,6 +1037,19 @@ export default function FlipIQCalculator() {
           </div>
         )}
 
+        {loading && !result && (
+          <>
+            <AnalysisProgressPanel
+              query={query}
+              costPrice={costPrice}
+              condition={condition}
+              progress={analysisProgress}
+              elapsedSeconds={elapsedSeconds}
+            />
+            <ResultPreviewSkeleton />
+          </>
+        )}
+
         {/* ══════════════ RESULT ══════════════ */}
         {result && (
           <div ref={resultRef} className="fade-up">
@@ -924,44 +1391,66 @@ export default function FlipIQCalculator() {
             {aiLoading && (
               <div
                 style={{
-                  padding: "14px 16px",
+                  padding: "14px 16px 16px",
                   borderRadius: 14,
                   background: "rgba(139,92,246,0.04)",
                   border: "1px solid rgba(139,92,246,0.08)",
                   marginBottom: 12,
                 }}
               >
-                <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
-                  <span style={{ fontSize: 14 }}>&#x1F9E0;</span>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 10,
+                    marginBottom: 12,
+                  }}
+                >
                   <span
                     style={{ fontSize: 12, color: "#c4b5fd", fontWeight: 700 }}
                   >
-                    AI Analysis
+                    Writing AI brief
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: "#64748b",
+                      fontFamily: "'JetBrains Mono', monospace",
+                    }}
+                  >
+                    {formatElapsed(elapsedSeconds)}
                   </span>
                 </div>
+                <div className="skeleton-line" style={{ width: "96%" }} />
+                <div className="skeleton-line" style={{ width: "88%" }} />
+                <div className="skeleton-line" style={{ width: "72%" }} />
                 <div
                   style={{
-                    height: 14,
-                    borderRadius: 4,
-                    marginBottom: 8,
-                    width: "90%",
-                    background:
-                      "linear-gradient(90deg, rgba(139,92,246,0.06) 25%, rgba(139,92,246,0.12) 50%, rgba(139,92,246,0.06) 75%)",
-                    backgroundSize: "200% 100%",
-                    animation: "shimmer 1.5s ease-in-out infinite",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                    gap: 7,
+                    marginTop: 4,
                   }}
-                />
-                <div
-                  style={{
-                    height: 14,
-                    borderRadius: 4,
-                    width: "70%",
-                    background:
-                      "linear-gradient(90deg, rgba(139,92,246,0.06) 25%, rgba(139,92,246,0.12) 50%, rgba(139,92,246,0.06) 75%)",
-                    backgroundSize: "200% 100%",
-                    animation: "shimmer 1.5s ease-in-out infinite",
-                  }}
-                />
+                >
+                  {["Market", "Risk", "Channel"].map((label) => (
+                    <div
+                      key={label}
+                      style={{
+                        borderRadius: 9,
+                        padding: "8px 6px",
+                        background: "rgba(139,92,246,0.045)",
+                        border: "1px solid rgba(139,92,246,0.08)",
+                        textAlign: "center",
+                        fontSize: 10,
+                        color: "#a78bfa",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {label}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
             {!aiLoading && result.aiExplanation && (
