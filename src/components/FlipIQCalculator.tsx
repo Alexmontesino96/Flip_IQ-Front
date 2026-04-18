@@ -1038,59 +1038,110 @@ export default function FlipIQCalculator() {
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>
                 Pricing strategy
               </div>
-              <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-                {[
-                  {
-                    l: "Quick sale",
-                    v: `$${result.quickPrice}`,
-                    c: "#f97316",
-                    sub: "Fast",
-                    primary: false,
-                  },
-                  {
-                    l: "Market",
-                    v: `$${result.marketPrice}`,
-                    c: "#8b5cf6",
-                    sub: `~${result.estDaysToSell}d`,
-                    primary: true,
-                  },
-                  {
-                    l: "Stretch",
-                    v: `$${result.stretchPrice}`,
-                    c: "#0ea5e9",
-                    sub: "Patient",
-                    primary: false,
-                  },
-                ].map((p, i) => (
+              {result.quickPrice === result.marketPrice &&
+              result.marketPrice === result.stretchPrice ? (
+                <div style={{ marginBottom: 12 }}>
                   <div
-                    key={i}
                     style={{
-                      flex: 1,
-                      padding: "10px 6px",
+                      padding: "14px 6px",
                       borderRadius: 10,
                       textAlign: "center",
-                      background: p.primary
-                        ? "rgba(139,92,246,0.08)"
-                        : "rgba(255,255,255,0.02)",
-                      border: `1px solid ${p.primary ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.04)"}`,
+                      background: "rgba(139,92,246,0.08)",
+                      border: "1px solid rgba(139,92,246,0.2)",
+                      marginBottom: 8,
                     }}
                   >
                     <div
                       style={{ fontSize: 9, color: "#64748b", marginBottom: 2 }}
                     >
-                      {p.l}
+                      Market price
                     </div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: p.c }}>
-                      {p.v}
+                    <div
+                      style={{
+                        fontSize: 22,
+                        fontWeight: 700,
+                        color: "#8b5cf6",
+                      }}
+                    >
+                      ${result.marketPrice}
                     </div>
                     <div
                       style={{ fontSize: 9, color: "#475569", marginTop: 2 }}
                     >
-                      {p.sub}
+                      ~{result.estDaysToSell}d
                     </div>
                   </div>
-                ))}
-              </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "#64748b",
+                      textAlign: "center",
+                    }}
+                  >
+                    Not enough price variation to suggest a range
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+                  {[
+                    {
+                      l: "Quick sale",
+                      v: `$${result.quickPrice}`,
+                      c: "#f97316",
+                      sub: "Fast",
+                      primary: false,
+                    },
+                    {
+                      l: "Market",
+                      v: `$${result.marketPrice}`,
+                      c: "#8b5cf6",
+                      sub: `~${result.estDaysToSell}d`,
+                      primary: true,
+                    },
+                    {
+                      l: "Stretch",
+                      v: `$${result.stretchPrice}`,
+                      c: "#0ea5e9",
+                      sub: "Patient",
+                      primary: false,
+                    },
+                  ].map((p, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        flex: 1,
+                        padding: "10px 6px",
+                        borderRadius: 10,
+                        textAlign: "center",
+                        background: p.primary
+                          ? "rgba(139,92,246,0.08)"
+                          : "rgba(255,255,255,0.02)",
+                        border: `1px solid ${p.primary ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.04)"}`,
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 9,
+                          color: "#64748b",
+                          marginBottom: 2,
+                        }}
+                      >
+                        {p.l}
+                      </div>
+                      <div
+                        style={{ fontSize: 16, fontWeight: 700, color: p.c }}
+                      >
+                        {p.v}
+                      </div>
+                      <div
+                        style={{ fontSize: 9, color: "#475569", marginTop: 2 }}
+                      >
+                        {p.sub}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Buy Box */}
               <div
