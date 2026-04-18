@@ -24,6 +24,7 @@ export interface Channel {
   id: string;
   label: string;
   icon: string;
+  badge?: string;
   salePrice: string;
   fees: string;
   ship: string;
@@ -72,7 +73,7 @@ export interface AnalysisResult {
   marketPrice: string;
   stretchPrice: string;
   warnings: string[];
-  estDaysToSell: number;
+  estDaysToSell: string;
   aiExplanation?: string;
   bestMarketplace?: string;
   bestMarketplaceReason?: string;
@@ -272,6 +273,22 @@ function getPrimaryAnalysis(data: any) {
   );
 }
 
+function formatEstimatedDaysToSell(value: unknown): string {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return `~${Math.max(1, Math.round(value))}d`;
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return "~7d";
+    if (trimmed.toLowerCase() === "n/a") return "N/A";
+    if (trimmed.startsWith("~")) return trimmed;
+    return /\d$/.test(trimmed) ? `~${trimmed}d` : `~${trimmed}`;
+  }
+
+  return "~7d";
+}
+
 function transformResponse(data: any): AnalysisResult {
   const primaryAnalysis = getPrimaryAnalysis(data);
 
@@ -313,6 +330,7 @@ function transformResponse(data: any): AnalysisResult {
         id: ch.marketplace,
         label: meta.label,
         icon: meta.icon,
+        badge: ch.label || undefined,
         salePrice: (ch.estimated_sale_price || 0).toFixed(2),
         fees: Math.max(0, totalFees).toFixed(2),
         ship: ship.toFixed(2),
@@ -328,6 +346,7 @@ function transformResponse(data: any): AnalysisResult {
     );
 
   const primaryChannel =
+    channels.find((ch) => ch.badge === "BEST PROFIT") ||
     channels.find((ch) => ch.id === data.best_marketplace && !ch.estimated) ||
     channels.find((ch) => !ch.estimated) ||
     channels[0];
@@ -344,9 +363,8 @@ function transformResponse(data: any): AnalysisResult {
   const maxBuy = data.summary?.buy_box?.recommended_max_buy ?? 0;
   const headroom = data.summary?.buy_box?.headroom ?? 0;
 
-  const estDaysToSell = Math.max(
-    1,
-    Math.round(primaryAnalysis?.velocity?.estimated_days_to_sell || 7)
+  const estDaysToSell = formatEstimatedDaysToSell(
+    primaryAnalysis?.velocity?.estimated_days_to_sell
   );
 
   return {

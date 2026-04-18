@@ -742,7 +742,7 @@ export default function FlipIQCalculator() {
                         result.confidence < 60
                           ? "Days to sell *"
                           : "Days to sell",
-                      v: `~${result.estDaysToSell}d`,
+                      v: result.estDaysToSell,
                       c: result.confidence < 60 ? "#fbbf24" : "#38bdf8",
                     },
                   ];
@@ -917,25 +917,17 @@ export default function FlipIQCalculator() {
               </div>
               {result.channels.map((ch) => {
                 const profit = parseFloat(ch.profit);
-                const isBest = result.bestMarketplace
-                  ? ch.id === result.bestMarketplace
-                  : false;
+                const isHighlighted = Boolean(ch.badge);
 
                 let badgeText = "";
                 let badgeBg = "";
                 let badgeColor = "";
-                if (isBest) {
-                  const reason = result.bestMarketplaceReason || "best_profit";
-                  if (reason === "safest" || reason === "lowest_risk") {
-                    badgeText = "SAFEST";
-                    badgeBg = "rgba(56,189,248,0.12)";
-                    badgeColor = "#38bdf8";
-                  } else if (reason === "fastest_sell") {
-                    badgeText = "FASTEST";
-                    badgeBg = "rgba(250,204,21,0.12)";
-                    badgeColor = "#facc15";
+                if (ch.badge) {
+                  badgeText = ch.badge;
+                  if (ch.badge === "BEST ROI") {
+                    badgeBg = "rgba(167,139,250,0.12)";
+                    badgeColor = "#a78bfa";
                   } else {
-                    badgeText = "BEST";
                     badgeBg = "rgba(34,197,94,0.12)";
                     badgeColor = "#4ade80";
                   }
@@ -951,10 +943,10 @@ export default function FlipIQCalculator() {
                       padding: "10px 12px",
                       borderRadius: 12,
                       marginBottom: 6,
-                      background: isBest
+                      background: isHighlighted
                         ? "rgba(34,197,94,0.04)"
                         : "rgba(255,255,255,0.01)",
-                      border: `1px solid ${isBest ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.04)"}`,
+                      border: `1px solid ${isHighlighted ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.04)"}`,
                     }}
                   >
                     <span style={{ fontSize: 20, flexShrink: 0 }}>
@@ -1084,7 +1076,7 @@ export default function FlipIQCalculator() {
                             marginTop: 2,
                           }}
                         >
-                          ~{result.estDaysToSell}d
+                          {result.estDaysToSell}
                         </div>
                       </div>
                       <div
@@ -1112,7 +1104,7 @@ export default function FlipIQCalculator() {
                     l: "Market",
                     v: `$${result.marketPrice}`,
                     c: "#8b5cf6",
-                    sub: `~${result.estDaysToSell}d`,
+                    sub: result.estDaysToSell,
                     primary: true,
                   },
                   hasStretch && {
