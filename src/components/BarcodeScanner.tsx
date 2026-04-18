@@ -1,111 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
+import { useRef } from "react";
+import { Scanner, IDetectedBarcode } from "@yudiel/react-qr-scanner";
 
 interface BarcodeScannerProps {
   onScan: (barcode: string) => void;
   onClose: () => void;
 }
 
-const CONTAINER_ID = "flipiq-barcode-reader";
-
 export default function BarcodeScanner({
   onScan,
   onClose,
 }: BarcodeScannerProps) {
-  const scannerRef = useRef<Html5Qrcode | null>(null);
-  const stoppedRef = useRef(false);
-  const onScanRef = useRef(onScan);
-  const [error, setError] = useState<string | null>(null);
-  const [starting, setStarting] = useState(true);
+  const handledRef = useRef(false);
 
-  useEffect(() => {
-    onScanRef.current = onScan;
-  }, [onScan]);
-
-  useEffect(() => {
-    // Wait a tick for the DOM element to be ready
-    const timeout = setTimeout(() => {
-      const el = document.getElementById(CONTAINER_ID);
-      if (!el || stoppedRef.current) return;
-
-      const scanner = new Html5Qrcode(CONTAINER_ID, {
-        formatsToSupport: [
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.CODE_128,
-          Html5QrcodeSupportedFormats.CODE_39,
-          Html5QrcodeSupportedFormats.ITF,
-        ],
-        verbose: false,
-      });
-      scannerRef.current = scanner;
-
-      const config = {
-        fps: 10,
-        qrbox: { width: 250, height: 150 },
-      };
-
-      const onSuccess = (decodedText: string) => {
-        if (stoppedRef.current) return;
-        stoppedRef.current = true;
-        // Stop scanner first, then notify parent
-        scanner
-          .stop()
-          .catch(() => {})
-          .finally(() => {
-            onScanRef.current(decodedText);
-          });
-      };
-
-      scanner
-        .start({ facingMode: "environment" }, config, onSuccess, () => {})
-        .then(() => {
-          if (!stoppedRef.current) setStarting(false);
-        })
-        .catch(() => {
-          if (stoppedRef.current) return;
-          scanner
-            .start({ facingMode: "user" }, config, onSuccess, () => {})
-            .then(() => {
-              if (!stoppedRef.current) setStarting(false);
-            })
-            .catch((err: unknown) => {
-              if (stoppedRef.current) return;
-              const msg = err instanceof Error ? err.message : String(err);
-              setStarting(false);
-              if (
-                msg.includes("Permission") ||
-                msg.includes("NotAllowedError")
-              ) {
-                setError(
-                  "Camera permission denied. Please allow camera access in your browser settings and try again."
-                );
-              } else if (
-                msg.includes("NotFoundError") ||
-                msg.includes("no camera")
-              ) {
-                setError("No camera found on this device.");
-              } else {
-                setError("Could not start camera: " + msg);
-              }
-            });
-        });
-    }, 50);
-
-    return () => {
-      clearTimeout(timeout);
-      stoppedRef.current = true;
-      const s = scannerRef.current;
-      if (s) {
-        s.stop().catch(() => {});
-        scannerRef.current = null;
-      }
-    };
-  }, []);
+  const handleScan = (results: IDetectedBarcode[]) => {
+    if (handledRef.current || results.length === 0) return;
+    const code = results[0].rawValue;
+    if (!code) return;
+    handledRef.current = true;
+    onScan(code);
+  };
 
   return (
     <div
@@ -125,15 +40,6 @@ export default function BarcodeScanner({
         justifyContent: "center",
       }}
     >
-      <style>{`
-        #${CONTAINER_ID} video {
-          object-fit: cover !important;
-          width: 100% !important;
-          height: 100% !important;
-        }
-        #${CONTAINER_ID} img[alt="Info icon"] { display: none !important; }
-      `}</style>
-
       {/* Close button */}
       <button
         onClick={onClose}
@@ -167,7 +73,7 @@ export default function BarcodeScanner({
           marginBottom: 16,
         }}
       >
-        {starting ? "Starting camera..." : "Point camera at barcode"}
+        Point camera at barcode
       </div>
 
       {/* Camera viewport */}
@@ -178,29 +84,26 @@ export default function BarcodeScanner({
           borderRadius: 16,
           overflow: "hidden",
           border: "2px solid rgba(139,92,246,0.5)",
-          background: "#000",
         }}
       >
-        <div id={CONTAINER_ID} style={{ width: "100%", height: "100%" }} />
-      </div>
-
-      {error && (
-        <div
-          style={{
-            marginTop: 20,
-            padding: "12px 20px",
-            borderRadius: 12,
-            background: "rgba(239,68,68,0.1)",
-            border: "1px solid rgba(239,68,68,0.2)",
-            color: "#f87171",
-            fontSize: 13,
-            maxWidth: 320,
-            textAlign: "center",
+        <Scanner
+          onScan={handleScan}
+          formats={[
+            "ean_13",
+            "ean_8",
+            "upc_a",
+            "upc_e",
+            "code_128",
+            "code_39",
+            "itf",
+          ]}
+          components={{ torch: false, finder: true, onOff: false, zoom: false }}
+          styles={{
+            container: { width: "100%", height: "100%" },
+            video: { objectFit: "cover" },
           }}
-        >
-          {error}
-        </div>
-      )}
+        />
+      </div>
 
       <button
         onClick={onClose}
