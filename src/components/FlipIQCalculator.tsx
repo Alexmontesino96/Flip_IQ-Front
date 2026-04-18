@@ -6,13 +6,15 @@ import dynamic from "next/dynamic";
 import ScoreRing from "./ScoreRing";
 import {
   runAnalysis,
+  runAnalysisStream,
   AnalysisResult,
+  AiCompleteUpdate,
   MarketplaceDetail,
   ApiError,
 } from "@/lib/analysis";
 import { checkStatus, submitEmail } from "@/lib/usage";
 import EmailGate from "./EmailGate";
-import { trackEvent, getUtmSource } from "@/lib/tracking";
+import { trackEvent } from "@/lib/tracking";
 
 const BarcodeScanner = dynamic(() => import("./BarcodeScanner"), {
   ssr: false,
@@ -40,6 +42,7 @@ export default function FlipIQCalculator() {
   const [remaining, setRemaining] = useState<number | null>(null);
   const [tier, setTier] = useState("anonymous");
   const [loadingStep, setLoadingStep] = useState(0);
+  const [aiLoading, setAiLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const resultRef = useRef<HTMLDivElement>(null);
 
@@ -59,28 +62,23 @@ export default function FlipIQCalculator() {
 
   useEffect(() => {
     if (!loading) return;
-    setLoadingStep(0);
     const interval = setInterval(() => {
       setLoadingStep((s) => (s < 3 ? s + 1 : s));
     }, 2000);
     return () => clearInterval(interval);
   }, [loading]);
 
-  const executeAnalysis = useCallback(
-    async (q: string, cost: string, cond: string, isRetry = false) => {
-      setLoading(true);
-      setError(null);
-      setResult(null);
-      trackEvent("analysis_started", { query: q, cost });
+  const executeAnalysisFallback = useCallback(
+    async (q: string, cost: string, cond: string, isRetry: boolean) => {
       try {
         const r = await runAnalysis(q.trim(), parseFloat(cost), cond);
         setResult(r);
+        setLoading(false);
         trackEvent("analysis_completed", {
           query: q,
           recommendation: r.recommendation,
           flipScore: r.flipScore,
         });
-        // Refresh remaining count from backend
         checkStatus().then((s) => {
           setRemaining(s.remaining);
           setTier(s.tier);
@@ -94,6 +92,7 @@ export default function FlipIQCalculator() {
           100
         );
       } catch (err) {
+        setLoading(false);
         if (
           !isRetry &&
           err instanceof ApiError &&
@@ -105,11 +104,76 @@ export default function FlipIQCalculator() {
             err instanceof Error ? err.message : "Error analyzing product"
           );
         }
-      } finally {
-        setLoading(false);
       }
     },
     []
+  );
+
+  const executeAnalysis = useCallback(
+    async (q: string, cost: string, cond: string, isRetry = false) => {
+      setLoading(true);
+      setLoadingStep(0);
+      setError(null);
+      setResult(null);
+      setAiLoading(false);
+      trackEvent("analysis_started", { query: q, cost });
+
+      try {
+        await runAnalysisStream(
+          q.trim(),
+          parseFloat(cost),
+          cond,
+          (r: AnalysisResult) => {
+            setResult(r);
+            setLoading(false);
+            setAiLoading(true);
+            trackEvent("analysis_completed", {
+              query: q,
+              recommendation: r.recommendation,
+              flipScore: r.flipScore,
+            });
+            checkStatus().then((s) => {
+              setRemaining(s.remaining);
+              setTier(s.tier);
+            });
+            setTimeout(
+              () =>
+                resultRef.current?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                }),
+              100
+            );
+          },
+          (updates: AiCompleteUpdate) => {
+            setResult((prev) => (prev ? { ...prev, ...updates } : prev));
+            setAiLoading(false);
+          },
+          (err: ApiError) => {
+            setLoading(false);
+            setAiLoading(false);
+            if (!isRetry && err.reason === "free_limit_reached") {
+              setShowEmailGate(true);
+            } else {
+              setError(err.message);
+            }
+          }
+        );
+      } catch (err) {
+        // Stream endpoint failed (e.g. 404, network error) — fallback
+        if (err instanceof ApiError && err.reason === "free_limit_reached") {
+          setLoading(false);
+          if (!isRetry) {
+            setShowEmailGate(true);
+          } else {
+            setError(err.message);
+          }
+        } else {
+          await executeAnalysisFallback(q, cost, cond, isRetry);
+        }
+      }
+    },
+    [executeAnalysisFallback]
   );
 
   const handleAnalyze = async () => {
@@ -856,8 +920,51 @@ export default function FlipIQCalculator() {
               </div>
             )}
 
-            {/* AI Explanation */}
-            {result.aiExplanation && (
+            {/* AI Explanation — skeleton while loading, real text when ready */}
+            {aiLoading && (
+              <div
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: 14,
+                  background: "rgba(139,92,246,0.04)",
+                  border: "1px solid rgba(139,92,246,0.08)",
+                  marginBottom: 12,
+                }}
+              >
+                <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+                  <span style={{ fontSize: 14 }}>&#x1F9E0;</span>
+                  <span
+                    style={{ fontSize: 12, color: "#c4b5fd", fontWeight: 700 }}
+                  >
+                    AI Analysis
+                  </span>
+                </div>
+                <div
+                  style={{
+                    height: 14,
+                    borderRadius: 4,
+                    marginBottom: 8,
+                    width: "90%",
+                    background:
+                      "linear-gradient(90deg, rgba(139,92,246,0.06) 25%, rgba(139,92,246,0.12) 50%, rgba(139,92,246,0.06) 75%)",
+                    backgroundSize: "200% 100%",
+                    animation: "shimmer 1.5s ease-in-out infinite",
+                  }}
+                />
+                <div
+                  style={{
+                    height: 14,
+                    borderRadius: 4,
+                    width: "70%",
+                    background:
+                      "linear-gradient(90deg, rgba(139,92,246,0.06) 25%, rgba(139,92,246,0.12) 50%, rgba(139,92,246,0.06) 75%)",
+                    backgroundSize: "200% 100%",
+                    animation: "shimmer 1.5s ease-in-out infinite",
+                  }}
+                />
+              </div>
+            )}
+            {!aiLoading && result.aiExplanation && (
               <div
                 style={{
                   padding: "14px 16px",

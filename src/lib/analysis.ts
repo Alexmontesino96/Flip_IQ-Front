@@ -128,6 +128,128 @@ function getRecStyle(recommendation: string, signal?: string) {
   }
 }
 
+export interface AiCompleteUpdate {
+  aiExplanation?: string;
+  flipScore?: number;
+  risk?: number;
+  recommendation?: string;
+  recColor?: string;
+  recIcon?: string;
+}
+
+export async function runAnalysisStream(
+  query: string,
+  costPrice: number,
+  condition: string,
+  onAnalysis: (result: AnalysisResult) => void,
+  onAiComplete: (updates: AiCompleteUpdate) => void,
+  onError: (error: ApiError) => void
+): Promise<void> {
+  const isBarcode = /^\d{8,14}$/.test(query.trim());
+
+  const body: Record<string, unknown> = {
+    cost_price: costPrice,
+    condition,
+    marketplace: "ebay",
+    lang: "en",
+  };
+
+  if (isBarcode) {
+    body.barcode = query.trim();
+  } else {
+    body.keyword = query.trim();
+  }
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "X-Client-ID": getClientId(),
+    Accept: "text/event-stream",
+  };
+  const email = getVerifiedEmail();
+  if (email) headers["X-Verified-Email"] = email;
+
+  const res = await fetch(`${API_URL}/api/v1/analysis/stream`, {
+    method: "POST",
+    credentials: "include",
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new ApiError(
+      res.status,
+      error.detail || `Error ${res.status}`,
+      error.reason
+    );
+  }
+
+  const reader = res.body?.getReader();
+  if (!reader) throw new ApiError(500, "No response body");
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let receivedAnalysis = false;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      let currentEvent = "";
+      for (const line of lines) {
+        if (line.startsWith("event: ")) {
+          currentEvent = line.slice(7).trim();
+        } else if (line.startsWith("data: ")) {
+          const dataStr = line.slice(6);
+          if (currentEvent === "done") break;
+          if (currentEvent === "error") {
+            const errData = JSON.parse(dataStr);
+            onError(
+              new ApiError(
+                errData.status || 500,
+                errData.detail || "Stream error",
+                errData.reason
+              )
+            );
+            return;
+          }
+          if (currentEvent === "analysis") {
+            const data = JSON.parse(dataStr);
+            const result = transformResponse(data);
+            receivedAnalysis = true;
+            onAnalysis(result);
+          } else if (currentEvent === "ai_complete") {
+            const data = JSON.parse(dataStr);
+            const updates: AiCompleteUpdate = {};
+            if (data.ai_explanation)
+              updates.aiExplanation = data.ai_explanation;
+            if (data.flip_score != null) updates.flipScore = data.flip_score;
+            if (data.risk_score != null) updates.risk = 100 - data.risk_score;
+            if (data.recommendation) {
+              const rec = getRecStyle(data.recommendation, data.signal);
+              updates.recommendation = rec.text;
+              updates.recColor = rec.color;
+              updates.recIcon = rec.icon;
+            }
+            onAiComplete(updates);
+          }
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  if (!receivedAnalysis) {
+    throw new ApiError(500, "Stream ended without analysis data");
+  }
+}
+
 export async function runAnalysis(
   query: string,
   costPrice: number,
