@@ -244,8 +244,36 @@ function extractConditionInfo(analysis: any): ConditionInfo | undefined {
   };
 }
 
+function getAnalysisForMarketplace(data: any, marketplace?: string) {
+  if (!marketplace) return undefined;
+  if (marketplace === "ebay") return data.ebay_analysis;
+  if (marketplace === "amazon_fba" || marketplace === "amazon") {
+    return data.amazon_analysis;
+  }
+  return undefined;
+}
+
+function hasUsableComps(analysis: any): boolean {
+  return Boolean(
+    analysis?.estimated_sale_price != null &&
+    (analysis?.comps?.total_sold || 0) > 0
+  );
+}
+
+function getPrimaryAnalysis(data: any) {
+  const best = getAnalysisForMarketplace(data, data.best_marketplace);
+  if (hasUsableComps(best)) return best;
+
+  const candidates = [data.ebay_analysis, data.amazon_analysis].filter(Boolean);
+  return (
+    candidates.find((analysis) => hasUsableComps(analysis)) ||
+    candidates[0] ||
+    undefined
+  );
+}
+
 function transformResponse(data: any): AnalysisResult {
-  const primaryAnalysis = data.ebay_analysis || data.amazon_analysis;
+  const primaryAnalysis = getPrimaryAnalysis(data);
 
   // Product info from API + market data from primary analysis
   const product: ResultProduct = {
@@ -291,12 +319,18 @@ function transformResponse(data: any): AnalysisResult {
         profit: ch.profit.toFixed(2),
         roi: ch.roi_pct.toFixed(1),
         margin: ch.margin_pct.toFixed(1),
-        estimated: ESTIMATED_CHANNELS.has(ch.marketplace),
+        estimated:
+          Boolean(ch.is_estimated) || ESTIMATED_CHANNELS.has(ch.marketplace),
       };
     })
     .sort(
       (a: Channel, b: Channel) => parseFloat(b.profit) - parseFloat(a.profit)
     );
+
+  const primaryChannel =
+    channels.find((ch) => ch.id === data.best_marketplace && !ch.estimated) ||
+    channels.find((ch) => !ch.estimated) ||
+    channels[0];
 
   const rec = getRecStyle(data.recommendation || "watch", data.summary?.signal);
 
@@ -325,12 +359,12 @@ function transformResponse(data: any): AnalysisResult {
     velocity: data.velocity_score ?? 0,
     risk,
     confidence,
-    mainProfit:
-      channels.length > 0
-        ? channels[0].profit
-        : data.net_profit?.toFixed(2) || "0.00",
-    mainROI:
-      channels.length > 0 ? channels[0].roi : data.roi_pct?.toFixed(1) || "0.0",
+    mainProfit: primaryChannel
+      ? primaryChannel.profit
+      : data.net_profit?.toFixed(2) || "0.00",
+    mainROI: primaryChannel
+      ? primaryChannel.roi
+      : data.roi_pct?.toFixed(1) || "0.0",
     maxBuy: maxBuy.toFixed(2),
     headroom: headroom.toFixed(2),
     quickPrice: pricing?.quick_list?.toFixed(2) || "0.00",
