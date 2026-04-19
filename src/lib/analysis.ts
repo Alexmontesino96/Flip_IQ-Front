@@ -66,6 +66,8 @@ export interface ExecutionInfo {
   finalScore: number;
   winProbability: number;
   expectedProfit: string;
+  outcomeLow: string;
+  outcomeHigh: string;
   category: string;
   quantityGuidance: string;
   recommendedMarketplace?: string;
@@ -384,12 +386,16 @@ function buildMarketplaceDetails(data: any): MarketplaceDetail[] {
 function extractExecutionInfo(data: any): ExecutionInfo | undefined {
   const e = data.execution_analysis;
   if (!e) return undefined;
+  const expectedProfit = Number(e.expected_profit ?? 0);
+  const outcomeSpread = Math.max(8, Math.abs(expectedProfit) * 0.12);
   return {
     marketScore: data.market_score ?? data.flip_score ?? 0,
     executionScore: e.score ?? 0,
     finalScore: data.final_score ?? data.flip_score ?? 0,
     winProbability: e.win_probability ?? 0,
-    expectedProfit: (e.expected_profit ?? 0).toFixed(2),
+    expectedProfit: expectedProfit.toFixed(2),
+    outcomeLow: (expectedProfit - outcomeSpread).toFixed(0),
+    outcomeHigh: (expectedProfit + outcomeSpread).toFixed(0),
     category: e.category || "unknown",
     quantityGuidance: e.quantity_guidance || "Test small",
     recommendedMarketplace:
@@ -400,12 +406,23 @@ function extractExecutionInfo(data: any): ExecutionInfo | undefined {
 
 function collectWarnings(data: any): string[] {
   const seen = new Set<string>();
+  const seenCategories = new Set<string>();
   const warnings: string[] = [];
-  const add = (w: string) => {
-    if (!seen.has(w)) {
-      seen.add(w);
-      warnings.push(w);
+  const add = (w: string, scope = "general") => {
+    const normalized = w.trim().replace(/\s+/g, " ");
+    if (!normalized) return;
+    const exactKey = normalized.toLowerCase();
+    const category = warningCategory(normalized);
+    const categoryKey = category ? `${scope}:${category}` : "";
+    if (
+      seen.has(exactKey) ||
+      (categoryKey && seenCategories.has(categoryKey))
+    ) {
+      return;
     }
+    seen.add(exactKey);
+    if (categoryKey) seenCategories.add(categoryKey);
+    warnings.push(normalized);
   };
   // Top-level summary warnings
   for (const w of data.summary?.warnings || []) add(w);
@@ -422,10 +439,36 @@ function collectWarnings(data: any): string[] {
     for (const w of data[key]?.warnings || []) {
       // Prefix generic warnings with the marketplace so they aren't confusing
       const prefixed = w.startsWith(label) ? w : `${label}: ${w}`;
-      add(prefixed);
+      add(prefixed, label);
     }
   }
   return warnings;
+}
+
+function warningCategory(warning: string): string | null {
+  const w = warning.toLowerCase();
+  if (w.includes("confidence")) return "confidence";
+  if (w.includes("only") && (w.includes("comp") || w.includes("clean"))) {
+    return "small_sample";
+  }
+  if (w.includes("clean comps") || w.includes("comps after")) {
+    return "small_sample";
+  }
+  if (w.includes("fba fees") || w.includes("generic estimate")) {
+    return "fba_fees";
+  }
+  if (w.includes("bimodal") || w.includes("distribution")) {
+    return "price_distribution";
+  }
+  if (w.includes("seller") || w.includes("buy box")) {
+    return "seller_concentration";
+  }
+  if (w.includes("fallback")) return "fallback_source";
+  if (w.includes("blocked") || w.includes("partial")) return "source_status";
+  if (w.includes("condition") || w.includes("mixed comps")) return "condition";
+  if (w.includes("demand") || w.includes("trend")) return "demand";
+  if (w.includes("execution risk caps")) return "execution_cap";
+  return null;
 }
 
 function extractConditionInfo(analysis: any): ConditionInfo | undefined {
@@ -468,15 +511,24 @@ function getPrimaryAnalysis(data: any) {
   );
 }
 
-function formatEstimatedDaysToSell(value: unknown): string {
+function formatEstimatedDaysToSell(value: unknown, confidence = 50): string {
+  if (confidence < 40) return "Insufficient data";
+
   if (typeof value === "number" && Number.isFinite(value)) {
     return `~${Math.max(1, Math.round(value))}d`;
+  } else if (typeof value === "number") {
+    return "Insufficient data";
   }
 
   if (typeof value === "string") {
     const trimmed = value.trim();
     if (!trimmed) return "~7d";
+    if (trimmed.toLowerCase().includes("nan")) return "Insufficient data";
     if (trimmed.toLowerCase() === "n/a") return "N/A";
+    const numbers = trimmed.match(/\d+/g)?.map(Number) || [];
+    if (numbers.length >= 2 && Math.abs(numbers[1] - numbers[0]) > 10) {
+      return "Insufficient data";
+    }
     if (trimmed.startsWith("~")) return trimmed;
     return /\d$/.test(trimmed) ? `~${trimmed}d` : `~${trimmed}`;
   }
@@ -575,7 +627,8 @@ function transformResponse(data: any): AnalysisResult {
   const headroom = data.summary?.buy_box?.headroom ?? 0;
 
   const estDaysToSell = formatEstimatedDaysToSell(
-    primaryAnalysis?.velocity?.estimated_days_to_sell
+    primaryAnalysis?.velocity?.estimated_days_to_sell,
+    confidence
   );
 
   return {

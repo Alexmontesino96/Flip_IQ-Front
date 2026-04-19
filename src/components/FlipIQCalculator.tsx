@@ -422,6 +422,16 @@ function ResultPreviewSkeleton() {
   );
 }
 
+function isLowTrustResult(result: AnalysisResult) {
+  return result.confidence < 40 || result.product.comps < 5;
+}
+
+function channelConfidenceLabel(channelId: string) {
+  if (channelId === "amazon_fba") return "Buy Box chance";
+  if (channelId === "ebay") return "Sell-through confidence";
+  return "Execution confidence";
+}
+
 export default function FlipIQCalculator() {
   const [query, setQuery] = useState("");
   const [costPrice, setCostPrice] = useState("");
@@ -753,7 +763,7 @@ export default function FlipIQCalculator() {
               marginBottom: 8,
             }}
           >
-            Is it worth flipping?
+            Know if you&apos;ll actually sell before you buy
           </h1>
           <p style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.6 }}>
             The only tool that compares profit across{" "}
@@ -1192,55 +1202,225 @@ export default function FlipIQCalculator() {
                 );
               })()}
 
-              {/* Score Rings */}
-              <div
+              {result.executionInfo && (
+                <div
+                  style={{
+                    padding: "14px 14px",
+                    borderRadius: 14,
+                    background: isLowTrustResult(result)
+                      ? "rgba(251,191,36,0.055)"
+                      : "rgba(56,189,248,0.055)",
+                    border: `1px solid ${
+                      isLowTrustResult(result)
+                        ? "rgba(251,191,36,0.16)"
+                        : "rgba(56,189,248,0.16)"
+                    }`,
+                    marginBottom: 12,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      alignItems: "flex-start",
+                      marginBottom: 12,
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: isLowTrustResult(result)
+                            ? "#fbbf24"
+                            : "#7dd3fc",
+                          fontWeight: 800,
+                          textTransform: "uppercase",
+                          marginBottom: 3,
+                        }}
+                      >
+                        Should I buy?
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 22,
+                          lineHeight: 1.1,
+                          fontWeight: 900,
+                          color: isLowTrustResult(result)
+                            ? "#fbbf24"
+                            : result.recColor,
+                        }}
+                      >
+                        {result.recommendation === "BUY"
+                          ? "YES"
+                          : result.recommendation === "BUY SMALL"
+                            ? "YES (LIMITED)"
+                            : result.recommendation === "WATCH"
+                              ? "NOT YET"
+                              : "NO"}
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        textAlign: "right",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: 10,
+                          color: "#64748b",
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          marginBottom: 3,
+                        }}
+                      >
+                        Execution confidence
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 22,
+                          lineHeight: 1.1,
+                          fontWeight: 900,
+                          color: "#c4b5fd",
+                        }}
+                      >
+                        {Math.round(result.executionInfo.winProbability * 100)}%
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                      gap: 8,
+                    }}
+                  >
+                    {[
+                      {
+                        l: "Risk",
+                        v:
+                          result.executionInfo.executionScore < 45
+                            ? "Execution friction"
+                            : result.executionInfo.executionScore < 70
+                              ? "Price / access"
+                              : "Controlled",
+                        c:
+                          result.executionInfo.executionScore < 45
+                            ? "#f87171"
+                            : result.executionInfo.executionScore < 70
+                              ? "#fbbf24"
+                              : "#4ade80",
+                      },
+                      {
+                        l: "Expected outcome",
+                        v: isLowTrustResult(result)
+                          ? "Insufficient data"
+                          : `$${result.executionInfo.outcomeLow}–$${result.executionInfo.outcomeHigh}`,
+                        c: isLowTrustResult(result) ? "#fbbf24" : "#4ade80",
+                      },
+                    ].map((item) => (
+                      <div
+                        key={item.l}
+                        style={{
+                          borderRadius: 10,
+                          background: "rgba(255,255,255,0.035)",
+                          padding: "9px 10px",
+                          minHeight: 54,
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 9,
+                            color: "#64748b",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            marginBottom: 4,
+                          }}
+                        >
+                          {item.l}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 13,
+                            color: item.c,
+                            fontWeight: 800,
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {item.v}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <details
                 style={{
-                  display: "flex",
-                  justifyContent: "space-around",
-                  padding: "16px 0",
                   borderTop: "1px solid rgba(255,255,255,0.05)",
                   borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  padding: "10px 0",
                 }}
               >
-                <ScoreRing
-                  value={result.flipScore}
-                  color={
-                    result.flipScore >= 65
-                      ? "#22c55e"
-                      : result.flipScore >= 45
-                        ? "#eab308"
-                        : "#f97316"
-                  }
-                  label="Flip"
-                />
-                <ScoreRing
-                  value={result.velocity}
-                  color="#38bdf8"
-                  label="Speed"
-                />
-                <ScoreRing
-                  value={100 - result.risk}
-                  color={
-                    result.risk <= 30
-                      ? "#22c55e"
-                      : result.risk <= 50
-                        ? "#eab308"
-                        : "#ef4444"
-                  }
-                  label="Safety"
-                />
-                <ScoreRing
-                  value={result.confidence}
-                  color={
-                    result.confidence >= 60
-                      ? "#22c55e"
-                      : result.confidence >= 40
-                        ? "#eab308"
-                        : "#ef4444"
-                  }
-                  label="Conf."
-                />
-              </div>
+                <summary
+                  style={{
+                    cursor: "pointer",
+                    color: "#94a3b8",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    listStyle: "none",
+                  }}
+                >
+                  Score details
+                </summary>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-around",
+                    padding: "16px 0 6px",
+                  }}
+                >
+                  <ScoreRing
+                    value={result.flipScore}
+                    color={
+                      result.flipScore >= 65
+                        ? "#22c55e"
+                        : result.flipScore >= 45
+                          ? "#eab308"
+                          : "#f97316"
+                    }
+                    label="Flip"
+                  />
+                  <ScoreRing
+                    value={result.velocity}
+                    color="#38bdf8"
+                    label="Speed"
+                  />
+                  <ScoreRing
+                    value={100 - result.risk}
+                    color={
+                      result.risk <= 30
+                        ? "#22c55e"
+                        : result.risk <= 50
+                          ? "#eab308"
+                          : "#ef4444"
+                    }
+                    label="Safety"
+                  />
+                  <ScoreRing
+                    value={result.confidence}
+                    color={
+                      result.confidence >= 60
+                        ? "#22c55e"
+                        : result.confidence >= 40
+                          ? "#eab308"
+                          : "#ef4444"
+                    }
+                    label="Conf."
+                  />
+                </div>
+              </details>
 
               {/* Key Numbers */}
               <div
@@ -1252,24 +1432,35 @@ export default function FlipIQCalculator() {
                 }}
               >
                 {(() => {
-                  const profitNum = parseFloat(result.mainProfit);
-                  const isBuyRec =
-                    result.recommendation === "BUY" ||
-                    result.recommendation === "BUY SMALL";
-                  const profitLabel = result.executionInfo
-                    ? "Exec. profit"
-                    : isBuyRec
-                      ? "Best profit"
-                      : profitNum > 0
-                        ? "Top channel"
-                        : "Best case";
+                  const weightedProfit =
+                    result.executionInfo?.expectedProfit || result.mainProfit;
+                  const profitNum = parseFloat(weightedProfit);
+                  const lowTrust = isLowTrustResult(result);
                   return [
                     {
-                      l: profitLabel,
-                      v: `$${result.mainProfit}`,
-                      c: profitNum > 0 ? "#4ade80" : "#ef4444",
+                      l: result.executionInfo ? "Execution" : "Confidence",
+                      v: result.executionInfo
+                        ? `${result.executionInfo.executionScore}/100`
+                        : `${result.confidence}/100`,
+                      c: result.executionInfo
+                        ? result.executionInfo.executionScore >= 70
+                          ? "#4ade80"
+                          : result.executionInfo.executionScore >= 45
+                            ? "#fbbf24"
+                            : "#f87171"
+                        : "#a78bfa",
                     },
-                    { l: "ROI", v: `${result.mainROI}%`, c: "#a78bfa" },
+                    {
+                      l: lowTrust ? "Profit signal *" : "Expected profit",
+                      v: lowTrust
+                        ? `$${weightedProfit}*`
+                        : `$${weightedProfit}`,
+                      c: lowTrust
+                        ? "#fbbf24"
+                        : profitNum > 0
+                          ? "#4ade80"
+                          : "#ef4444",
+                    },
                     {
                       l:
                         result.confidence < 60
@@ -1309,13 +1500,25 @@ export default function FlipIQCalculator() {
               </div>
 
               {result.executionInfo && (
-                <div
+                <details
                   style={{
                     marginTop: 14,
                     paddingTop: 14,
                     borderTop: "1px solid rgba(255,255,255,0.05)",
                   }}
                 >
+                  <summary
+                    style={{
+                      cursor: "pointer",
+                      color: "#94a3b8",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      listStyle: "none",
+                      marginBottom: 10,
+                    }}
+                  >
+                    Execution details
+                  </summary>
                   <div
                     style={{
                       display: "grid",
@@ -1400,7 +1603,8 @@ export default function FlipIQCalculator() {
                     }}
                   >
                     <span>
-                      {result.executionInfo.quantityGuidance} · Win probability{" "}
+                      {result.executionInfo.quantityGuidance} · Execution
+                      confidence{" "}
                       {Math.round(result.executionInfo.winProbability * 100)}%
                     </span>
                     <span
@@ -1417,7 +1621,7 @@ export default function FlipIQCalculator() {
                       )?.label || result.executionInfo.recommendedMarketplace}
                     </span>
                   </div>
-                </div>
+                </details>
               )}
             </div>
 
@@ -1596,19 +1800,54 @@ export default function FlipIQCalculator() {
                       letterSpacing: 0.5,
                     }}
                   >
-                    AI Analysis
+                    Decision Brief
                   </span>
                 </div>
-                <p
-                  style={{
-                    fontSize: 13,
-                    color: "#94a3b8",
-                    lineHeight: 1.6,
-                    margin: 0,
-                  }}
-                >
-                  {result.aiExplanation}
-                </p>
+                {(() => {
+                  const isLong = result.aiExplanation.length > 620;
+                  const brief = isLong
+                    ? `${result.aiExplanation.slice(0, 620).trim()}...`
+                    : result.aiExplanation;
+                  return (
+                    <>
+                      <p
+                        style={{
+                          fontSize: 13,
+                          color: "#94a3b8",
+                          lineHeight: 1.6,
+                          margin: 0,
+                        }}
+                      >
+                        {brief}
+                      </p>
+                      {isLong && (
+                        <details style={{ marginTop: 10 }}>
+                          <summary
+                            style={{
+                              cursor: "pointer",
+                              color: "#c4b5fd",
+                              fontSize: 12,
+                              fontWeight: 700,
+                              listStyle: "none",
+                            }}
+                          >
+                            Full analysis
+                          </summary>
+                          <p
+                            style={{
+                              fontSize: 12,
+                              color: "#94a3b8",
+                              lineHeight: 1.6,
+                              margin: "8px 0 0",
+                            }}
+                          >
+                            {result.aiExplanation}
+                          </p>
+                        </details>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
 
@@ -1765,7 +2004,7 @@ export default function FlipIQCalculator() {
                         >
                           Execution {ch.executionScore}/100
                           {ch.winProbability != null
-                            ? ` · Win ${Math.round(ch.winProbability * 100)}%`
+                            ? ` · ${channelConfidenceLabel(ch.id)} ${Math.round(ch.winProbability * 100)}%`
                             : ""}
                           {ch.executionNote ? ` · ${ch.executionNote}` : ""}
                         </div>
