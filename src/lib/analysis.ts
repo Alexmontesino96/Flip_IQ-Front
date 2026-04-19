@@ -398,8 +398,7 @@ function extractExecutionInfo(data: any): ExecutionInfo | undefined {
     outcomeHigh: (expectedProfit + outcomeSpread).toFixed(0),
     category: e.category || "unknown",
     quantityGuidance: e.quantity_guidance || "Test small",
-    recommendedMarketplace:
-      data.recommended_marketplace || data.best_marketplace,
+    recommendedMarketplace: data.recommended_marketplace || undefined,
     bestProfitMarketplace: data.best_profit_marketplace,
   };
 }

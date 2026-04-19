@@ -1609,16 +1609,23 @@ export default function FlipIQCalculator() {
                     </span>
                     <span
                       style={{
-                        color: "#c4b5fd",
+                        color: result.executionInfo.recommendedMarketplace
+                          ? "#c4b5fd"
+                          : "#fbbf24",
                         fontWeight: 700,
                         textAlign: "right",
                       }}
                     >
-                      Recommended:{" "}
-                      {result.channels.find(
-                        (ch) =>
-                          ch.id === result.executionInfo?.recommendedMarketplace
-                      )?.label || result.executionInfo.recommendedMarketplace}
+                      {result.executionInfo.recommendedMarketplace
+                        ? `Recommended: ${
+                            result.channels.find(
+                              (ch) =>
+                                ch.id ===
+                                result.executionInfo?.recommendedMarketplace
+                            )?.label ||
+                            result.executionInfo.recommendedMarketplace
+                          }`
+                        : "No auto-recommended channel"}
                     </span>
                   </div>
                 </details>
