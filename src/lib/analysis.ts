@@ -25,6 +25,11 @@ export interface Channel {
   label: string;
   icon: string;
   badge?: string;
+  channelRole?: string;
+  executionNote?: string;
+  executionScore?: number;
+  winProbability?: number;
+  expectedProfit?: string;
   salePrice: string;
   fees: string;
   ship: string;
@@ -55,6 +60,18 @@ export interface ConditionInfo {
   matchRate: number;
 }
 
+export interface ExecutionInfo {
+  marketScore: number;
+  executionScore: number;
+  finalScore: number;
+  winProbability: number;
+  expectedProfit: string;
+  category: string;
+  quantityGuidance: string;
+  recommendedMarketplace?: string;
+  bestProfitMarketplace?: string;
+}
+
 export interface AnalysisResult {
   product: ResultProduct;
   channels: Channel[];
@@ -79,6 +96,7 @@ export interface AnalysisResult {
   bestMarketplaceReason?: string;
   marketplaceDetails?: MarketplaceDetail[];
   conditionInfo?: ConditionInfo;
+  executionInfo?: ExecutionInfo;
 }
 
 export interface MarketplaceDetail {
@@ -93,6 +111,9 @@ export interface MarketplaceDetail {
   median: string;
   salesPerDay: string;
   confidence: number;
+  executionScore?: number;
+  winProbability?: number;
+  channelRole?: string;
 }
 
 const SIGNAL_COLORS: Record<string, { color: string; icon: string }> = {
@@ -260,7 +281,10 @@ export async function runAnalysisStream(
             if (data.flip_score != null) updates.flipScore = data.flip_score;
             if (data.risk_score != null) updates.risk = 100 - data.risk_score;
             if (data.recommendation) {
-              const rec = getRecStyle(data.recommendation, data.signal);
+              const rec = getRecStyle(
+                data.recommendation,
+                data.signal || data.summary?.signal
+              );
               updates.recommendation = rec.text;
               updates.recColor = rec.color;
               updates.recIcon = rec.icon;
@@ -349,9 +373,29 @@ function buildMarketplaceDetails(data: any): MarketplaceDetail[] {
       median: (a.comps?.median_price || 0).toFixed(2),
       salesPerDay: (a.comps?.sales_per_day || 0).toFixed(2),
       confidence: a.confidence?.score ?? 0,
+      executionScore: a.execution_analysis?.score,
+      winProbability: a.execution_analysis?.win_probability,
+      channelRole: a.execution_analysis?.channel_role,
     });
   }
   return details;
+}
+
+function extractExecutionInfo(data: any): ExecutionInfo | undefined {
+  const e = data.execution_analysis;
+  if (!e) return undefined;
+  return {
+    marketScore: data.market_score ?? data.flip_score ?? 0,
+    executionScore: e.score ?? 0,
+    finalScore: data.final_score ?? data.flip_score ?? 0,
+    winProbability: e.win_probability ?? 0,
+    expectedProfit: (e.expected_profit ?? 0).toFixed(2),
+    category: e.category || "unknown",
+    quantityGuidance: e.quantity_guidance || "Test small",
+    recommendedMarketplace:
+      data.recommended_marketplace || data.best_marketplace,
+    bestProfitMarketplace: data.best_profit_marketplace,
+  };
 }
 
 function collectWarnings(data: any): string[] {
@@ -482,6 +526,20 @@ function transformResponse(data: any): AnalysisResult {
         label: meta.label,
         icon: meta.icon,
         badge: ch.label || undefined,
+        channelRole: ch.channel_role || undefined,
+        executionNote: ch.execution_note || undefined,
+        executionScore:
+          typeof ch.execution_score === "number"
+            ? ch.execution_score
+            : undefined,
+        winProbability:
+          typeof ch.win_probability === "number"
+            ? ch.win_probability
+            : undefined,
+        expectedProfit:
+          typeof ch.expected_profit === "number"
+            ? ch.expected_profit.toFixed(2)
+            : undefined,
         salePrice: (ch.estimated_sale_price || 0).toFixed(2),
         fees: Math.max(0, totalFees).toFixed(2),
         ship: ship.toFixed(2),
@@ -497,8 +555,10 @@ function transformResponse(data: any): AnalysisResult {
     );
 
   const primaryChannel =
-    channels.find((ch) => ch.badge === "BEST PROFIT") ||
+    channels.find((ch) => ch.channelRole === "recommended") ||
+    channels.find((ch) => ch.id === data.recommended_marketplace) ||
     channels.find((ch) => ch.id === data.best_marketplace && !ch.estimated) ||
+    channels.find((ch) => ch.badge === "BEST PROFIT") ||
     channels.find((ch) => !ch.estimated) ||
     channels[0];
 
@@ -549,5 +609,6 @@ function transformResponse(data: any): AnalysisResult {
     bestMarketplaceReason: data.best_marketplace_reason || undefined,
     marketplaceDetails: buildMarketplaceDetails(data),
     conditionInfo: extractConditionInfo(primaryAnalysis),
+    executionInfo: extractExecutionInfo(data),
   };
 }

@@ -1256,11 +1256,13 @@ export default function FlipIQCalculator() {
                   const isBuyRec =
                     result.recommendation === "BUY" ||
                     result.recommendation === "BUY SMALL";
-                  const profitLabel = isBuyRec
-                    ? "Best profit"
-                    : profitNum > 0
-                      ? "Top channel"
-                      : "Best case";
+                  const profitLabel = result.executionInfo
+                    ? "Exec. profit"
+                    : isBuyRec
+                      ? "Best profit"
+                      : profitNum > 0
+                        ? "Top channel"
+                        : "Best case";
                   return [
                     {
                       l: profitLabel,
@@ -1305,6 +1307,118 @@ export default function FlipIQCalculator() {
                   </div>
                 ))}
               </div>
+
+              {result.executionInfo && (
+                <div
+                  style={{
+                    marginTop: 14,
+                    paddingTop: 14,
+                    borderTop: "1px solid rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                      gap: 8,
+                      marginBottom: 10,
+                    }}
+                  >
+                    {[
+                      {
+                        l: "Market",
+                        v: result.executionInfo.marketScore,
+                        c: "#38bdf8",
+                      },
+                      {
+                        l: "Execution",
+                        v: result.executionInfo.executionScore,
+                        c:
+                          result.executionInfo.executionScore >= 70
+                            ? "#4ade80"
+                            : result.executionInfo.executionScore >= 45
+                              ? "#fbbf24"
+                              : "#f87171",
+                      },
+                      {
+                        l: "Final",
+                        v: result.executionInfo.finalScore,
+                        c: "#a78bfa",
+                      },
+                    ].map((s) => (
+                      <div key={s.l} style={{ minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontSize: 9,
+                            color: "#64748b",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            marginBottom: 3,
+                          }}
+                        >
+                          {s.l}
+                        </div>
+                        <div
+                          style={{
+                            height: 6,
+                            borderRadius: 999,
+                            background: "rgba(255,255,255,0.06)",
+                            overflow: "hidden",
+                            marginBottom: 4,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: `${Math.max(0, Math.min(100, s.v))}%`,
+                              height: "100%",
+                              borderRadius: 999,
+                              background: s.c,
+                            }}
+                          />
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 16,
+                            color: s.c,
+                            fontWeight: 800,
+                          }}
+                        >
+                          {s.v}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      alignItems: "center",
+                      fontSize: 11,
+                      color: "#94a3b8",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    <span>
+                      {result.executionInfo.quantityGuidance} · Win probability{" "}
+                      {Math.round(result.executionInfo.winProbability * 100)}%
+                    </span>
+                    <span
+                      style={{
+                        color: "#c4b5fd",
+                        fontWeight: 700,
+                        textAlign: "right",
+                      }}
+                    >
+                      Recommended:{" "}
+                      {result.channels.find(
+                        (ch) =>
+                          ch.id === result.executionInfo?.recommendedMarketplace
+                      )?.label || result.executionInfo.recommendedMarketplace}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Warnings */}
@@ -1513,7 +1627,8 @@ export default function FlipIQCalculator() {
               </div>
               {result.channels.map((ch) => {
                 const profit = parseFloat(ch.profit);
-                const isHighlighted = Boolean(ch.badge);
+                const isRecommended = ch.channelRole === "recommended";
+                const isHighlighted = Boolean(ch.badge) || isRecommended;
 
                 let badgeText = "";
                 let badgeBg = "";
@@ -1528,6 +1643,26 @@ export default function FlipIQCalculator() {
                     badgeColor = "#4ade80";
                   }
                 }
+                const roleText =
+                  ch.channelRole === "recommended"
+                    ? "RECOMMENDED"
+                    : ch.channelRole === "test_only"
+                      ? "TEST ONLY"
+                      : ch.channelRole === "best_profit"
+                        ? "RAW PROFIT"
+                        : "";
+                const roleBg =
+                  ch.channelRole === "recommended"
+                    ? "rgba(56,189,248,0.12)"
+                    : ch.channelRole === "test_only"
+                      ? "rgba(251,191,36,0.12)"
+                      : "rgba(148,163,184,0.10)";
+                const roleColor =
+                  ch.channelRole === "recommended"
+                    ? "#38bdf8"
+                    : ch.channelRole === "test_only"
+                      ? "#fbbf24"
+                      : "#cbd5e1";
 
                 return (
                   <div
@@ -1540,9 +1675,17 @@ export default function FlipIQCalculator() {
                       borderRadius: 12,
                       marginBottom: 6,
                       background: isHighlighted
-                        ? "rgba(34,197,94,0.04)"
+                        ? isRecommended
+                          ? "rgba(56,189,248,0.045)"
+                          : "rgba(34,197,94,0.04)"
                         : "rgba(255,255,255,0.01)",
-                      border: `1px solid ${isHighlighted ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.04)"}`,
+                      border: `1px solid ${
+                        isRecommended
+                          ? "rgba(56,189,248,0.18)"
+                          : isHighlighted
+                            ? "rgba(34,197,94,0.15)"
+                            : "rgba(255,255,255,0.04)"
+                      }`,
                     }}
                   >
                     <span style={{ fontSize: 20, flexShrink: 0 }}>
@@ -1574,6 +1717,20 @@ export default function FlipIQCalculator() {
                             {badgeText}
                           </span>
                         )}
+                        {roleText && (
+                          <span
+                            style={{
+                              fontSize: 9,
+                              fontWeight: 700,
+                              padding: "2px 6px",
+                              borderRadius: 4,
+                              background: roleBg,
+                              color: roleColor,
+                            }}
+                          >
+                            {roleText}
+                          </span>
+                        )}
                         {ch.estimated && (
                           <span
                             style={{
@@ -1593,6 +1750,26 @@ export default function FlipIQCalculator() {
                         Sells ~${ch.salePrice} &middot; Fees: ${ch.fees}
                         {parseFloat(ch.ship) > 0 ? ` + $${ch.ship} ship` : ""}
                       </div>
+                      {ch.executionScore != null && (
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color:
+                              ch.executionScore >= 70
+                                ? "#4ade80"
+                                : ch.executionScore >= 45
+                                  ? "#fbbf24"
+                                  : "#f87171",
+                            marginTop: 2,
+                          }}
+                        >
+                          Execution {ch.executionScore}/100
+                          {ch.winProbability != null
+                            ? ` · Win ${Math.round(ch.winProbability * 100)}%`
+                            : ""}
+                          {ch.executionNote ? ` · ${ch.executionNote}` : ""}
+                        </div>
+                      )}
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <div
