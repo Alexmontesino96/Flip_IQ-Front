@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import ScoreRing from "./ScoreRing";
 import {
@@ -29,18 +29,100 @@ const SAMPLE_QUERIES = [
   { query: "Stanley Cup 40oz", name: "Stanley Cup", cost: "25" },
 ];
 
-const ANALYSIS_PHASES = ["Product", "Market", "Comps", "Scores", "Brief"];
+const ACCENT = "#8b5cf6";
 
-const STAGE_INDEX: Record<string, number> = {
-  start: 0,
-  identify: 0,
-  category: 0,
-  fetch: 1,
-  matching: 2,
-  scoring: 3,
-  analysis: 3,
-  ai: 4,
+interface OrbitalEngine {
+  id: string;
+  label: string;
+  ring: number;
+}
+
+const ORBITAL_ENGINES: OrbitalEngine[] = [
+  { id: "start", label: "Starting scan", ring: 0 },
+  { id: "identify", label: "Resolving barcode", ring: 0 },
+  { id: "category", label: "Classifying product", ring: 0 },
+  { id: "fetch_ebay", label: "Fetching eBay comps", ring: 1 },
+  { id: "fetch_amz", label: "Fetching Amazon data", ring: 1 },
+  { id: "enrich", label: "Enriching titles (AI)", ring: 1 },
+  { id: "relevance", label: "Filtering by relevance", ring: 1 },
+  { id: "cleaner", label: "Cleaning comparables", ring: 2 },
+  { id: "pricing", label: "Calculating pricing", ring: 2 },
+  { id: "profit", label: "Net profit", ring: 2 },
+  { id: "max_buy", label: "Max buy price", ring: 2 },
+  { id: "velocity", label: "Sales velocity", ring: 2 },
+  { id: "risk", label: "Risk score", ring: 2 },
+  { id: "confidence", label: "Analysis confidence", ring: 2 },
+  { id: "competition", label: "Market competition", ring: 2 },
+  { id: "trend", label: "Demand trend", ring: 2 },
+  { id: "ai", label: "AI explanation", ring: 0 },
+];
+
+const ORBITAL_STAGE_MAP: Record<string, string[]> = {
+  start: ["start"],
+  identify: ["identify"],
+  category: ["category"],
+  fetch: ["fetch_ebay", "fetch_amz"],
+  matching: ["enrich", "relevance"],
+  scoring: [
+    "cleaner",
+    "pricing",
+    "profit",
+    "max_buy",
+    "velocity",
+    "risk",
+    "confidence",
+    "competition",
+    "trend",
+  ],
+  analysis: [
+    "cleaner",
+    "pricing",
+    "profit",
+    "max_buy",
+    "velocity",
+    "risk",
+    "confidence",
+    "competition",
+    "trend",
+  ],
+  ai: ["ai"],
 };
+
+interface PositionedEngine extends OrbitalEngine {
+  x: number;
+  y: number;
+  theta: number;
+  r: number;
+}
+
+function computeOrbitals(size: number) {
+  const cx = size / 2;
+  const cy = size / 2;
+  const scale = size / 320;
+  const rings: Record<number, number> = {
+    0: 48 * scale,
+    1: 100 * scale,
+    2: 148 * scale,
+  };
+  const byRing: Record<number, OrbitalEngine[]> = { 0: [], 1: [], 2: [] };
+  ORBITAL_ENGINES.forEach((e) => byRing[e.ring].push(e));
+  const positioned: PositionedEngine[] = [];
+  for (const ring of [0, 1, 2]) {
+    const list = byRing[ring];
+    const r = rings[ring];
+    list.forEach((e, i) => {
+      const theta = (i / list.length) * Math.PI * 2 - Math.PI / 2 + ring * 0.35;
+      positioned.push({
+        ...e,
+        x: cx + Math.cos(theta) * r,
+        y: cy + Math.sin(theta) * r,
+        theta,
+        r,
+      });
+    });
+  }
+  return { positioned, cx, cy, rings };
+}
 
 function formatElapsed(seconds: number) {
   const mins = Math.floor(seconds / 60);
@@ -48,305 +130,291 @@ function formatElapsed(seconds: number) {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-function getFallbackProgress(seconds: number) {
-  if (seconds < 3) return 8;
-  if (seconds < 10) return 24;
-  if (seconds < 20) return 46;
-  if (seconds < 32) return 64;
-  return 78;
-}
+type EngineState = "idle" | "active" | "complete";
 
-function getFallbackMessage(seconds: number) {
-  if (seconds < 4) return "Starting live market scan";
-  if (seconds < 12) return "Pulling sold comps and marketplace signals";
-  if (seconds < 24) return "Matching relevant listings";
-  if (seconds < 36) return "Building the profit model";
-  return "Still working through live marketplace data";
-}
-
-function getNumberDetail(
-  details: Record<string, unknown>,
-  keys: string[]
-): number | null {
-  for (const key of keys) {
-    const value = details[key];
-    if (typeof value === "number" && Number.isFinite(value)) return value;
-  }
-  return null;
-}
-
-function AnalysisProgressPanel({
-  query,
-  costPrice,
-  condition,
+function OrbitalAnalysis({
   progress,
   elapsedSeconds,
+  size = 280,
 }: {
-  query: string;
-  costPrice: string;
-  condition: string;
   progress: AnalysisProgress | null;
   elapsedSeconds: number;
+  size?: number;
 }) {
-  const details = progress?.details || {};
-  const activeIndex = progress
-    ? (STAGE_INDEX[progress.stage] ?? 0)
-    : Math.min(3, Math.floor(elapsedSeconds / 8));
-  const progressPct = progress?.progress ?? getFallbackProgress(elapsedSeconds);
-  const message = progress?.message || getFallbackMessage(elapsedSeconds);
-  const ebayCount = getNumberDetail(details, [
-    "ebay_clean_count",
-    "ebay_count",
-    "ebay_raw_count",
-  ]);
-  const amazonCount = getNumberDetail(details, [
-    "amazon_clean_count",
-    "amazon_count",
-    "amazon_raw_count",
-  ]);
-  const fallbackUsed = Boolean(details.fallback_used);
-  const slowNote =
-    elapsedSeconds >= 18 && progress?.stage !== "analysis"
-      ? "Live sources can take a few extra seconds."
-      : null;
+  const { positioned, cx, cy, rings } = useMemo(
+    () => computeOrbitals(size),
+    [size]
+  );
 
-  const lanes = [
-    {
-      label: "eBay comps",
-      value:
-        ebayCount !== null
-          ? `${ebayCount} found`
-          : activeIndex >= 1
-            ? "Scanning"
-            : "Queued",
-      tone: activeIndex >= 1 ? "#38bdf8" : "#64748b",
-    },
-    {
-      label: "Amazon data",
-      value:
-        amazonCount !== null
-          ? `${amazonCount} found`
-          : activeIndex >= 1
-            ? "Checking"
-            : "Queued",
-      tone: activeIndex >= 1 ? "#a78bfa" : "#64748b",
-    },
-    {
-      label: "Comp match",
-      value:
-        activeIndex > 2
-          ? "Selected"
-          : activeIndex === 2
-            ? "Filtering"
-            : "Queued",
-      tone: activeIndex >= 2 ? "#fbbf24" : "#64748b",
-    },
-    {
-      label: "Deal model",
-      value:
-        activeIndex > 3 ? "Ready" : activeIndex === 3 ? "Scoring" : "Queued",
-      tone: activeIndex >= 3 ? "#4ade80" : "#64748b",
-    },
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    let raf: number;
+    const loop = () => {
+      setTick((t) => t + 1);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // Derive engine states purely from current progress (no refs, no effects)
+  const STAGE_ORDER = [
+    "start",
+    "identify",
+    "category",
+    "fetch",
+    "matching",
+    "scoring",
+    "ai",
   ];
+  const engineStates = useMemo(() => {
+    const states: Record<string, EngineState> = {};
+    ORBITAL_ENGINES.forEach((e) => {
+      states[e.id] = "idle";
+    });
+    if (!progress) return states;
+
+    const currentStage =
+      progress.stage === "analysis" ? "scoring" : progress.stage;
+    const currentIndex = STAGE_ORDER.indexOf(currentStage);
+    if (currentIndex < 0) return states;
+
+    for (let i = 0; i <= currentIndex; i++) {
+      const stage = STAGE_ORDER[i];
+      const engines = ORBITAL_STAGE_MAP[stage] || [];
+      if (i < currentIndex) {
+        engines.forEach((id) => {
+          states[id] = "complete";
+        });
+      } else {
+        engines.forEach((id) => {
+          states[id] = progress.status === "complete" ? "complete" : "active";
+        });
+      }
+    }
+    return states;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress?.stage, progress?.status]);
+
+  const t = tick * 0.008;
+  const completedCount = Object.values(engineStates).filter(
+    (s) => s === "complete"
+  ).length;
+  const activeCount = Object.values(engineStates).filter(
+    (s) => s === "active"
+  ).length;
+  const progressPct = progress?.progress ?? 0;
+  const message = progress?.message || "Connecting...";
+  const stageName = progress?.stage || "start";
+
+  const completedPositioned = positioned.filter(
+    (e) => engineStates[e.id] === "complete"
+  );
 
   return (
     <div
       className="fade-up"
       style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 20,
+        padding: "20px 16px",
         background: "rgba(255,255,255,0.025)",
         border: "1px solid rgba(255,255,255,0.07)",
         borderRadius: 20,
-        padding: 16,
         marginBottom: 14,
-        overflow: "hidden",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 12,
-          alignItems: "flex-start",
-          marginBottom: 14,
-        }}
-      >
-        <div style={{ minWidth: 0 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 4,
-            }}
-          >
-            <span className="pulse-dot" />
-            <span style={{ fontSize: 13, fontWeight: 800 }}>Live analysis</span>
-          </div>
-          <div
-            style={{
-              fontSize: 12,
-              color: "#94a3b8",
-              lineHeight: 1.4,
-              wordBreak: "break-word",
-            }}
-          >
-            {query || "Product"} · ${costPrice || "0"} · {condition}
-          </div>
-        </div>
+      <div style={{ position: "relative", width: size, height: size }}>
+        <svg
+          width={size}
+          height={size}
+          style={{ position: "absolute", inset: 0, overflow: "visible" }}
+        >
+          <defs>
+            <radialGradient id="orbCoreGlow" cx="50%" cy="50%">
+              <stop offset="0%" stopColor={ACCENT} stopOpacity="0.5" />
+              <stop offset="50%" stopColor={ACCENT} stopOpacity="0.08" />
+              <stop offset="100%" stopColor={ACCENT} stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="orbNodeGlow" cx="50%" cy="50%">
+              <stop offset="0%" stopColor={ACCENT} stopOpacity="0.6" />
+              <stop offset="100%" stopColor={ACCENT} stopOpacity="0" />
+            </radialGradient>
+          </defs>
+
+          {/* Orbit rings */}
+          {[1, 2].map((ring) => (
+            <circle
+              key={ring}
+              cx={cx}
+              cy={cy}
+              r={rings[ring]}
+              fill="none"
+              stroke="rgba(255,255,255,0.07)"
+              strokeWidth="1"
+              strokeDasharray="2 5"
+            />
+          ))}
+
+          {/* Sweep ring on outer orbit — rotates while processing */}
+          {progressPct < 100 && (
+            <g transform={`rotate(${t * 30} ${cx} ${cy})`}>
+              <circle
+                cx={cx}
+                cy={cy}
+                r={rings[2]}
+                fill="none"
+                stroke={ACCENT}
+                strokeWidth="1"
+                strokeDasharray={`${rings[2] * 0.08} ${rings[2] * 6}`}
+                opacity={0.8}
+              />
+            </g>
+          )}
+
+          {/* Core glow */}
+          <circle
+            cx={cx}
+            cy={cy}
+            r={72 * (size / 320)}
+            fill="url(#orbCoreGlow)"
+          />
+
+          {/* Connection lines from completed nodes to center */}
+          {completedPositioned.map((e) => (
+            <line
+              key={`c2c-${e.id}`}
+              x1={e.x}
+              y1={e.y}
+              x2={cx}
+              y2={cy}
+              stroke={ACCENT}
+              strokeWidth="0.75"
+              opacity={0.28}
+            />
+          ))}
+
+          {/* Nodes */}
+          {positioned.map((e, i) => {
+            const st = engineStates[e.id];
+            const isActive = st === "active";
+            const isDone = st === "complete";
+            const wobble = Math.sin(t * 1.1 + i * 0.7) * 1.2;
+            const x = e.x + wobble;
+            const y = e.y + wobble * 0.6;
+            const pulse = isActive ? Math.sin(tick * 0.16 + i) * 1.8 : 0;
+            const baseR = e.ring === 0 ? 8 : 5.5;
+            const r = baseR + pulse + (isDone ? 1 : 0);
+
+            const fill = isDone || isActive ? ACCENT : "rgba(255,255,255,0.18)";
+            const nodeOpacity = isDone ? 1 : isActive ? 0.95 : 0.55;
+
+            return (
+              <g key={e.id}>
+                {isActive && (
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={r + 10}
+                    fill="url(#orbNodeGlow)"
+                    opacity={0.9}
+                  />
+                )}
+                <circle cx={x} cy={y} r={r} fill={fill} opacity={nodeOpacity} />
+                {isDone && (
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={Math.max(1.5, r - 3)}
+                    fill="#08080d"
+                  />
+                )}
+              </g>
+            );
+          })}
+
+          {/* Center — radiating pulse when anything active */}
+          <circle
+            cx={cx}
+            cy={cy}
+            r={14 + (activeCount > 0 ? Math.sin(tick * 0.12) * 2.5 : 0)}
+            fill={ACCENT}
+            opacity={0.95}
+          />
+          <circle cx={cx} cy={cy} r={5.5} fill="#08080d" />
+        </svg>
+
+        {/* Progress % below core */}
         <div
           style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 12,
-            color: "#c4b5fd",
-            padding: "5px 8px",
-            borderRadius: 8,
-            background: "rgba(139,92,246,0.08)",
-            border: "1px solid rgba(139,92,246,0.18)",
-            flexShrink: 0,
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            pointerEvents: "none",
           }}
         >
-          {formatElapsed(elapsedSeconds)}
+          <div
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 10,
+              color: ACCENT,
+              marginTop: 48,
+              letterSpacing: 2,
+              fontWeight: 500,
+              opacity: 0.75,
+            }}
+          >
+            {String(Math.round(progressPct)).padStart(2, "0")}%
+          </div>
         </div>
       </div>
 
-      <div style={{ marginBottom: 14 }}>
+      {/* Status block */}
+      <div
+        style={{
+          textAlign: "center",
+          minHeight: 74,
+          width: "100%",
+          maxWidth: 300,
+        }}
+      >
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
-            gap: 10,
-            marginBottom: 8,
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 9,
+            letterSpacing: 2,
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.4)",
+            marginBottom: 10,
           }}
         >
-          <div style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 700 }}>
-            {message}
-          </div>
-          <div
-            style={{
-              fontSize: 11,
-              color: "#64748b",
-              fontFamily: "'JetBrains Mono', monospace",
-            }}
-          >
-            {progressPct}%
-          </div>
+          <span>
+            {String(completedCount).padStart(2, "0")} / {ORBITAL_ENGINES.length}
+          </span>
+          <span style={{ color: ACCENT }}>{stageName}</span>
+          <span>{formatElapsed(elapsedSeconds)}</span>
         </div>
         <div
           style={{
-            height: 6,
-            borderRadius: 999,
-            background: "rgba(255,255,255,0.06)",
-            overflow: "hidden",
+            fontSize: 15,
+            fontWeight: 500,
+            color: "#e2e8f0",
+            letterSpacing: -0.2,
+            lineHeight: 1.35,
+            minHeight: 42,
           }}
         >
-          <div
-            style={{
-              width: `${progressPct}%`,
-              height: "100%",
-              borderRadius: 999,
-              background: "linear-gradient(90deg, #38bdf8, #8b5cf6, #22c55e)",
-              transition: "width 0.5s ease",
-            }}
-          />
+          {message}
         </div>
       </div>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(5, 1fr)",
-          gap: 6,
-          marginBottom: 14,
-        }}
-      >
-        {ANALYSIS_PHASES.map((phase, index) => {
-          const complete =
-            index < activeIndex ||
-            (progress?.status === "complete" && index === activeIndex);
-          const active = index === activeIndex && !complete;
-          return (
-            <div key={phase} style={{ minWidth: 0 }}>
-              <div
-                style={{
-                  height: 5,
-                  borderRadius: 999,
-                  background: complete
-                    ? "#22c55e"
-                    : active
-                      ? "#8b5cf6"
-                      : "rgba(255,255,255,0.08)",
-                  marginBottom: 6,
-                  transition: "background 0.3s ease",
-                }}
-              />
-              <div
-                style={{
-                  fontSize: 10,
-                  color: complete || active ? "#cbd5e1" : "#475569",
-                  fontWeight: 700,
-                  textAlign: "center",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {phase}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-          gap: 8,
-        }}
-      >
-        {lanes.map((lane) => (
-          <div
-            key={lane.label}
-            style={{
-              padding: "10px 11px",
-              borderRadius: 10,
-              border: "1px solid rgba(255,255,255,0.06)",
-              background: "rgba(255,255,255,0.025)",
-              minHeight: 58,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 10,
-                color: "#64748b",
-                fontWeight: 700,
-                marginBottom: 5,
-                textTransform: "uppercase",
-              }}
-            >
-              {lane.label}
-            </div>
-            <div style={{ fontSize: 13, color: lane.tone, fontWeight: 800 }}>
-              {lane.value}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {(fallbackUsed || slowNote) && (
-        <div
-          style={{
-            marginTop: 10,
-            fontSize: 11,
-            color: "#fbbf24",
-            lineHeight: 1.5,
-          }}
-        >
-          {fallbackUsed
-            ? "UPC fallback is using the resolved product title."
-            : slowNote}
-        </div>
-      )}
     </div>
   );
 }
@@ -424,12 +492,6 @@ function ResultPreviewSkeleton() {
 
 function isLowTrustResult(result: AnalysisResult) {
   return result.confidence < 40 || result.product.comps < 5;
-}
-
-function channelConfidenceLabel(channelId: string) {
-  if (channelId === "amazon_fba") return "Buy Box chance";
-  if (channelId === "ebay") return "Sell-through confidence";
-  return "Execution confidence";
 }
 
 export default function FlipIQCalculator() {
@@ -1049,10 +1111,7 @@ export default function FlipIQCalculator() {
 
         {loading && !result && (
           <>
-            <AnalysisProgressPanel
-              query={query}
-              costPrice={costPrice}
-              condition={condition}
+            <OrbitalAnalysis
               progress={analysisProgress}
               elapsedSeconds={elapsedSeconds}
             />
@@ -1202,160 +1261,6 @@ export default function FlipIQCalculator() {
                 );
               })()}
 
-              {result.executionInfo && (
-                <div
-                  style={{
-                    padding: "14px 14px",
-                    borderRadius: 14,
-                    background: isLowTrustResult(result)
-                      ? "rgba(251,191,36,0.055)"
-                      : "rgba(56,189,248,0.055)",
-                    border: `1px solid ${
-                      isLowTrustResult(result)
-                        ? "rgba(251,191,36,0.16)"
-                        : "rgba(56,189,248,0.16)"
-                    }`,
-                    marginBottom: 12,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 10,
-                      alignItems: "flex-start",
-                      marginBottom: 12,
-                    }}
-                  >
-                    <div style={{ minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontSize: 10,
-                          color: isLowTrustResult(result)
-                            ? "#fbbf24"
-                            : "#7dd3fc",
-                          fontWeight: 800,
-                          textTransform: "uppercase",
-                          marginBottom: 3,
-                        }}
-                      >
-                        Should I buy?
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 22,
-                          lineHeight: 1.1,
-                          fontWeight: 900,
-                          color: isLowTrustResult(result)
-                            ? "#fbbf24"
-                            : result.recColor,
-                        }}
-                      >
-                        {result.recommendation === "BUY"
-                          ? "YES"
-                          : result.recommendation === "BUY SMALL"
-                            ? "YES (LIMITED)"
-                            : result.recommendation === "WATCH"
-                              ? "NOT YET"
-                              : "NO"}
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        textAlign: "right",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: 10,
-                          color: "#64748b",
-                          fontWeight: 700,
-                          textTransform: "uppercase",
-                          marginBottom: 3,
-                        }}
-                      >
-                        Execution confidence
-                      </div>
-                      <div
-                        style={{
-                          fontSize: 22,
-                          lineHeight: 1.1,
-                          fontWeight: 900,
-                          color: "#c4b5fd",
-                        }}
-                      >
-                        {Math.round(result.executionInfo.winProbability * 100)}%
-                      </div>
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                      gap: 8,
-                    }}
-                  >
-                    {[
-                      {
-                        l: "Risk",
-                        v:
-                          result.executionInfo.executionScore < 45
-                            ? "Execution friction"
-                            : result.executionInfo.executionScore < 70
-                              ? "Price / access"
-                              : "Controlled",
-                        c:
-                          result.executionInfo.executionScore < 45
-                            ? "#f87171"
-                            : result.executionInfo.executionScore < 70
-                              ? "#fbbf24"
-                              : "#4ade80",
-                      },
-                      {
-                        l: "Expected outcome",
-                        v: isLowTrustResult(result)
-                          ? "Insufficient data"
-                          : `$${result.executionInfo.outcomeLow}–$${result.executionInfo.outcomeHigh}`,
-                        c: isLowTrustResult(result) ? "#fbbf24" : "#4ade80",
-                      },
-                    ].map((item) => (
-                      <div
-                        key={item.l}
-                        style={{
-                          borderRadius: 10,
-                          background: "rgba(255,255,255,0.035)",
-                          padding: "9px 10px",
-                          minHeight: 54,
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontSize: 9,
-                            color: "#64748b",
-                            fontWeight: 700,
-                            textTransform: "uppercase",
-                            marginBottom: 4,
-                          }}
-                        >
-                          {item.l}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: 13,
-                            color: item.c,
-                            fontWeight: 800,
-                            lineHeight: 1.2,
-                          }}
-                        >
-                          {item.v}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               <details
                 style={{
                   borderTop: "1px solid rgba(255,255,255,0.05)",
@@ -1432,29 +1337,19 @@ export default function FlipIQCalculator() {
                 }}
               >
                 {(() => {
-                  const weightedProfit =
-                    result.executionInfo?.expectedProfit || result.mainProfit;
-                  const profitNum = parseFloat(weightedProfit);
+                  const profitNum = parseFloat(result.mainProfit);
                   const lowTrust = isLowTrustResult(result);
                   return [
                     {
-                      l: result.executionInfo ? "Execution" : "Confidence",
-                      v: result.executionInfo
-                        ? `${result.executionInfo.executionScore}/100`
-                        : `${result.confidence}/100`,
-                      c: result.executionInfo
-                        ? result.executionInfo.executionScore >= 70
-                          ? "#4ade80"
-                          : result.executionInfo.executionScore >= 45
-                            ? "#fbbf24"
-                            : "#f87171"
-                        : "#a78bfa",
+                      l: "Confidence",
+                      v: `${result.confidence}/100`,
+                      c: "#a78bfa",
                     },
                     {
                       l: lowTrust ? "Profit signal *" : "Expected profit",
                       v: lowTrust
-                        ? `$${weightedProfit}*`
-                        : `$${weightedProfit}`,
+                        ? `$${result.mainProfit}*`
+                        : `$${result.mainProfit}`,
                       c: lowTrust
                         ? "#fbbf24"
                         : profitNum > 0
@@ -1498,138 +1393,6 @@ export default function FlipIQCalculator() {
                   </div>
                 ))}
               </div>
-
-              {result.executionInfo && (
-                <details
-                  style={{
-                    marginTop: 14,
-                    paddingTop: 14,
-                    borderTop: "1px solid rgba(255,255,255,0.05)",
-                  }}
-                >
-                  <summary
-                    style={{
-                      cursor: "pointer",
-                      color: "#94a3b8",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      listStyle: "none",
-                      marginBottom: 10,
-                    }}
-                  >
-                    Execution details
-                  </summary>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                      gap: 8,
-                      marginBottom: 10,
-                    }}
-                  >
-                    {[
-                      {
-                        l: "Market",
-                        v: result.executionInfo.marketScore,
-                        c: "#38bdf8",
-                      },
-                      {
-                        l: "Execution",
-                        v: result.executionInfo.executionScore,
-                        c:
-                          result.executionInfo.executionScore >= 70
-                            ? "#4ade80"
-                            : result.executionInfo.executionScore >= 45
-                              ? "#fbbf24"
-                              : "#f87171",
-                      },
-                      {
-                        l: "Final",
-                        v: result.executionInfo.finalScore,
-                        c: "#a78bfa",
-                      },
-                    ].map((s) => (
-                      <div key={s.l} style={{ minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontSize: 9,
-                            color: "#64748b",
-                            fontWeight: 700,
-                            textTransform: "uppercase",
-                            marginBottom: 3,
-                          }}
-                        >
-                          {s.l}
-                        </div>
-                        <div
-                          style={{
-                            height: 6,
-                            borderRadius: 999,
-                            background: "rgba(255,255,255,0.06)",
-                            overflow: "hidden",
-                            marginBottom: 4,
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: `${Math.max(0, Math.min(100, s.v))}%`,
-                              height: "100%",
-                              borderRadius: 999,
-                              background: s.c,
-                            }}
-                          />
-                        </div>
-                        <div
-                          style={{
-                            fontSize: 16,
-                            color: s.c,
-                            fontWeight: 800,
-                          }}
-                        >
-                          {s.v}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 10,
-                      alignItems: "center",
-                      fontSize: 11,
-                      color: "#94a3b8",
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    <span>
-                      {result.executionInfo.quantityGuidance} · Execution
-                      confidence{" "}
-                      {Math.round(result.executionInfo.winProbability * 100)}%
-                    </span>
-                    <span
-                      style={{
-                        color: result.executionInfo.recommendedMarketplace
-                          ? "#c4b5fd"
-                          : "#fbbf24",
-                        fontWeight: 700,
-                        textAlign: "right",
-                      }}
-                    >
-                      {result.executionInfo.recommendedMarketplace
-                        ? `Recommended: ${
-                            result.channels.find(
-                              (ch) =>
-                                ch.id ===
-                                result.executionInfo?.recommendedMarketplace
-                            )?.label ||
-                            result.executionInfo.recommendedMarketplace
-                          }`
-                        : "No auto-recommended channel"}
-                    </span>
-                  </div>
-                </details>
-              )}
             </div>
 
             {/* Warnings */}
@@ -1873,8 +1636,7 @@ export default function FlipIQCalculator() {
               </div>
               {result.channels.map((ch) => {
                 const profit = parseFloat(ch.profit);
-                const isRecommended = ch.channelRole === "recommended";
-                const isHighlighted = Boolean(ch.badge) || isRecommended;
+                const isHighlighted = Boolean(ch.badge);
 
                 let badgeText = "";
                 let badgeBg = "";
@@ -1889,26 +1651,6 @@ export default function FlipIQCalculator() {
                     badgeColor = "#4ade80";
                   }
                 }
-                const roleText =
-                  ch.channelRole === "recommended"
-                    ? "RECOMMENDED"
-                    : ch.channelRole === "test_only"
-                      ? "TEST ONLY"
-                      : ch.channelRole === "best_profit"
-                        ? "RAW PROFIT"
-                        : "";
-                const roleBg =
-                  ch.channelRole === "recommended"
-                    ? "rgba(56,189,248,0.12)"
-                    : ch.channelRole === "test_only"
-                      ? "rgba(251,191,36,0.12)"
-                      : "rgba(148,163,184,0.10)";
-                const roleColor =
-                  ch.channelRole === "recommended"
-                    ? "#38bdf8"
-                    : ch.channelRole === "test_only"
-                      ? "#fbbf24"
-                      : "#cbd5e1";
 
                 return (
                   <div
@@ -1921,16 +1663,12 @@ export default function FlipIQCalculator() {
                       borderRadius: 12,
                       marginBottom: 6,
                       background: isHighlighted
-                        ? isRecommended
-                          ? "rgba(56,189,248,0.045)"
-                          : "rgba(34,197,94,0.04)"
+                        ? "rgba(34,197,94,0.04)"
                         : "rgba(255,255,255,0.01)",
                       border: `1px solid ${
-                        isRecommended
-                          ? "rgba(56,189,248,0.18)"
-                          : isHighlighted
-                            ? "rgba(34,197,94,0.15)"
-                            : "rgba(255,255,255,0.04)"
+                        isHighlighted
+                          ? "rgba(34,197,94,0.15)"
+                          : "rgba(255,255,255,0.04)"
                       }`,
                     }}
                   >
@@ -1963,20 +1701,6 @@ export default function FlipIQCalculator() {
                             {badgeText}
                           </span>
                         )}
-                        {roleText && (
-                          <span
-                            style={{
-                              fontSize: 9,
-                              fontWeight: 700,
-                              padding: "2px 6px",
-                              borderRadius: 4,
-                              background: roleBg,
-                              color: roleColor,
-                            }}
-                          >
-                            {roleText}
-                          </span>
-                        )}
                         {ch.estimated && (
                           <span
                             style={{
@@ -1996,26 +1720,6 @@ export default function FlipIQCalculator() {
                         Sells ~${ch.salePrice} &middot; Fees: ${ch.fees}
                         {parseFloat(ch.ship) > 0 ? ` + $${ch.ship} ship` : ""}
                       </div>
-                      {ch.executionScore != null && (
-                        <div
-                          style={{
-                            fontSize: 11,
-                            color:
-                              ch.executionScore >= 70
-                                ? "#4ade80"
-                                : ch.executionScore >= 45
-                                  ? "#fbbf24"
-                                  : "#f87171",
-                            marginTop: 2,
-                          }}
-                        >
-                          Execution {ch.executionScore}/100
-                          {ch.winProbability != null
-                            ? ` · ${channelConfidenceLabel(ch.id)} ${Math.round(ch.winProbability * 100)}%`
-                            : ""}
-                          {ch.executionNote ? ` · ${ch.executionNote}` : ""}
-                        </div>
-                      )}
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <div
