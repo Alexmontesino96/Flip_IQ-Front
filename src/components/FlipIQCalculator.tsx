@@ -657,8 +657,10 @@ export default function FlipIQCalculator() {
     [executeAnalysisFallback]
   );
 
+  const costValid = costPrice !== "" && parseFloat(costPrice) > 0;
+
   const handleAnalyze = async () => {
-    if (!query || !costPrice) return;
+    if (!query || !costValid) return;
     executeAnalysis(query, costPrice, condition);
   };
 
@@ -1005,7 +1007,7 @@ export default function FlipIQCalculator() {
           {/* Analyze Button */}
           <button
             className="cta-btn"
-            disabled={!query || !costPrice || loading}
+            disabled={!query || !costValid || loading}
             onClick={handleAnalyze}
           >
             {loading ? (
