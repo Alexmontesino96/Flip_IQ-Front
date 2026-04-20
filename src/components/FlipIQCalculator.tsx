@@ -3,7 +3,6 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
-import ScoreRing from "./ScoreRing";
 import {
   runAnalysis,
   runAnalysisStream,
@@ -20,6 +19,10 @@ import { trackEvent } from "@/lib/tracking";
 const BarcodeScanner = dynamic(() => import("./BarcodeScanner"), {
   ssr: false,
 });
+
+const MONO = "'JetBrains Mono', ui-monospace, Menlo, monospace";
+const DISPLAY = "'Inter Tight', -apple-system, system-ui, sans-serif";
+const ACCENT = "#D4FF3D";
 
 const SAMPLE_QUERIES = [
   { query: "AirPods Pro", name: "AirPods Pro", cost: "105" },
@@ -119,7 +122,7 @@ function AnalysisProgressPanel({
           : activeIndex >= 1
             ? "Scanning"
             : "Queued",
-      tone: activeIndex >= 1 ? "#38bdf8" : "#64748b",
+      tone: activeIndex >= 1 ? ACCENT : "rgba(245,245,242,0.3)",
     },
     {
       label: "Amazon data",
@@ -129,7 +132,7 @@ function AnalysisProgressPanel({
           : activeIndex >= 1
             ? "Checking"
             : "Queued",
-      tone: activeIndex >= 1 ? "#a78bfa" : "#64748b",
+      tone: activeIndex >= 1 ? ACCENT : "rgba(245,245,242,0.3)",
     },
     {
       label: "Comp match",
@@ -139,13 +142,13 @@ function AnalysisProgressPanel({
           : activeIndex === 2
             ? "Filtering"
             : "Queued",
-      tone: activeIndex >= 2 ? "#fbbf24" : "#64748b",
+      tone: activeIndex >= 2 ? "#FFB84D" : "rgba(245,245,242,0.3)",
     },
     {
       label: "Deal model",
       value:
         activeIndex > 3 ? "Ready" : activeIndex === 3 ? "Scoring" : "Queued",
-      tone: activeIndex >= 3 ? "#4ade80" : "#64748b",
+      tone: activeIndex >= 3 ? "#4ade80" : "rgba(245,245,242,0.3)",
     },
   ];
 
@@ -153,8 +156,8 @@ function AnalysisProgressPanel({
     <div
       className="fade-up"
       style={{
-        background: "rgba(255,255,255,0.025)",
-        border: "1px solid rgba(255,255,255,0.07)",
+        background: "rgba(245,245,242,0.03)",
+        border: "1px solid rgba(245,245,242,0.08)",
         borderRadius: 20,
         padding: 16,
         marginBottom: 14,
@@ -180,12 +183,22 @@ function AnalysisProgressPanel({
             }}
           >
             <span className="pulse-dot" />
-            <span style={{ fontSize: 13, fontWeight: 800 }}>Live analysis</span>
+            <span
+              style={{
+                fontFamily: MONO,
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: "uppercase" as const,
+                letterSpacing: 1,
+              }}
+            >
+              Live analysis
+            </span>
           </div>
           <div
             style={{
               fontSize: 12,
-              color: "#94a3b8",
+              color: "rgba(245,245,242,0.45)",
               lineHeight: 1.4,
               wordBreak: "break-word",
             }}
@@ -195,13 +208,13 @@ function AnalysisProgressPanel({
         </div>
         <div
           style={{
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: MONO,
             fontSize: 12,
-            color: "#c4b5fd",
+            color: ACCENT,
             padding: "5px 8px",
             borderRadius: 8,
-            background: "rgba(139,92,246,0.08)",
-            border: "1px solid rgba(139,92,246,0.18)",
+            background: "rgba(212,255,61,0.08)",
+            border: "1px solid rgba(212,255,61,0.18)",
             flexShrink: 0,
           }}
         >
@@ -218,14 +231,14 @@ function AnalysisProgressPanel({
             marginBottom: 8,
           }}
         >
-          <div style={{ fontSize: 13, color: "#e2e8f0", fontWeight: 700 }}>
+          <div style={{ fontSize: 13, color: "#F5F5F2", fontWeight: 700 }}>
             {message}
           </div>
           <div
             style={{
               fontSize: 11,
-              color: "#64748b",
-              fontFamily: "'JetBrains Mono', monospace",
+              color: "rgba(245,245,242,0.4)",
+              fontFamily: MONO,
             }}
           >
             {progressPct}%
@@ -235,7 +248,7 @@ function AnalysisProgressPanel({
           style={{
             height: 6,
             borderRadius: 999,
-            background: "rgba(255,255,255,0.06)",
+            background: "rgba(245,245,242,0.06)",
             overflow: "hidden",
           }}
         >
@@ -244,7 +257,7 @@ function AnalysisProgressPanel({
               width: `${progressPct}%`,
               height: "100%",
               borderRadius: 999,
-              background: "linear-gradient(90deg, #38bdf8, #8b5cf6, #22c55e)",
+              background: `linear-gradient(90deg, ${ACCENT}, #4ade80)`,
               transition: "width 0.5s ease",
             }}
           />
@@ -271,23 +284,29 @@ function AnalysisProgressPanel({
                   height: 5,
                   borderRadius: 999,
                   background: complete
-                    ? "#22c55e"
+                    ? ACCENT
                     : active
-                      ? "#8b5cf6"
-                      : "rgba(255,255,255,0.08)",
+                      ? "rgba(212,255,61,0.5)"
+                      : "rgba(245,245,242,0.08)",
                   marginBottom: 6,
                   transition: "background 0.3s ease",
                 }}
               />
               <div
                 style={{
-                  fontSize: 10,
-                  color: complete || active ? "#cbd5e1" : "#475569",
+                  fontFamily: MONO,
+                  fontSize: 9,
+                  color:
+                    complete || active
+                      ? "rgba(245,245,242,0.7)"
+                      : "rgba(245,245,242,0.25)",
                   fontWeight: 700,
                   textAlign: "center",
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
+                  textTransform: "uppercase" as const,
+                  letterSpacing: 0.5,
                 }}
               >
                 {phase}
@@ -310,18 +329,20 @@ function AnalysisProgressPanel({
             style={{
               padding: "10px 11px",
               borderRadius: 10,
-              border: "1px solid rgba(255,255,255,0.06)",
-              background: "rgba(255,255,255,0.025)",
+              border: "1px solid rgba(245,245,242,0.06)",
+              background: "rgba(245,245,242,0.03)",
               minHeight: 58,
             }}
           >
             <div
               style={{
-                fontSize: 10,
-                color: "#64748b",
+                fontFamily: MONO,
+                fontSize: 9,
+                color: "rgba(245,245,242,0.4)",
                 fontWeight: 700,
                 marginBottom: 5,
-                textTransform: "uppercase",
+                textTransform: "uppercase" as const,
+                letterSpacing: 1,
               }}
             >
               {lane.label}
@@ -356,8 +377,8 @@ function ResultPreviewSkeleton() {
     <div
       className="fade-up"
       style={{
-        background: "rgba(255,255,255,0.02)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        background: "rgba(245,245,242,0.02)",
+        border: "1px solid rgba(245,245,242,0.06)",
         borderRadius: 20,
         padding: 16,
         marginBottom: 14,
@@ -409,7 +430,7 @@ function ResultPreviewSkeleton() {
             key={i}
             style={{
               borderRadius: 10,
-              background: "rgba(255,255,255,0.03)",
+              background: "rgba(245,245,242,0.03)",
               padding: "12px 8px",
             }}
           >
@@ -677,33 +698,33 @@ export default function FlipIQCalculator() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#08080d",
-        color: "#e2e8f0",
-        fontFamily: "'DM Sans','Segoe UI',system-ui,sans-serif",
+        background: "#0A0A0A",
+        color: "#F5F5F2",
+        fontFamily: DISPLAY,
       }}
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        ::selection { background: rgba(139,92,246,0.3); }
+        ::selection { background: rgba(212,255,61,0.3); }
         @keyframes fadeUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
         @keyframes spin { to { transform: rotate(360deg) } }
         @keyframes shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
         @keyframes pulseDot { 0%, 100% { opacity: 0.45; transform: scale(0.85) } 50% { opacity: 1; transform: scale(1) } }
         .fade-up { animation: fadeUp 0.5s ease both; }
         .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 4px rgba(34,197,94,0.12); display: inline-block; animation: pulseDot 1.2s ease-in-out infinite; flex-shrink: 0; }
-        .skeleton-line { height: 12px; border-radius: 6px; margin-bottom: 8px; background: linear-gradient(90deg, rgba(255,255,255,0.045) 25%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.045) 75%); background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; }
-        .skeleton-block { border-radius: 12px; background: linear-gradient(90deg, rgba(255,255,255,0.045) 25%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.045) 75%); background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; }
-        .input-field { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: #e2e8f0; font-size: 15px; font-family: inherit; outline: none; transition: border-color 0.3s; }
-        .input-field:focus { border-color: rgba(139,92,246,0.5); }
-        .input-field::placeholder { color: #475569; }
-        .cta-btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.3s; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; box-shadow: 0 4px 20px rgba(139,92,246,0.25); }
-        .cta-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(139,92,246,0.35); }
+        .skeleton-line { height: 12px; border-radius: 6px; margin-bottom: 8px; background: linear-gradient(90deg, rgba(212,255,61,0.04) 25%, rgba(212,255,61,0.08) 50%, rgba(212,255,61,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; }
+        .skeleton-block { border-radius: 12px; background: linear-gradient(90deg, rgba(212,255,61,0.04) 25%, rgba(212,255,61,0.08) 50%, rgba(212,255,61,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; }
+        .input-field { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(245,245,242,0.08); background: rgba(245,245,242,0.04); color: #F5F5F2; font-size: 15px; font-family: inherit; outline: none; transition: border-color 0.3s; }
+        .input-field:focus { border-color: rgba(212,255,61,0.5); }
+        .input-field::placeholder { color: rgba(245,245,242,0.3); }
+        .cta-btn { width: 100%; padding: 16px; border-radius: 16px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; font-family: ${DISPLAY}; transition: all 0.3s; background: #D4FF3D; color: #0A0A0A; }
+        .cta-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(212,255,61,0.2); }
         .cta-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
-        .cond-btn { padding: 10px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); background: transparent; color: #94a3b8; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s; flex: 1; }
-        .cond-btn.active { background: rgba(139,92,246,0.12); border-color: rgba(139,92,246,0.3); color: #c4b5fd; }
-        .sample-chip { padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); color: #94a3b8; font-size: 12px; cursor: pointer; transition: all 0.2s; font-family: inherit; white-space: nowrap; }
-        .sample-chip:hover { background: rgba(139,92,246,0.08); border-color: rgba(139,92,246,0.2); color: #c4b5fd; }
+        .cond-btn { padding: 10px 16px; border-radius: 10px; border: 1px solid rgba(245,245,242,0.08); background: transparent; color: rgba(245,245,242,0.5); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s; flex: 1; }
+        .cond-btn.active { background: rgba(212,255,61,0.12); border-color: rgba(212,255,61,0.3); color: #D4FF3D; }
+        .sample-chip { padding: 8px 14px; border-radius: 100px; border: 1px solid rgba(245,245,242,0.08); background: rgba(245,245,242,0.03); color: rgba(245,245,242,0.5); font-size: 12px; cursor: pointer; transition: all 0.2s; font-family: inherit; white-space: nowrap; }
+        .sample-chip:hover { background: rgba(212,255,61,0.08); border-color: rgba(212,255,61,0.2); color: #D4FF3D; }
       `}</style>
 
       <div style={{ maxWidth: 520, margin: "0 auto", padding: "0 16px 60px" }}>
@@ -719,33 +740,36 @@ export default function FlipIQCalculator() {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div
               style={{
-                width: 34,
-                height: 34,
-                borderRadius: 9,
-                background: "linear-gradient(135deg, #8b5cf6, #0ea5e9)",
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: ACCENT,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: 800,
-                color: "#fff",
+                color: "#0A0A0A",
               }}
             >
               F
             </div>
-            <span style={{ fontSize: 20, fontWeight: 700 }}>
-              Flip<span style={{ color: "#8b5cf6" }}>IQ</span>
+            <span style={{ fontSize: 15, fontWeight: 600, color: "#F5F5F2" }}>
+              FlipIQ
             </span>
           </div>
           <span
             style={{
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: 600,
+              fontFamily: MONO,
               padding: "5px 12px",
-              borderRadius: 16,
-              background: "rgba(34,197,94,0.08)",
-              border: "1px solid rgba(34,197,94,0.2)",
-              color: "#4ade80",
+              borderRadius: 100,
+              background: "rgba(212,255,61,0.08)",
+              border: "1px solid rgba(212,255,61,0.2)",
+              color: ACCENT,
+              letterSpacing: 1,
+              textTransform: "uppercase" as const,
             }}
           >
             Live Data
@@ -754,23 +778,44 @@ export default function FlipIQCalculator() {
 
         {/* ── HERO ── */}
         <div style={{ textAlign: "center", marginBottom: 28 }}>
-          <h1
+          <div
             style={{
-              fontSize: 24,
-              fontWeight: 800,
-              letterSpacing: -0.5,
-              lineHeight: 1.2,
-              marginBottom: 8,
+              fontFamily: MONO,
+              fontSize: 10,
+              letterSpacing: 2,
+              textTransform: "uppercase" as const,
+              color: "rgba(245,245,242,0.4)",
+              marginBottom: 10,
             }}
           >
-            Know if you&apos;ll actually sell before you buy
+            {(() => {
+              const h = new Date().getHours();
+              if (h < 12) return "GOOD MORNING";
+              if (h < 18) return "GOOD AFTERNOON";
+              return "GOOD EVENING";
+            })()}
+          </div>
+          <h1
+            style={{
+              fontSize: 36,
+              fontWeight: 700,
+              letterSpacing: -1.5,
+              lineHeight: 1.1,
+              marginBottom: 10,
+              color: "#F5F5F2",
+            }}
+          >
+            What are you flipping today?
           </h1>
-          <p style={{ fontSize: 14, color: "#94a3b8", lineHeight: 1.6 }}>
-            The only tool that compares profit across{" "}
-            <span style={{ color: "#c4b5fd", fontWeight: 600 }}>
-              eBay + Amazon + FBMP + MercadoLibre
-            </span>{" "}
-            in one search.
+          <p
+            style={{
+              fontSize: 14,
+              color: "rgba(245,245,242,0.55)",
+              lineHeight: 1.6,
+            }}
+          >
+            Compare profit across eBay, Amazon, FBMP &amp; MercadoLibre in one
+            search.
           </p>
         </div>
 
@@ -788,9 +833,9 @@ export default function FlipIQCalculator() {
         {/* ── INPUT FORM ── */}
         <div
           style={{
-            background: "rgba(255,255,255,0.02)",
-            border: "1px solid rgba(255,255,255,0.06)",
-            borderRadius: 20,
+            background: "rgba(245,245,242,0.03)",
+            border: "1px solid rgba(245,245,242,0.08)",
+            borderRadius: 24,
             padding: 20,
             marginBottom: 16,
           }}
@@ -799,8 +844,11 @@ export default function FlipIQCalculator() {
           <div style={{ marginBottom: 14 }}>
             <label
               style={{
-                fontSize: 12,
-                color: "#64748b",
+                fontFamily: MONO,
+                fontSize: 9,
+                letterSpacing: 2,
+                textTransform: "uppercase" as const,
+                color: "rgba(245,245,242,0.45)",
                 fontWeight: 600,
                 marginBottom: 6,
                 display: "block",
@@ -832,8 +880,8 @@ export default function FlipIQCalculator() {
                   width: 34,
                   height: 34,
                   borderRadius: 8,
-                  border: "1px solid rgba(139,92,246,0.2)",
-                  background: "rgba(139,92,246,0.08)",
+                  border: `1px solid rgba(212,255,61,0.25)`,
+                  background: "rgba(212,255,61,0.08)",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
@@ -849,7 +897,7 @@ export default function FlipIQCalculator() {
                   height="18"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="#a78bfa"
+                  stroke={ACCENT}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -865,13 +913,16 @@ export default function FlipIQCalculator() {
           <div style={{ marginBottom: 14 }}>
             <div
               style={{
-                fontSize: 11,
-                color: "#64748b",
+                fontFamily: MONO,
+                fontSize: 9,
+                letterSpacing: 2,
+                textTransform: "uppercase" as const,
+                color: "rgba(245,245,242,0.45)",
                 fontWeight: 600,
                 marginBottom: 6,
               }}
             >
-              Quick start — tap to try:
+              Quick start
             </div>
             <div
               style={{
@@ -897,8 +948,11 @@ export default function FlipIQCalculator() {
             <div style={{ flex: 1 }}>
               <label
                 style={{
-                  fontSize: 12,
-                  color: "#64748b",
+                  fontFamily: MONO,
+                  fontSize: 9,
+                  letterSpacing: 2,
+                  textTransform: "uppercase" as const,
+                  color: "rgba(245,245,242,0.45)",
                   fontWeight: 600,
                   marginBottom: 6,
                   display: "block",
@@ -914,7 +968,7 @@ export default function FlipIQCalculator() {
                 onChange={(e) => setCostPrice(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
                 style={{
-                  fontFamily: "'JetBrains Mono', monospace",
+                  fontFamily: MONO,
                   fontSize: 14,
                 }}
               />
@@ -922,8 +976,11 @@ export default function FlipIQCalculator() {
             <div style={{ flex: 1 }}>
               <label
                 style={{
-                  fontSize: 12,
-                  color: "#64748b",
+                  fontFamily: MONO,
+                  fontSize: 9,
+                  letterSpacing: 2,
+                  textTransform: "uppercase" as const,
+                  color: "rgba(245,245,242,0.45)",
                   fontWeight: 600,
                   marginBottom: 6,
                   display: "block",
@@ -963,8 +1020,8 @@ export default function FlipIQCalculator() {
                   style={{
                     width: 16,
                     height: 16,
-                    border: "2px solid rgba(255,255,255,0.3)",
-                    borderTopColor: "#fff",
+                    border: "2px solid rgba(10,10,10,0.3)",
+                    borderTopColor: "#0A0A0A",
                     borderRadius: "50%",
                     animation: "spin 0.6s linear infinite",
                     display: "inline-block",
@@ -982,7 +1039,7 @@ export default function FlipIQCalculator() {
                 textAlign: "center",
                 marginTop: 8,
                 fontSize: 12,
-                color: "#475569",
+                color: "rgba(245,245,242,0.3)",
               }}
             >
               {remaining} analyses remaining
@@ -1004,8 +1061,8 @@ export default function FlipIQCalculator() {
           <div
             className="fade-up"
             style={{
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.06)",
+              background: "rgba(245,245,242,0.02)",
+              border: "1px solid rgba(245,245,242,0.06)",
               borderRadius: 20,
               padding: 24,
               textAlign: "center",
@@ -1019,7 +1076,7 @@ export default function FlipIQCalculator() {
             <p
               style={{
                 fontSize: 13,
-                color: "#94a3b8",
+                color: "rgba(245,245,242,0.5)",
                 marginBottom: 16,
                 lineHeight: 1.6,
               }}
@@ -1063,105 +1120,176 @@ export default function FlipIQCalculator() {
         {/* ══════════════ RESULT ══════════════ */}
         {result && (
           <div ref={resultRef} className="fade-up">
-            {/* Product + Recommendation */}
+            {/* Product info */}
             <div
               style={{
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 20,
-                padding: 20,
+                display: "flex",
+                gap: 14,
+                alignItems: "flex-start",
                 marginBottom: 12,
               }}
             >
               <div
                 style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 14,
+                  background: "rgba(245,245,242,0.05)",
+                  overflow: "hidden",
+                  flexShrink: 0,
                   display: "flex",
-                  gap: 14,
-                  alignItems: "flex-start",
-                  marginBottom: 16,
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                <div
+                {result.product.image ? (
+                  <img
+                    src={result.product.image}
+                    alt=""
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                      const sibling = (e.target as HTMLImageElement)
+                        .nextSibling as HTMLElement | null;
+                      if (sibling) sibling.style.display = "flex";
+                    }}
+                  />
+                ) : null}
+                <span
                   style={{
-                    width: 64,
-                    height: 64,
-                    borderRadius: 14,
-                    background: "rgba(255,255,255,0.05)",
-                    overflow: "hidden",
-                    flexShrink: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    fontSize: 24,
+                    display: result.product.image ? "none" : "flex",
                   }}
                 >
-                  {result.product.image ? (
-                    <img
-                      src={result.product.image}
-                      alt=""
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                        const sibling = (e.target as HTMLImageElement)
-                          .nextSibling as HTMLElement | null;
-                        if (sibling) sibling.style.display = "flex";
-                      }}
-                    />
-                  ) : null}
-                  <span
-                    style={{
-                      fontSize: 28,
-                      display: result.product.image ? "none" : "flex",
-                    }}
-                  >
-                    📦
-                  </span>
+                  📦
+                </span>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 9,
+                    color: "rgba(245,245,242,0.4)",
+                    fontWeight: 600,
+                    letterSpacing: 1,
+                    textTransform: "uppercase" as const,
+                  }}
+                >
+                  {result.product.brand}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{ fontSize: 11, color: "#64748b", fontWeight: 600 }}
-                  >
-                    {result.product.brand}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 16,
-                      fontWeight: 700,
-                      lineHeight: 1.2,
-                      marginBottom: 6,
-                    }}
-                  >
-                    {result.product.title}
-                  </div>
-                  <div
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "5px 12px",
-                      borderRadius: 16,
-                      background: `${result.recColor}12`,
-                      border: `1px solid ${result.recColor}30`,
-                    }}
-                  >
-                    <span style={{ fontSize: 13 }}>{result.recIcon}</span>
-                    <span
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: result.recColor,
-                        letterSpacing: 0.5,
-                      }}
-                    >
-                      {result.recommendation}
-                    </span>
-                  </div>
+                <div
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 700,
+                    lineHeight: 1.2,
+                    color: "#F5F5F2",
+                  }}
+                >
+                  {result.product.title}
                 </div>
               </div>
+            </div>
 
+            {/* Verdict Block */}
+            {(() => {
+              const rec = result.recommendation;
+              let verdictBg = ACCENT;
+              let verdictColor = "#0A0A0A";
+              let verdictBorder = "transparent";
+              if (rec === "BUY SMALL") {
+                verdictBg = "rgba(245,245,242,0.08)";
+                verdictColor = "#F5F5F2";
+                verdictBorder = "rgba(245,245,242,0.12)";
+              } else if (rec === "WATCH") {
+                verdictBg = "rgba(255,184,77,0.12)";
+                verdictColor = "#FFB84D";
+                verdictBorder = "rgba(255,184,77,0.2)";
+              } else if (rec === "PASS") {
+                verdictBg = "rgba(255,100,100,0.1)";
+                verdictColor = "#FF6464";
+                verdictBorder = "rgba(255,100,100,0.2)";
+              }
+              return (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "16px 20px",
+                    borderRadius: 16,
+                    background: verdictBg,
+                    border: `1px solid ${verdictBorder}`,
+                    marginBottom: 12,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 34,
+                      fontWeight: 800,
+                      fontFamily: DISPLAY,
+                      color: verdictColor,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {rec}
+                  </div>
+                  <div
+                    style={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: "50%",
+                      border: `2px solid ${rec === "BUY" ? "#0A0A0A" : ACCENT}`,
+                      display: "flex",
+                      flexDirection: "column" as const,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontFamily: DISPLAY,
+                        fontSize: 20,
+                        fontWeight: 800,
+                        color: verdictColor,
+                        lineHeight: 1,
+                      }}
+                    >
+                      {result.flipScore}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 7,
+                        color:
+                          rec === "BUY"
+                            ? "rgba(10,10,10,0.6)"
+                            : "rgba(245,245,242,0.5)",
+                        letterSpacing: 0.5,
+                        textTransform: "uppercase" as const,
+                      }}
+                    >
+                      /100
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Main result card */}
+            <div
+              style={{
+                background: "rgba(245,245,242,0.03)",
+                border: "1px solid rgba(245,245,242,0.08)",
+                borderRadius: 20,
+                padding: 20,
+                marginBottom: 12,
+              }}
+            >
               {/* Condition Banner */}
               {(() => {
                 const ci = result.conditionInfo;
@@ -1269,7 +1397,7 @@ export default function FlipIQCalculator() {
                       <div
                         style={{
                           fontSize: 10,
-                          color: "#64748b",
+                          color: "rgba(245,245,242,0.4)",
                           fontWeight: 700,
                           textTransform: "uppercase",
                           marginBottom: 3,
@@ -1282,7 +1410,7 @@ export default function FlipIQCalculator() {
                           fontSize: 22,
                           lineHeight: 1.1,
                           fontWeight: 900,
-                          color: "#c4b5fd",
+                          color: ACCENT,
                         }}
                       >
                         {Math.round(result.executionInfo.winProbability * 100)}%
@@ -1324,7 +1452,7 @@ export default function FlipIQCalculator() {
                         key={item.l}
                         style={{
                           borderRadius: 10,
-                          background: "rgba(255,255,255,0.035)",
+                          background: "rgba(245,245,242,0.04)",
                           padding: "9px 10px",
                           minHeight: 54,
                         }}
@@ -1332,7 +1460,7 @@ export default function FlipIQCalculator() {
                         <div
                           style={{
                             fontSize: 9,
-                            color: "#64748b",
+                            color: "rgba(245,245,242,0.4)",
                             fontWeight: 700,
                             textTransform: "uppercase",
                             marginBottom: 4,
@@ -1356,71 +1484,87 @@ export default function FlipIQCalculator() {
                 </div>
               )}
 
-              <details
+              {/* Score Bars */}
+              <div
                 style={{
-                  borderTop: "1px solid rgba(255,255,255,0.05)",
-                  borderBottom: "1px solid rgba(255,255,255,0.05)",
-                  padding: "10px 0",
+                  padding: 14,
+                  borderRadius: 16,
+                  background: "rgba(245,245,242,0.03)",
+                  border: "1px solid rgba(245,245,242,0.06)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 14,
                 }}
               >
-                <summary
-                  style={{
-                    cursor: "pointer",
-                    color: "#94a3b8",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    listStyle: "none",
-                  }}
-                >
-                  Score details
-                </summary>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-around",
-                    padding: "16px 0 6px",
-                  }}
-                >
-                  <ScoreRing
-                    value={result.flipScore}
-                    color={
-                      result.flipScore >= 65
-                        ? "#22c55e"
-                        : result.flipScore >= 45
-                          ? "#eab308"
-                          : "#f97316"
-                    }
-                    label="Flip"
-                  />
-                  <ScoreRing
-                    value={result.velocity}
-                    color="#38bdf8"
-                    label="Speed"
-                  />
-                  <ScoreRing
-                    value={100 - result.risk}
-                    color={
-                      result.risk <= 30
-                        ? "#22c55e"
-                        : result.risk <= 50
-                          ? "#eab308"
-                          : "#ef4444"
-                    }
-                    label="Safety"
-                  />
-                  <ScoreRing
-                    value={result.confidence}
-                    color={
-                      result.confidence >= 60
-                        ? "#22c55e"
-                        : result.confidence >= 40
-                          ? "#eab308"
-                          : "#ef4444"
-                    }
-                    label="Conf."
-                  />
-                </div>
-              </details>
+                {[
+                  {
+                    label: "Risk",
+                    value: 100 - result.risk,
+                    warning: 100 - result.risk < 40,
+                  },
+                  {
+                    label: "Confidence",
+                    value: result.confidence,
+                    warning: result.confidence < 50,
+                  },
+                  {
+                    label: "Velocity",
+                    value: result.velocity,
+                    warning: result.velocity < 40,
+                  },
+                ].map((bar) => (
+                  <div key={bar.label}>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "baseline",
+                        marginBottom: 6,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: MONO,
+                          fontSize: 10,
+                          color: "rgba(245,245,242,0.45)",
+                          textTransform: "uppercase" as const,
+                          letterSpacing: 1,
+                        }}
+                      >
+                        {bar.label}
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: DISPLAY,
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: bar.warning ? "#FFB84D" : "#F5F5F2",
+                        }}
+                      >
+                        {bar.value}/100
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        height: 4,
+                        borderRadius: 999,
+                        background: "rgba(245,245,242,0.06)",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${Math.max(0, Math.min(100, bar.value))}%`,
+                          height: "100%",
+                          borderRadius: 999,
+                          background: bar.warning ? "#FFB84D" : ACCENT,
+                          transition: "width 0.5s ease",
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
 
               {/* Key Numbers */}
               <div
@@ -1448,7 +1592,7 @@ export default function FlipIQCalculator() {
                           : result.executionInfo.executionScore >= 45
                             ? "#fbbf24"
                             : "#f87171"
-                        : "#a78bfa",
+                        : ACCENT,
                     },
                     {
                       l: lowTrust ? "Profit signal *" : "Expected profit",
@@ -1459,7 +1603,7 @@ export default function FlipIQCalculator() {
                         ? "#fbbf24"
                         : profitNum > 0
                           ? "#4ade80"
-                          : "#ef4444",
+                          : "#FF6464",
                     },
                     {
                       l:
@@ -1467,7 +1611,7 @@ export default function FlipIQCalculator() {
                           ? "Days to sell *"
                           : "Days to sell",
                       v: result.estDaysToSell,
-                      c: result.confidence < 60 ? "#fbbf24" : "#38bdf8",
+                      c: result.confidence < 60 ? "#fbbf24" : ACCENT,
                     },
                   ];
                 })().map((s, i) => (
@@ -1477,22 +1621,30 @@ export default function FlipIQCalculator() {
                       textAlign: "center",
                       padding: "10px 6px",
                       borderRadius: 10,
-                      background: "rgba(255,255,255,0.03)",
+                      background: "rgba(245,245,242,0.03)",
                     }}
                   >
                     <div
                       style={{
+                        fontFamily: MONO,
                         fontSize: 9,
-                        color: "#64748b",
-                        textTransform: "uppercase",
+                        color: "rgba(245,245,242,0.4)",
+                        textTransform: "uppercase" as const,
                         fontWeight: 600,
-                        letterSpacing: 0.4,
+                        letterSpacing: 1,
                         marginBottom: 3,
                       }}
                     >
                       {s.l}
                     </div>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: s.c }}>
+                    <div
+                      style={{
+                        fontFamily: DISPLAY,
+                        fontSize: 20,
+                        fontWeight: 700,
+                        color: s.c,
+                      }}
+                    >
                       {s.v}
                     </div>
                   </div>
@@ -1504,17 +1656,20 @@ export default function FlipIQCalculator() {
                   style={{
                     marginTop: 14,
                     paddingTop: 14,
-                    borderTop: "1px solid rgba(255,255,255,0.05)",
+                    borderTop: "1px solid rgba(245,245,242,0.06)",
                   }}
                 >
                   <summary
                     style={{
                       cursor: "pointer",
-                      color: "#94a3b8",
-                      fontSize: 12,
+                      color: "rgba(245,245,242,0.5)",
+                      fontFamily: MONO,
+                      fontSize: 11,
                       fontWeight: 700,
                       listStyle: "none",
                       marginBottom: 10,
+                      textTransform: "uppercase" as const,
+                      letterSpacing: 1,
                     }}
                   >
                     Execution details
@@ -1531,7 +1686,7 @@ export default function FlipIQCalculator() {
                       {
                         l: "Market",
                         v: result.executionInfo.marketScore,
-                        c: "#38bdf8",
+                        c: ACCENT,
                       },
                       {
                         l: "Execution",
@@ -1546,14 +1701,14 @@ export default function FlipIQCalculator() {
                       {
                         l: "Final",
                         v: result.executionInfo.finalScore,
-                        c: "#a78bfa",
+                        c: ACCENT,
                       },
                     ].map((s) => (
                       <div key={s.l} style={{ minWidth: 0 }}>
                         <div
                           style={{
                             fontSize: 9,
-                            color: "#64748b",
+                            color: "rgba(245,245,242,0.4)",
                             fontWeight: 700,
                             textTransform: "uppercase",
                             marginBottom: 3,
@@ -1565,7 +1720,7 @@ export default function FlipIQCalculator() {
                           style={{
                             height: 6,
                             borderRadius: 999,
-                            background: "rgba(255,255,255,0.06)",
+                            background: "rgba(245,245,242,0.06)",
                             overflow: "hidden",
                             marginBottom: 4,
                           }}
@@ -1598,7 +1753,7 @@ export default function FlipIQCalculator() {
                       gap: 10,
                       alignItems: "center",
                       fontSize: 11,
-                      color: "#94a3b8",
+                      color: "rgba(245,245,242,0.5)",
                       lineHeight: 1.4,
                     }}
                   >
@@ -1610,7 +1765,7 @@ export default function FlipIQCalculator() {
                     <span
                       style={{
                         color: result.executionInfo.recommendedMarketplace
-                          ? "#c4b5fd"
+                          ? ACCENT
                           : "#fbbf24",
                         fontWeight: 700,
                         textAlign: "right",
@@ -1718,8 +1873,8 @@ export default function FlipIQCalculator() {
                 style={{
                   padding: "14px 16px 16px",
                   borderRadius: 14,
-                  background: "rgba(139,92,246,0.04)",
-                  border: "1px solid rgba(139,92,246,0.08)",
+                  background: "rgba(212,255,61,0.04)",
+                  border: "1px solid rgba(212,255,61,0.08)",
                   marginBottom: 12,
                 }}
               >
@@ -1733,15 +1888,22 @@ export default function FlipIQCalculator() {
                   }}
                 >
                   <span
-                    style={{ fontSize: 12, color: "#c4b5fd", fontWeight: 700 }}
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 11,
+                      color: ACCENT,
+                      fontWeight: 700,
+                      textTransform: "uppercase" as const,
+                      letterSpacing: 1,
+                    }}
                   >
                     Writing AI brief
                   </span>
                   <span
                     style={{
                       fontSize: 11,
-                      color: "#64748b",
-                      fontFamily: "'JetBrains Mono', monospace",
+                      color: "rgba(245,245,242,0.4)",
+                      fontFamily: MONO,
                     }}
                   >
                     {formatElapsed(elapsedSeconds)}
@@ -1764,12 +1926,15 @@ export default function FlipIQCalculator() {
                       style={{
                         borderRadius: 9,
                         padding: "8px 6px",
-                        background: "rgba(139,92,246,0.045)",
-                        border: "1px solid rgba(139,92,246,0.08)",
+                        background: "rgba(212,255,61,0.045)",
+                        border: "1px solid rgba(212,255,61,0.08)",
                         textAlign: "center",
-                        fontSize: 10,
-                        color: "#a78bfa",
+                        fontFamily: MONO,
+                        fontSize: 9,
+                        color: ACCENT,
                         fontWeight: 700,
+                        textTransform: "uppercase" as const,
+                        letterSpacing: 1,
                       }}
                     >
                       {label}
@@ -1782,10 +1947,9 @@ export default function FlipIQCalculator() {
               <div
                 style={{
                   padding: "14px 16px",
-                  borderRadius: 14,
-                  background:
-                    "linear-gradient(135deg, rgba(139,92,246,0.06), rgba(14,165,233,0.04))",
-                  border: "1px solid rgba(139,92,246,0.12)",
+                  borderRadius: 12,
+                  background: "rgba(245,245,242,0.03)",
+                  border: "1px solid rgba(245,245,242,0.06)",
                   marginBottom: 12,
                 }}
               >
@@ -1793,18 +1957,27 @@ export default function FlipIQCalculator() {
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 6,
-                    marginBottom: 8,
+                    gap: 8,
+                    marginBottom: 10,
                   }}
                 >
-                  <span style={{ fontSize: 14 }}>&#x1F9E0;</span>
+                  <div
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: ACCENT,
+                      flexShrink: 0,
+                    }}
+                  />
                   <span
                     style={{
-                      fontSize: 12,
+                      fontFamily: MONO,
+                      fontSize: 10,
                       fontWeight: 700,
-                      color: "#c4b5fd",
-                      textTransform: "uppercase",
-                      letterSpacing: 0.5,
+                      color: "rgba(245,245,242,0.5)",
+                      textTransform: "uppercase" as const,
+                      letterSpacing: 1.5,
                     }}
                   >
                     Decision Brief
@@ -1819,9 +1992,10 @@ export default function FlipIQCalculator() {
                     <>
                       <p
                         style={{
-                          fontSize: 13,
-                          color: "#94a3b8",
-                          lineHeight: 1.6,
+                          fontFamily: DISPLAY,
+                          fontSize: 14,
+                          color: "rgba(245,245,242,0.85)",
+                          lineHeight: 1.55,
                           margin: 0,
                         }}
                       >
@@ -1832,19 +2006,23 @@ export default function FlipIQCalculator() {
                           <summary
                             style={{
                               cursor: "pointer",
-                              color: "#c4b5fd",
-                              fontSize: 12,
+                              color: ACCENT,
+                              fontFamily: MONO,
+                              fontSize: 11,
                               fontWeight: 700,
                               listStyle: "none",
+                              textTransform: "uppercase" as const,
+                              letterSpacing: 1,
                             }}
                           >
                             Full analysis
                           </summary>
                           <p
                             style={{
-                              fontSize: 12,
-                              color: "#94a3b8",
-                              lineHeight: 1.6,
+                              fontFamily: DISPLAY,
+                              fontSize: 13,
+                              color: "rgba(245,245,242,0.75)",
+                              lineHeight: 1.55,
                               margin: "8px 0 0",
                             }}
                           >
@@ -1861,14 +2039,24 @@ export default function FlipIQCalculator() {
             {/* Channel Comparison */}
             <div
               style={{
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.06)",
+                background: "rgba(245,245,242,0.03)",
+                border: "1px solid rgba(245,245,242,0.08)",
                 borderRadius: 20,
                 padding: 16,
                 marginBottom: 12,
               }}
             >
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>
+              <div
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  marginBottom: 12,
+                  color: "rgba(245,245,242,0.5)",
+                  textTransform: "uppercase" as const,
+                  letterSpacing: 1.5,
+                }}
+              >
                 Profit by channel
               </div>
               {result.channels.map((ch) => {
@@ -1882,8 +2070,8 @@ export default function FlipIQCalculator() {
                 if (ch.badge) {
                   badgeText = ch.badge;
                   if (ch.badge === "BEST ROI") {
-                    badgeBg = "rgba(167,139,250,0.12)";
-                    badgeColor = "#a78bfa";
+                    badgeBg = "rgba(212,255,61,0.12)";
+                    badgeColor = ACCENT;
                   } else {
                     badgeBg = "rgba(34,197,94,0.12)";
                     badgeColor = "#4ade80";
@@ -1891,24 +2079,24 @@ export default function FlipIQCalculator() {
                 }
                 const roleText =
                   ch.channelRole === "recommended"
-                    ? "RECOMMENDED"
+                    ? "Best"
                     : ch.channelRole === "test_only"
-                      ? "TEST ONLY"
+                      ? "test"
                       : ch.channelRole === "best_profit"
-                        ? "RAW PROFIT"
+                        ? "+profit"
                         : "";
                 const roleBg =
                   ch.channelRole === "recommended"
-                    ? "rgba(56,189,248,0.12)"
+                    ? "rgba(212,255,61,0.12)"
                     : ch.channelRole === "test_only"
                       ? "rgba(251,191,36,0.12)"
-                      : "rgba(148,163,184,0.10)";
+                      : "rgba(245,245,242,0.08)";
                 const roleColor =
                   ch.channelRole === "recommended"
-                    ? "#38bdf8"
+                    ? ACCENT
                     : ch.channelRole === "test_only"
                       ? "#fbbf24"
-                      : "#cbd5e1";
+                      : "rgba(245,245,242,0.6)";
 
                 return (
                   <div
@@ -1920,17 +2108,13 @@ export default function FlipIQCalculator() {
                       padding: "10px 12px",
                       borderRadius: 12,
                       marginBottom: 6,
-                      background: isHighlighted
-                        ? isRecommended
-                          ? "rgba(56,189,248,0.045)"
-                          : "rgba(34,197,94,0.04)"
-                        : "rgba(255,255,255,0.01)",
+                      background: isRecommended
+                        ? "rgba(212,255,61,0.06)"
+                        : "rgba(245,245,242,0.02)",
                       border: `1px solid ${
                         isRecommended
-                          ? "rgba(56,189,248,0.18)"
-                          : isHighlighted
-                            ? "rgba(34,197,94,0.15)"
-                            : "rgba(255,255,255,0.04)"
+                          ? "rgba(212,255,61,0.18)"
+                          : "rgba(245,245,242,0.06)"
                       }`,
                     }}
                   >
@@ -1946,16 +2130,18 @@ export default function FlipIQCalculator() {
                           alignItems: "center",
                           gap: 6,
                           flexWrap: "wrap",
+                          color: "#F5F5F2",
                         }}
                       >
                         {ch.label}
                         {badgeText && (
                           <span
                             style={{
+                              fontFamily: MONO,
                               fontSize: 9,
                               fontWeight: 700,
-                              padding: "2px 6px",
-                              borderRadius: 4,
+                              padding: "2px 8px",
+                              borderRadius: 100,
                               background: badgeBg,
                               color: badgeColor,
                             }}
@@ -1966,10 +2152,11 @@ export default function FlipIQCalculator() {
                         {roleText && (
                           <span
                             style={{
+                              fontFamily: MONO,
                               fontSize: 9,
                               fontWeight: 700,
-                              padding: "2px 6px",
-                              borderRadius: 4,
+                              padding: "2px 8px",
+                              borderRadius: 100,
                               background: roleBg,
                               color: roleColor,
                             }}
@@ -1992,7 +2179,13 @@ export default function FlipIQCalculator() {
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: 11, color: "#64748b" }}>
+                      <div
+                        style={{
+                          fontFamily: MONO,
+                          fontSize: 9,
+                          color: "rgba(245,245,242,0.4)",
+                        }}
+                      >
                         Sells ~${ch.salePrice} &middot; Fees: ${ch.fees}
                         {parseFloat(ch.ship) > 0 ? ` + $${ch.ship} ship` : ""}
                       </div>
@@ -2020,14 +2213,21 @@ export default function FlipIQCalculator() {
                     <div style={{ textAlign: "right" }}>
                       <div
                         style={{
-                          fontSize: 16,
+                          fontFamily: DISPLAY,
+                          fontSize: 15,
                           fontWeight: 700,
-                          color: profit > 0 ? "#4ade80" : "#ef4444",
+                          color: profit > 0 ? ACCENT : "#FF6464",
                         }}
                       >
                         {profit > 0 ? "+" : ""}${ch.profit}
                       </div>
-                      <div style={{ fontSize: 11, color: "#64748b" }}>
+                      <div
+                        style={{
+                          fontFamily: MONO,
+                          fontSize: 9,
+                          color: "rgba(245,245,242,0.4)",
+                        }}
+                      >
                         {ch.roi}% ROI
                       </div>
                     </div>
@@ -2036,18 +2236,28 @@ export default function FlipIQCalculator() {
               })}
             </div>
 
-            {/* Pricing Strategy */}
+            {/* Pricing Strategy / Sale Plan */}
             <div
               style={{
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.06)",
+                background: "rgba(245,245,242,0.03)",
+                border: "1px solid rgba(245,245,242,0.08)",
                 borderRadius: 20,
                 padding: 16,
                 marginBottom: 12,
               }}
             >
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>
-                Pricing strategy
+              <div
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  marginBottom: 12,
+                  color: "rgba(245,245,242,0.5)",
+                  textTransform: "uppercase" as const,
+                  letterSpacing: 1.5,
+                }}
+              >
+                Sale Plan
               </div>
               {(() => {
                 const q = parseFloat(result.quickPrice);
@@ -2057,42 +2267,46 @@ export default function FlipIQCalculator() {
                 const hasStretch = s > 0 && s !== m;
 
                 if (!hasQuick && !hasStretch) {
-                  // Only market price available
                   return (
                     <div style={{ marginBottom: 12 }}>
                       <div
                         style={{
                           padding: "14px 6px",
-                          borderRadius: 10,
+                          borderRadius: 12,
                           textAlign: "center",
-                          background: "rgba(139,92,246,0.08)",
-                          border: "1px solid rgba(139,92,246,0.2)",
+                          background: "rgba(212,255,61,0.08)",
+                          border: `1px solid rgba(212,255,61,0.2)`,
                           marginBottom: 8,
                         }}
                       >
                         <div
                           style={{
-                            fontSize: 9,
-                            color: "#64748b",
-                            marginBottom: 2,
+                            fontFamily: MONO,
+                            fontSize: 8,
+                            color: "rgba(245,245,242,0.4)",
+                            marginBottom: 4,
+                            textTransform: "uppercase" as const,
+                            letterSpacing: 1,
                           }}
                         >
                           Market price
                         </div>
                         <div
                           style={{
+                            fontFamily: DISPLAY,
                             fontSize: 22,
                             fontWeight: 700,
-                            color: "#8b5cf6",
+                            color: ACCENT,
                           }}
                         >
                           ${result.marketPrice}
                         </div>
                         <div
                           style={{
+                            fontFamily: MONO,
                             fontSize: 9,
-                            color: "#475569",
-                            marginTop: 2,
+                            color: "rgba(245,245,242,0.4)",
+                            marginTop: 4,
                           }}
                         >
                           {result.estDaysToSell}
@@ -2101,7 +2315,7 @@ export default function FlipIQCalculator() {
                       <div
                         style={{
                           fontSize: 11,
-                          color: "#64748b",
+                          color: "rgba(245,245,242,0.4)",
                           textAlign: "center",
                         }}
                       >
@@ -2113,23 +2327,23 @@ export default function FlipIQCalculator() {
 
                 const tiers = [
                   hasQuick && {
-                    l: "Quick sale",
+                    l: "Quick",
                     v: `$${result.quickPrice}`,
-                    c: "#f97316",
+                    c: "#F5F5F2",
                     sub: "Fast",
                     primary: false,
                   },
                   {
                     l: "Market",
                     v: `$${result.marketPrice}`,
-                    c: "#8b5cf6",
+                    c: ACCENT,
                     sub: result.estDaysToSell,
                     primary: true,
                   },
                   hasStretch && {
                     l: "Stretch",
                     v: `$${result.stretchPrice}`,
-                    c: "#0ea5e9",
+                    c: "#F5F5F2",
                     sub: "Patient",
                     primary: false,
                   },
@@ -2148,34 +2362,43 @@ export default function FlipIQCalculator() {
                         key={i}
                         style={{
                           flex: 1,
-                          padding: "10px 6px",
-                          borderRadius: 10,
+                          padding: "12px 6px",
+                          borderRadius: 12,
                           textAlign: "center",
                           background: p.primary
-                            ? "rgba(139,92,246,0.08)"
-                            : "rgba(255,255,255,0.02)",
-                          border: `1px solid ${p.primary ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.04)"}`,
+                            ? "rgba(212,255,61,0.08)"
+                            : "rgba(245,245,242,0.03)",
+                          border: `1px solid ${p.primary ? "rgba(212,255,61,0.2)" : "rgba(245,245,242,0.06)"}`,
                         }}
                       >
                         <div
                           style={{
-                            fontSize: 9,
-                            color: "#64748b",
-                            marginBottom: 2,
+                            fontFamily: MONO,
+                            fontSize: 8,
+                            color: "rgba(245,245,242,0.4)",
+                            marginBottom: 4,
+                            textTransform: "uppercase" as const,
+                            letterSpacing: 1,
                           }}
                         >
                           {p.l}
                         </div>
                         <div
-                          style={{ fontSize: 16, fontWeight: 700, color: p.c }}
+                          style={{
+                            fontFamily: DISPLAY,
+                            fontSize: 22,
+                            fontWeight: 700,
+                            color: p.c,
+                          }}
                         >
                           {p.v}
                         </div>
                         <div
                           style={{
+                            fontFamily: MONO,
                             fontSize: 9,
-                            color: "#475569",
-                            marginTop: 2,
+                            color: "rgba(245,245,242,0.35)",
+                            marginTop: 4,
                           }}
                         >
                           {p.sub}
@@ -2189,96 +2412,114 @@ export default function FlipIQCalculator() {
               {/* Buy Box */}
               <div
                 style={{
-                  padding: "12px",
-                  borderRadius: 12,
-                  background: "rgba(255,255,255,0.02)",
-                  border: "1px solid rgba(255,255,255,0.04)",
+                  padding: "16px",
+                  borderRadius: 16,
+                  background: "rgba(245,245,242,0.03)",
+                  border: "1px solid rgba(245,245,242,0.06)",
                 }}
               >
                 <div
                   style={{
+                    fontFamily: MONO,
+                    fontSize: 9,
+                    color: "rgba(245,245,242,0.4)",
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase" as const,
+                    marginBottom: 4,
+                  }}
+                >
+                  Max buy price
+                </div>
+                <div
+                  style={{
+                    fontFamily: DISPLAY,
+                    fontSize: 40,
+                    fontWeight: 700,
+                    color: ACCENT,
+                    lineHeight: 1,
+                    marginBottom: 4,
+                  }}
+                >
+                  ${result.maxBuy}
+                </div>
+                <div
+                  style={{
+                    fontFamily: DISPLAY,
+                    fontSize: 13,
+                    color: "rgba(245,245,242,0.45)",
+                    marginBottom: 16,
+                  }}
+                >
+                  Don&apos;t pay more than this
+                </div>
+                <div
+                  style={{
+                    borderTop: "1px solid rgba(245,245,242,0.06)",
+                    paddingTop: 12,
                     display: "flex",
                     justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 8,
                   }}
                 >
                   <div>
-                    <div style={{ fontSize: 10, color: "#64748b" }}>
+                    <div
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 9,
+                        color: "rgba(245,245,242,0.4)",
+                        letterSpacing: 1,
+                        textTransform: "uppercase" as const,
+                        marginBottom: 2,
+                      }}
+                    >
                       Your cost
                     </div>
                     <div
                       style={{
+                        fontFamily: DISPLAY,
                         fontSize: 18,
                         fontWeight: 700,
                         color:
                           parseFloat(result.headroom) >= 0
-                            ? "#e2e8f0"
-                            : "#ef4444",
+                            ? "#F5F5F2"
+                            : "#FF6464",
                       }}
                     >
                       ${costPrice}
                     </div>
                   </div>
-                  <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 10, color: "#64748b" }}>
+                  <div style={{ textAlign: "right" }}>
+                    <div
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 9,
+                        color: "rgba(245,245,242,0.4)",
+                        letterSpacing: 1,
+                        textTransform: "uppercase" as const,
+                        marginBottom: 2,
+                      }}
+                    >
                       Headroom
                     </div>
                     <div
                       style={{
-                        fontSize: 16,
+                        fontFamily: DISPLAY,
+                        fontSize: 18,
                         fontWeight: 700,
                         color:
-                          parseFloat(result.headroom) >= 0
-                            ? "#22c55e"
-                            : "#ef4444",
+                          parseFloat(result.headroom) >= 0 ? ACCENT : "#FF6464",
                       }}
                     >
                       {parseFloat(result.headroom) >= 0 ? "+" : ""}$
                       {result.headroom}
                     </div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 10, color: "#64748b" }}>
-                      Max buy
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 18,
-                        fontWeight: 700,
-                        color: "#22c55e",
-                      }}
-                    >
-                      ${result.maxBuy}
-                    </div>
-                  </div>
-                </div>
-                <div
-                  style={{
-                    height: 6,
-                    borderRadius: 3,
-                    background: "rgba(255,255,255,0.05)",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      height: "100%",
-                      borderRadius: 3,
-                      width: `${Math.min((parseFloat(result.maxBuy) / parseFloat(costPrice)) * 100, 100)}%`,
-                      background:
-                        parseFloat(result.headroom) >= 0
-                          ? "linear-gradient(90deg, #22c55e, #4ade80)"
-                          : "linear-gradient(90deg, #ef4444, #f97316)",
-                    }}
-                  />
                 </div>
                 {parseFloat(result.headroom) < 0 && (
                   <div
                     style={{
-                      marginTop: 8,
+                      marginTop: 10,
                       fontSize: 12,
-                      color: "#fbbf24",
+                      color: "#FFB84D",
                       textAlign: "center",
                       fontWeight: 600,
                     }}
@@ -2289,17 +2530,27 @@ export default function FlipIQCalculator() {
               </div>
             </div>
 
-            {/* Market Info */}
+            {/* Market Info / Comps */}
             <div
               style={{
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.06)",
+                background: "rgba(245,245,242,0.03)",
+                border: "1px solid rgba(245,245,242,0.08)",
                 borderRadius: 20,
                 padding: 16,
                 marginBottom: 12,
               }}
             >
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>
+              <div
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  marginBottom: 12,
+                  color: "rgba(245,245,242,0.5)",
+                  textTransform: "uppercase" as const,
+                  letterSpacing: 1.5,
+                }}
+              >
                 Market data
               </div>
               <div
@@ -2334,25 +2585,28 @@ export default function FlipIQCalculator() {
                     style={{
                       padding: "8px 6px",
                       borderRadius: 8,
-                      background: "rgba(255,255,255,0.02)",
+                      background: "rgba(245,245,242,0.03)",
                       textAlign: "center",
                     }}
                   >
                     <div
                       style={{
-                        fontSize: 9,
-                        color: "#475569",
+                        fontFamily: MONO,
+                        fontSize: 8,
+                        color: "rgba(245,245,242,0.4)",
                         marginBottom: 2,
-                        textTransform: "uppercase",
+                        textTransform: "uppercase" as const,
+                        letterSpacing: 1,
                       }}
                     >
                       {s.l}
                     </div>
                     <div
                       style={{
+                        fontFamily: DISPLAY,
                         fontSize: 13,
                         fontWeight: 600,
-                        color: "#94a3b8",
+                        color: "rgba(245,245,242,0.7)",
                       }}
                     >
                       {s.v}
@@ -2367,15 +2621,23 @@ export default function FlipIQCalculator() {
               result.marketplaceDetails.length > 1 && (
                 <div
                   style={{
-                    background: "rgba(255,255,255,0.02)",
-                    border: "1px solid rgba(255,255,255,0.06)",
+                    background: "rgba(245,245,242,0.03)",
+                    border: "1px solid rgba(245,245,242,0.08)",
                     borderRadius: 20,
                     padding: 16,
                     marginBottom: 12,
                   }}
                 >
                   <div
-                    style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      marginBottom: 12,
+                      color: "rgba(245,245,242,0.5)",
+                      textTransform: "uppercase" as const,
+                      letterSpacing: 1.5,
+                    }}
                   >
                     Marketplace deep dive
                   </div>
@@ -2395,12 +2657,15 @@ export default function FlipIQCalculator() {
                             flex: 1,
                             padding: "8px 12px",
                             borderRadius: 10,
-                            border: `1px solid ${activeTab === idx ? "rgba(139,92,246,0.3)" : "rgba(255,255,255,0.08)"}`,
+                            border: `1px solid ${activeTab === idx ? "rgba(212,255,61,0.3)" : "rgba(245,245,242,0.08)"}`,
                             background:
                               activeTab === idx
-                                ? "rgba(139,92,246,0.12)"
+                                ? "rgba(212,255,61,0.12)"
                                 : "transparent",
-                            color: activeTab === idx ? "#c4b5fd" : "#94a3b8",
+                            color:
+                              activeTab === idx
+                                ? ACCENT
+                                : "rgba(245,245,242,0.5)",
                             fontSize: 13,
                             fontWeight: 600,
                             cursor: "pointer",
@@ -2448,25 +2713,28 @@ export default function FlipIQCalculator() {
                             style={{
                               padding: "8px 6px",
                               borderRadius: 8,
-                              background: "rgba(255,255,255,0.02)",
+                              background: "rgba(245,245,242,0.03)",
                               textAlign: "center",
                             }}
                           >
                             <div
                               style={{
-                                fontSize: 9,
-                                color: "#475569",
+                                fontFamily: MONO,
+                                fontSize: 8,
+                                color: "rgba(245,245,242,0.4)",
                                 marginBottom: 2,
-                                textTransform: "uppercase",
+                                textTransform: "uppercase" as const,
+                                letterSpacing: 1,
                               }}
                             >
                               {s.l}
                             </div>
                             <div
                               style={{
+                                fontFamily: DISPLAY,
                                 fontSize: 13,
                                 fontWeight: 600,
-                                color: "#94a3b8",
+                                color: "rgba(245,245,242,0.7)",
                               }}
                             >
                               {s.v}
@@ -2482,21 +2750,27 @@ export default function FlipIQCalculator() {
             {/* CTA: Full Version */}
             <div
               style={{
-                background:
-                  "linear-gradient(135deg, rgba(139,92,246,0.08), rgba(14,165,233,0.05))",
-                border: "1px solid rgba(139,92,246,0.15)",
+                background: "rgba(245,245,242,0.03)",
+                border: "1px solid rgba(245,245,242,0.08)",
                 borderRadius: 20,
                 padding: 20,
                 textAlign: "center",
               }}
             >
-              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>
-                Want this in your pocket? 📱
+              <div
+                style={{
+                  fontSize: 16,
+                  fontWeight: 700,
+                  marginBottom: 4,
+                  color: "#F5F5F2",
+                }}
+              >
+                Want this in your pocket?
               </div>
               <p
                 style={{
                   fontSize: 13,
-                  color: "#94a3b8",
+                  color: "rgba(245,245,242,0.55)",
                   marginBottom: 16,
                   lineHeight: 1.6,
                 }}
@@ -2522,14 +2796,13 @@ export default function FlipIQCalculator() {
                       padding: "12px 20px",
                       borderRadius: 12,
                       border: "none",
-                      background: "linear-gradient(135deg, #8b5cf6, #6d28d9)",
-                      color: "#fff",
+                      background: ACCENT,
+                      color: "#0A0A0A",
                       fontWeight: 700,
                       fontSize: 13,
                       cursor: "pointer",
                       fontFamily: "inherit",
                       whiteSpace: "nowrap",
-                      boxShadow: "0 4px 16px rgba(139,92,246,0.25)",
                     }}
                   >
                     Join waitlist
@@ -2546,7 +2819,7 @@ export default function FlipIQCalculator() {
                     fontWeight: 600,
                   }}
                 >
-                  ✅ You&apos;re on the list! We&apos;ll notify you when FlipIQ
+                  You&apos;re on the list! We&apos;ll notify you when FlipIQ
                   launches.
                 </div>
               )}
@@ -2565,16 +2838,16 @@ export default function FlipIQCalculator() {
                 marginTop: 12,
                 padding: 14,
                 borderRadius: 14,
-                border: "1px solid rgba(255,255,255,0.08)",
+                border: "1px solid rgba(245,245,242,0.12)",
                 background: "transparent",
-                color: "#94a3b8",
+                color: "#F5F5F2",
                 fontSize: 14,
                 fontWeight: 600,
                 cursor: "pointer",
-                fontFamily: "inherit",
+                fontFamily: DISPLAY,
               }}
             >
-              Analyze another product
+              New analysis →
             </button>
           </div>
         )}
@@ -2586,13 +2859,13 @@ export default function FlipIQCalculator() {
               textAlign: "center",
               marginTop: 32,
               padding: "20px 0",
-              borderTop: "1px solid rgba(255,255,255,0.04)",
+              borderTop: "1px solid rgba(245,245,242,0.06)",
             }}
           >
             <p
               style={{
                 fontSize: 12,
-                color: "#475569",
+                color: "rgba(245,245,242,0.3)",
                 lineHeight: 1.6,
                 marginBottom: 12,
               }}
@@ -2614,18 +2887,18 @@ export default function FlipIQCalculator() {
                   width: 20,
                   height: 20,
                   borderRadius: 6,
-                  background: "linear-gradient(135deg, #8b5cf6, #0ea5e9)",
+                  background: ACCENT,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: 10,
                   fontWeight: 800,
-                  color: "#fff",
+                  color: "#0A0A0A",
                 }}
               >
                 F
               </div>
-              <span style={{ fontSize: 12, color: "#475569" }}>
+              <span style={{ fontSize: 12, color: "rgba(245,245,242,0.3)" }}>
                 FlipIQ · Built for resellers, by resellers
               </span>
             </div>
