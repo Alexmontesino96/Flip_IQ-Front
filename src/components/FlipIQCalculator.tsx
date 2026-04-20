@@ -453,6 +453,19 @@ function channelConfidenceLabel(channelId: string) {
   return "Execution confidence";
 }
 
+function getHeroScore(result: AnalysisResult) {
+  if (result.executionInfo) {
+    return {
+      label: "EXEC",
+      value: result.executionInfo.executionScore,
+    };
+  }
+  return {
+    label: "CONF",
+    value: result.confidence,
+  };
+}
+
 export default function FlipIQCalculator() {
   const [query, setQuery] = useState("");
   const [costPrice, setCostPrice] = useState("");
@@ -1199,6 +1212,7 @@ export default function FlipIQCalculator() {
             {/* Verdict Block */}
             {(() => {
               const rec = result.recommendation;
+              const heroScore = getHeroScore(result);
               let verdictBg = ACCENT;
               let verdictColor = "#0A0A0A";
               let verdictBorder = "transparent";
@@ -1244,7 +1258,7 @@ export default function FlipIQCalculator() {
                       width: 64,
                       height: 64,
                       borderRadius: "50%",
-                      border: `2px solid ${rec === "BUY" ? "#0A0A0A" : ACCENT}`,
+                      border: `2px solid ${rec === "BUY" ? "#0A0A0A" : verdictColor}`,
                       display: "flex",
                       flexDirection: "column" as const,
                       alignItems: "center",
@@ -1261,7 +1275,7 @@ export default function FlipIQCalculator() {
                         lineHeight: 1,
                       }}
                     >
-                      {result.flipScore}
+                      {heroScore.value}
                     </div>
                     <div
                       style={{
@@ -1275,7 +1289,7 @@ export default function FlipIQCalculator() {
                         textTransform: "uppercase" as const,
                       }}
                     >
-                      /100
+                      {heroScore.label} /100
                     </div>
                   </div>
                 </div>
