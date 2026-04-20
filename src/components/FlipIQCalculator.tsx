@@ -2544,6 +2544,10 @@ export default function FlipIQCalculator() {
             >
               <div
                 style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 10,
                   fontFamily: MONO,
                   fontSize: 10,
                   fontWeight: 700,
@@ -2553,7 +2557,21 @@ export default function FlipIQCalculator() {
                   letterSpacing: 1.5,
                 }}
               >
-                Market data
+                <span>Market data</span>
+                <span
+                  style={{
+                    padding: "3px 7px",
+                    borderRadius: 999,
+                    border: "1px solid rgba(245,245,242,0.08)",
+                    background: "rgba(245,245,242,0.04)",
+                    color: "rgba(245,245,242,0.62)",
+                    fontSize: 9,
+                    letterSpacing: 1,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {result.product.market_source_label}
+                </span>
               </div>
               <div
                 style={{
