@@ -15,6 +15,11 @@ import {
 import { checkStatus, submitEmail } from "@/lib/usage";
 import EmailGate from "./EmailGate";
 import { trackEvent } from "@/lib/tracking";
+import {
+  fetchProductSuggestions,
+  registerSuggestionSelect,
+  ProductSuggestion,
+} from "@/lib/search";
 
 const BarcodeScanner = dynamic(() => import("./BarcodeScanner"), {
   ssr: false,
@@ -466,6 +471,22 @@ function getHeroScore(result: AnalysisResult) {
   };
 }
 
+function looksLikeBarcode(value: string) {
+  return /^\d{8,14}$/.test(value.trim());
+}
+
+function formatSuggestionPrice(value: number | null) {
+  if (value === null || !Number.isFinite(value)) return null;
+  return value >= 100 ? `$${value.toFixed(0)}` : `$${value.toFixed(2)}`;
+}
+
+function getSuggestionSourceLabel(source: string | null) {
+  if (source === "local") return "Saved matches";
+  if (source === "hybrid") return "Saved + live marketplace";
+  if (source === "local_only") return "Saved matches only";
+  return "Product suggestions";
+}
+
 export default function FlipIQCalculator() {
   const [query, setQuery] = useState("");
   const [costPrice, setCostPrice] = useState("");
@@ -488,7 +509,16 @@ export default function FlipIQCalculator() {
     null
   );
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [suggestions, setSuggestions] = useState<ProductSuggestion[]>([]);
+  const [suggestionsSource, setSuggestionsSource] = useState<string | null>(
+    null
+  );
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
+  const suggestionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suggestionAbortRef = useRef<AbortController | null>(null);
+  const selectedSuggestionTitleRef = useRef<string | null>(null);
   const analysisActive = loading || aiLoading;
 
   const LOADING_STEPS = [
@@ -526,6 +556,59 @@ export default function FlipIQCalculator() {
     const interval = setInterval(updateElapsed, 1000);
     return () => clearInterval(interval);
   }, [analysisActive, analysisStartedAt]);
+
+  useEffect(() => {
+    if (suggestionTimerRef.current) {
+      clearTimeout(suggestionTimerRef.current);
+    }
+    suggestionAbortRef.current?.abort();
+
+    const trimmed = query.trim();
+    if (
+      trimmed.length < 2 ||
+      looksLikeBarcode(trimmed) ||
+      selectedSuggestionTitleRef.current === trimmed
+    ) {
+      setSuggestions([]);
+      setSuggestionsSource(null);
+      setSuggestionsLoading(false);
+      return;
+    }
+
+    suggestionTimerRef.current = setTimeout(async () => {
+      const controller = new AbortController();
+      suggestionAbortRef.current = controller;
+      setSuggestionsLoading(true);
+
+      try {
+        const data = await fetchProductSuggestions(
+          trimmed,
+          8,
+          controller.signal
+        );
+        setSuggestions(data.results || []);
+        setSuggestionsSource(data.source || null);
+        setSuggestionsOpen((data.results || []).length > 0);
+      } catch (err) {
+        if (!(err instanceof DOMException && err.name === "AbortError")) {
+          setSuggestions([]);
+          setSuggestionsSource(null);
+        }
+      } finally {
+        if (suggestionAbortRef.current === controller) {
+          setSuggestionsLoading(false);
+          suggestionAbortRef.current = null;
+        }
+      }
+    }, 300);
+
+    return () => {
+      if (suggestionTimerRef.current) {
+        clearTimeout(suggestionTimerRef.current);
+      }
+      suggestionAbortRef.current?.abort();
+    };
+  }, [query]);
 
   const executeAnalysisFallback = useCallback(
     async (q: string, cost: string, cond: string, isRetry: boolean) => {
@@ -672,8 +755,27 @@ export default function FlipIQCalculator() {
 
   const costValid = costPrice !== "" && parseFloat(costPrice) > 0;
 
+  const handleSuggestionSelect = (product: ProductSuggestion) => {
+    selectedSuggestionTitleRef.current = product.title;
+    setQuery(product.title);
+    setSuggestions([]);
+    setSuggestionsOpen(false);
+    setSuggestionsSource(null);
+    trackEvent("suggestion_selected", {
+      productId: product.id ?? "live",
+      source: suggestionsSource ?? "unknown",
+      hasPriceHint: product.price_hint !== null ? 1 : 0,
+    });
+
+    if (product.id !== null) {
+      registerSuggestionSelect(product.id).catch(() => undefined);
+    }
+  };
+
   const handleAnalyze = async () => {
     if (!query || !costValid) return;
+    setSuggestionsOpen(false);
+    setSuggestions([]);
     executeAnalysis(query, costPrice, condition);
   };
 
@@ -704,7 +806,10 @@ export default function FlipIQCalculator() {
   };
 
   const pickSample = (q: string, cost?: string) => {
+    selectedSuggestionTitleRef.current = q;
     setQuery(q);
+    setSuggestions([]);
+    setSuggestionsOpen(false);
     if (cost) setCostPrice(cost);
     trackEvent("example_clicked", { product: q });
   };
@@ -733,6 +838,8 @@ export default function FlipIQCalculator() {
         .input-field { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(245,245,242,0.08); background: rgba(245,245,242,0.04); color: #F5F5F2; font-size: 15px; font-family: inherit; outline: none; transition: border-color 0.3s; }
         .input-field:focus { border-color: rgba(212,255,61,0.5); }
         .input-field::placeholder { color: rgba(245,245,242,0.3); }
+        .suggestion-option:hover { background: rgba(212,255,61,0.08) !important; }
+        .suggestion-option:focus-visible { outline: 2px solid rgba(212,255,61,0.5); outline-offset: -2px; background: rgba(212,255,61,0.08) !important; }
         .cta-btn { width: 100%; padding: 16px; border-radius: 16px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; font-family: ${DISPLAY}; transition: all 0.3s; background: #D4FF3D; color: #0A0A0A; }
         .cta-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(212,255,61,0.2); }
         .cta-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
@@ -838,7 +945,10 @@ export default function FlipIQCalculator() {
         {scanning && (
           <BarcodeScanner
             onScan={(barcode) => {
+              selectedSuggestionTitleRef.current = barcode;
               setQuery(barcode);
+              setSuggestions([]);
+              setSuggestionsOpen(false);
               setScanning(false);
             }}
             onClose={() => setScanning(false)}
@@ -877,7 +987,17 @@ export default function FlipIQCalculator() {
                 className="input-field"
                 placeholder="Type product name or scan barcode..."
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  selectedSuggestionTitleRef.current = null;
+                  setQuery(e.target.value);
+                  setSuggestionsOpen(true);
+                }}
+                onFocus={() => {
+                  if (suggestions.length > 0) setSuggestionsOpen(true);
+                }}
+                onBlur={() => {
+                  window.setTimeout(() => setSuggestionsOpen(false), 140);
+                }}
                 onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
                 style={{
                   paddingRight: 44,
@@ -921,6 +1041,178 @@ export default function FlipIQCalculator() {
                   <circle cx="12" cy="13" r="4" />
                 </svg>
               </button>
+              {suggestionsOpen &&
+                (suggestions.length > 0 || suggestionsLoading) && (
+                  <div
+                    role="listbox"
+                    aria-label="Product suggestions"
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      top: "calc(100% + 8px)",
+                      zIndex: 40,
+                      borderRadius: 16,
+                      border: "1px solid rgba(245,245,242,0.1)",
+                      background: "rgba(14,14,14,0.98)",
+                      boxShadow: "0 20px 55px rgba(0,0,0,0.5)",
+                      overflow: "hidden",
+                      backdropFilter: "blur(18px)",
+                    }}
+                  >
+                    {suggestions.length === 0 && suggestionsLoading ? (
+                      <div
+                        style={{
+                          padding: 14,
+                          color: "rgba(245,245,242,0.58)",
+                          fontSize: 13,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                        }}
+                      >
+                        <span className="pulse-dot" />
+                        Searching products...
+                      </div>
+                    ) : (
+                      suggestions.map((item, index) => {
+                        const priceHint = formatSuggestionPrice(
+                          item.price_hint
+                        );
+                        const meta = [item.brand, item.category]
+                          .filter(Boolean)
+                          .join(" · ");
+
+                        return (
+                          <button
+                            type="button"
+                            className="suggestion-option"
+                            key={`${item.id ?? item.title}-${index}`}
+                            role="option"
+                            aria-selected={false}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => handleSuggestionSelect(item)}
+                            style={{
+                              width: "100%",
+                              border: "none",
+                              borderBottom:
+                                index === suggestions.length - 1
+                                  ? "none"
+                                  : "1px solid rgba(245,245,242,0.06)",
+                              background: "transparent",
+                              color: "#F5F5F2",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 12,
+                              padding: "10px 12px",
+                              textAlign: "left",
+                              fontFamily: DISPLAY,
+                            }}
+                          >
+                            {item.image_url ? (
+                              <img
+                                src={item.image_url}
+                                alt=""
+                                style={{
+                                  width: 42,
+                                  height: 42,
+                                  borderRadius: 10,
+                                  objectFit: "cover",
+                                  background: "rgba(245,245,242,0.06)",
+                                  flexShrink: 0,
+                                }}
+                              />
+                            ) : (
+                              <span
+                                aria-hidden="true"
+                                style={{
+                                  width: 42,
+                                  height: 42,
+                                  borderRadius: 10,
+                                  background: "rgba(212,255,61,0.1)",
+                                  color: ACCENT,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  flexShrink: 0,
+                                  fontWeight: 800,
+                                }}
+                              >
+                                {item.title.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                            <span style={{ minWidth: 0, flex: 1 }}>
+                              <span
+                                style={{
+                                  display: "block",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  fontSize: 13,
+                                  fontWeight: 700,
+                                  lineHeight: 1.25,
+                                }}
+                              >
+                                {item.title}
+                              </span>
+                              {meta && (
+                                <span
+                                  style={{
+                                    display: "block",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                    color: "rgba(245,245,242,0.45)",
+                                    fontSize: 11,
+                                    marginTop: 3,
+                                  }}
+                                >
+                                  {meta}
+                                </span>
+                              )}
+                            </span>
+                            {priceHint && (
+                              <span
+                                style={{
+                                  fontFamily: MONO,
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  color: ACCENT,
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {priceHint}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })
+                    )}
+                    {(suggestionsSource || suggestionsLoading) &&
+                      suggestions.length > 0 && (
+                        <div
+                          style={{
+                            padding: "8px 12px",
+                            borderTop: "1px solid rgba(245,245,242,0.06)",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            gap: 10,
+                            color: "rgba(245,245,242,0.38)",
+                            fontFamily: MONO,
+                            fontSize: 9,
+                            letterSpacing: 1.2,
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          <span>
+                            {getSuggestionSourceLabel(suggestionsSource)}
+                          </span>
+                          {suggestionsLoading && <span>Updating</span>}
+                        </div>
+                      )}
+                  </div>
+                )}
             </div>
           </div>
 
