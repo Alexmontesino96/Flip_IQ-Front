@@ -1514,19 +1514,28 @@ export default function FlipIQCalculator() {
               >
                 {[
                   {
-                    label: "Risk",
+                    label: "Flip",
+                    value: result.flipScore,
+                    color: "#4ade80",
+                    warning: false,
+                  },
+                  {
+                    label: "Speed",
+                    value: result.velocity,
+                    color: "#38bdf8",
+                    warning: result.velocity < 40,
+                  },
+                  {
+                    label: "Safety",
                     value: 100 - result.risk,
+                    color: "#FFB84D",
                     warning: 100 - result.risk < 40,
                   },
                   {
-                    label: "Confidence",
+                    label: "Conf.",
                     value: result.confidence,
+                    color: "#a78bfa",
                     warning: result.confidence < 50,
-                  },
-                  {
-                    label: "Velocity",
-                    value: result.velocity,
-                    warning: result.velocity < 40,
                   },
                 ].map((bar) => (
                   <div key={bar.label}>
@@ -1554,7 +1563,7 @@ export default function FlipIQCalculator() {
                           fontFamily: DISPLAY,
                           fontSize: 13,
                           fontWeight: 600,
-                          color: bar.warning ? "#FFB84D" : "#F5F5F2",
+                          color: bar.warning ? "#FFB84D" : bar.color,
                         }}
                       >
                         {bar.value}/100
@@ -1573,7 +1582,7 @@ export default function FlipIQCalculator() {
                           width: `${Math.max(0, Math.min(100, bar.value))}%`,
                           height: "100%",
                           borderRadius: 999,
-                          background: bar.warning ? "#FFB84D" : ACCENT,
+                          background: bar.color,
                           transition: "width 0.5s ease",
                         }}
                       />
