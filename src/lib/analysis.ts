@@ -43,6 +43,8 @@ export interface ResultProduct {
   title: string;
   brand: string;
   image: string;
+  market_source_id: string;
+  market_source_label: string;
   comps: number;
   median_price: number;
   min_price: number;
@@ -537,12 +539,24 @@ function formatEstimatedDaysToSell(value: unknown, confidence = 50): string {
 
 function transformResponse(data: any): AnalysisResult {
   const primaryAnalysis = getPrimaryAnalysis(data);
+  const primaryMarketplace =
+    primaryAnalysis === data.amazon_analysis
+      ? "amazon_fba"
+      : primaryAnalysis === data.ebay_analysis
+        ? "ebay"
+        : primaryAnalysis?.marketplace || data.best_marketplace || "market";
+  const primaryMeta = MARKETPLACE_META[primaryMarketplace] || {
+    label: primaryMarketplace === "market" ? "Market" : primaryMarketplace,
+    icon: "",
+  };
 
   // Product info from API + market data from primary analysis
   const product: ResultProduct = {
     title: data.product?.title || "Unknown Product",
     brand: data.product?.brand || "",
     image: data.product?.image_url || "",
+    market_source_id: primaryMarketplace,
+    market_source_label: primaryMeta.label,
     comps: primaryAnalysis?.comps?.total_sold || 0,
     median_price:
       primaryAnalysis?.comps?.median_price || data.estimated_sale_price || 0,
