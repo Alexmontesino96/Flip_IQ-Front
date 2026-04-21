@@ -1,5 +1,19 @@
 import type { Metadata } from "next";
+import { Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
+import "./globals.css";
+
+const interTight = Inter_Tight({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-display",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "600"],
+  variable: "--font-mono",
+});
 
 export const metadata: Metadata = {
   title: "FlipIQ — Free Flip Profit Calculator",
@@ -26,7 +40,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      className={`${interTight.variable} ${jetbrainsMono.variable}`}
+    >
       <body>
         {children}
         <Analytics />

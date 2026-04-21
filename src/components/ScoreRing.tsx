@@ -30,7 +30,7 @@ export default function ScoreRing({
             cy={size / 2}
             r={r}
             fill="none"
-            stroke="rgba(255,255,255,0.06)"
+            stroke="rgba(245,245,242,0.08)"
             strokeWidth={5}
           />
           <circle
@@ -65,7 +65,7 @@ export default function ScoreRing({
       <div
         style={{
           fontSize: 10,
-          color: "#64748b",
+          color: "rgba(245,245,242,0.45)",
           fontWeight: 600,
           marginTop: 4,
           letterSpacing: 0.5,

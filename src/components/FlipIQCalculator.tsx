@@ -823,32 +823,6 @@ export default function FlipIQCalculator() {
         fontFamily: DISPLAY,
       }}
     >
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        ::selection { background: rgba(212,255,61,0.3); }
-        @keyframes fadeUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
-        @keyframes spin { to { transform: rotate(360deg) } }
-        @keyframes shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
-        @keyframes pulseDot { 0%, 100% { opacity: 0.45; transform: scale(0.85) } 50% { opacity: 1; transform: scale(1) } }
-        .fade-up { animation: fadeUp 0.5s ease both; }
-        .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 4px rgba(34,197,94,0.12); display: inline-block; animation: pulseDot 1.2s ease-in-out infinite; flex-shrink: 0; }
-        .skeleton-line { height: 12px; border-radius: 6px; margin-bottom: 8px; background: linear-gradient(90deg, rgba(212,255,61,0.04) 25%, rgba(212,255,61,0.08) 50%, rgba(212,255,61,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; }
-        .skeleton-block { border-radius: 12px; background: linear-gradient(90deg, rgba(212,255,61,0.04) 25%, rgba(212,255,61,0.08) 50%, rgba(212,255,61,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite; }
-        .input-field { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(245,245,242,0.08); background: rgba(245,245,242,0.04); color: #F5F5F2; font-size: 15px; font-family: inherit; outline: none; transition: border-color 0.3s; }
-        .input-field:focus { border-color: rgba(212,255,61,0.5); }
-        .input-field::placeholder { color: rgba(245,245,242,0.3); }
-        .suggestion-option:hover { background: rgba(212,255,61,0.08) !important; }
-        .suggestion-option:focus-visible { outline: 2px solid rgba(212,255,61,0.5); outline-offset: -2px; background: rgba(212,255,61,0.08) !important; }
-        .cta-btn { width: 100%; padding: 16px; border-radius: 16px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; font-family: ${DISPLAY}; transition: all 0.3s; background: #D4FF3D; color: #0A0A0A; }
-        .cta-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(212,255,61,0.2); }
-        .cta-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
-        .cond-btn { padding: 10px 16px; border-radius: 10px; border: 1px solid rgba(245,245,242,0.08); background: transparent; color: rgba(245,245,242,0.5); font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s; flex: 1; }
-        .cond-btn.active { background: rgba(212,255,61,0.12); border-color: rgba(212,255,61,0.3); color: #D4FF3D; }
-        .sample-chip { padding: 8px 14px; border-radius: 100px; border: 1px solid rgba(245,245,242,0.08); background: rgba(245,245,242,0.03); color: rgba(245,245,242,0.5); font-size: 12px; cursor: pointer; transition: all 0.2s; font-family: inherit; white-space: nowrap; }
-        .sample-chip:hover { background: rgba(212,255,61,0.08); border-color: rgba(212,255,61,0.2); color: #D4FF3D; }
-      `}</style>
-
       <div style={{ maxWidth: 520, margin: "0 auto", padding: "0 16px 60px" }}>
         {/* ── HEADER ── */}
         <div

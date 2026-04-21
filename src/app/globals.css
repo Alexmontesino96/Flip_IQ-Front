@@ -1,26 +1,256 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap");
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ─── CANVAS + SURFACES ──────────────────────────────── */
+  --canvas: #0a0a0a;
+  --canvas-elevated: #111118;
+  --surface-1: rgba(245, 245, 242, 0.03);
+  --surface-2: rgba(245, 245, 242, 0.04);
+  --surface-3: rgba(245, 245, 242, 0.06);
+  --surface-hover: rgba(245, 245, 242, 0.08);
+
+  /* ─── BORDERS ────────────────────────────────────────── */
+  --border-1: rgba(245, 245, 242, 0.06);
+  --border-2: rgba(245, 245, 242, 0.08);
+  --border-3: rgba(245, 245, 242, 0.12);
+
+  /* ─── ACCENT ───────────────────────────────────────── */
+  --accent: #d4ff3d;
+  --accent-tint: rgba(212, 255, 61, 0.08);
+  --accent-tint-strong: rgba(212, 255, 61, 0.12);
+  --accent-border: rgba(212, 255, 61, 0.18);
+  --accent-border-strong: rgba(212, 255, 61, 0.3);
+
+  /* ─── SEMANTIC SIGNAL COLORS ────────────────────────── */
+  --ok: #d4ff3d;
+  --warn: #ffb84d;
+  --bad: #ff6464;
+
+  /* ─── TEXT SCALE ────────────────────────────────────── */
+  --fg-1: #f5f5f2;
+  --fg-2: rgba(245, 245, 242, 0.75);
+  --fg-3: rgba(245, 245, 242, 0.55);
+  --fg-4: rgba(245, 245, 242, 0.45);
+  --fg-5: rgba(245, 245, 242, 0.3);
+
+  /* ─── TYPE ──────────────────────────────────────────── */
+  --font-display: "Inter Tight", -apple-system, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* ─── SPACING ───────────────────────────────────────── */
+  --container-max: 520px;
+  --container-pad: 16px;
+
+  /* ─── RADII ─────────────────────────────────────────── */
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 12px;
+  --r-xl: 14px;
+  --r-card: 20px;
+  --r-pill: 999px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--canvas);
+  --color-foreground: var(--fg-1);
+  --font-sans: var(--font-display);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* =====================================================
+   KEYFRAMES
+   ===================================================== */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+@keyframes pulseDot {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
+/* =====================================================
+   BASE STYLES
+   ===================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+::selection {
+  background: rgba(212, 255, 61, 0.3);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--canvas);
+  color: var(--fg-1);
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+}
+
+/* =====================================================
+   UTILITY CLASSES
+   ===================================================== */
+.fade-up {
+  animation: fadeUp 0.5s ease both;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(212, 255, 61, 0.12);
+  display: inline-block;
+  animation: pulseDot 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: linear-gradient(
+    90deg,
+    rgba(245, 245, 242, 0.045) 25%,
+    rgba(245, 245, 242, 0.09) 50%,
+    rgba(245, 245, 242, 0.045) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-block {
+  border-radius: 12px;
+  background: linear-gradient(
+    90deg,
+    rgba(245, 245, 242, 0.045) 25%,
+    rgba(245, 245, 242, 0.09) 50%,
+    rgba(245, 245, 242, 0.045) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* ── Inputs ────────────────────────────── */
+.input-field {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border-2);
+  background: var(--surface-2);
+  color: var(--fg-1);
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.3s;
+}
+.input-field:focus {
+  border-color: rgba(212, 255, 61, 0.5);
+}
+.input-field::placeholder {
+  color: var(--fg-5);
+}
+
+/* ── CTA ───────────────────────────────── */
+.cta-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: var(--r-xl);
+  border: none;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  background: var(--accent);
+  color: #0a0a0a;
+  transition: all 0.3s;
+}
+.cta-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+.cta-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Sample chip ───────────────────────── */
+.sample-chip {
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-2);
+  background: var(--surface-1);
+  color: var(--fg-3);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.sample-chip:hover {
+  background: var(--accent-tint);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+/* ── Condition toggle ──────────────────── */
+.cond-btn {
+  padding: 10px 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-2);
+  background: transparent;
+  color: var(--fg-3);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  flex: 1;
+  transition: all 0.2s;
+}
+.cond-btn.active {
+  background: var(--accent-tint-strong);
+  border-color: var(--accent-border-strong);
+  color: var(--accent);
+}
+
+/* ── Suggestion dropdown ──────────────── */
+.suggestion-option:hover {
+  background: var(--accent-tint) !important;
+}
+.suggestion-option:focus-visible {
+  outline: 2px solid rgba(212, 255, 61, 0.5);
+  outline-offset: -2px;
+  background: var(--accent-tint) !important;
 }
