@@ -3,46 +3,53 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { fetchHistory, AnalysisHistoryItem } from "@/lib/history";
 import TopBar from "@/components/ui/TopBar";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
 
-// Mock data for recent analyses
-const RECENT_ANALYSES = [
-  {
-    title: "AirPods Pro 2",
-    status: "buy" as const,
-    profit: "+$94",
-    time: "2h",
-  },
-  {
-    title: "Nintendo Switch OLED",
-    status: "watch" as const,
-    profit: "+$22",
-    time: "5h",
-  },
-  {
-    title: "Lego Icons Orchid",
-    status: "pass" as const,
-    profit: "-$8",
-    time: "1d",
-  },
-];
+type Rec = "buy" | "watch" | "pass" | "buy_small";
 
-const STATUS_DOT_COLOR: Record<"buy" | "watch" | "pass", string> = {
+const STATUS_DOT_COLOR: Record<Rec, string> = {
   buy: ACCENT,
+  buy_small: ACCENT,
   watch: "#FFB84D",
   pass: "rgba(245,245,242,0.4)",
 };
 
-const STATUS_LABEL: Record<"buy" | "watch" | "pass", string> = {
+const STATUS_LABEL: Record<Rec, string> = {
   buy: "BUY",
+  buy_small: "BUY SMALL",
   watch: "WATCH",
   pass: "PASS",
 };
 
+function normalizeRec(rec: string | null): Rec {
+  if (!rec) return "pass";
+  const r = rec.toLowerCase();
+  if (r === "buy") return "buy";
+  if (r === "buy_small") return "buy_small";
+  if (r === "watch") return "watch";
+  return "pass";
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d`;
+}
+
 export default function HomePage() {
   const router = useRouter();
   const [userName, setUserName] = useState("there");
+  const [recentAnalyses, setRecentAnalyses] = useState<AnalysisHistoryItem[]>(
+    []
+  );
+  const [historyCount, setHistoryCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const supabase = createClient();
@@ -50,6 +57,12 @@ export default function HomePage() {
       if (user?.email) {
         setUserName(user.email.split("@")[0]);
       }
+    });
+
+    fetchHistory(20).then((items) => {
+      setRecentAnalyses(items.slice(0, 3));
+      setHistoryCount(items.length);
+      setLoading(false);
     });
   }, []);
 
@@ -135,10 +148,9 @@ export default function HomePage() {
         margin: "0 auto",
       }}
     >
-      {/* 1. TopBar */}
       <TopBar showLogo accent={ACCENT} right={rightActions} />
 
-      {/* 2. Greeting section */}
+      {/* Greeting */}
       <section aria-label="Greeting" style={{ padding: "24px 20px 32px" }}>
         <p
           style={{
@@ -167,7 +179,7 @@ export default function HomePage() {
         </h1>
       </section>
 
-      {/* 3. Action buttons */}
+      {/* Action buttons */}
       <section
         aria-label="Main actions"
         style={{
@@ -177,7 +189,6 @@ export default function HomePage() {
           gap: 12,
         }}
       >
-        {/* Scan barcode button */}
         <button
           onClick={() => router.push("/scan")}
           aria-label="Scan barcode"
@@ -227,7 +238,6 @@ export default function HomePage() {
               />
             </svg>
           </div>
-
           <div style={{ flex: 1 }}>
             <div
               style={{
@@ -250,21 +260,14 @@ export default function HomePage() {
               UPC · EAN · ISBN
             </div>
           </div>
-
           <span
-            style={{
-              fontFamily: DISPLAY,
-              fontSize: 18,
-              color: "#0A0A0A",
-              flexShrink: 0,
-            }}
+            style={{ fontFamily: DISPLAY, fontSize: 18, color: "#0A0A0A" }}
             aria-hidden="true"
           >
             →
           </span>
         </button>
 
-        {/* Search product button */}
         <button
           onClick={() => router.push("/search")}
           aria-label="Search product"
@@ -310,7 +313,6 @@ export default function HomePage() {
               />
             </svg>
           </div>
-
           <div style={{ flex: 1 }}>
             <div
               style={{
@@ -333,13 +335,11 @@ export default function HomePage() {
               title, brand, model
             </div>
           </div>
-
           <span
             style={{
               fontFamily: DISPLAY,
               fontSize: 18,
               color: "rgba(245,245,242,0.4)",
-              flexShrink: 0,
             }}
             aria-hidden="true"
           >
@@ -348,9 +348,8 @@ export default function HomePage() {
         </button>
       </section>
 
-      {/* 4. Recent analyses */}
+      {/* Recent analyses */}
       <section aria-label="Recent analyses" style={{ padding: "32px 20px 0" }}>
-        {/* Header row */}
         <div
           style={{
             display: "flex",
@@ -387,7 +386,6 @@ export default function HomePage() {
           </button>
         </div>
 
-        {/* List */}
         <ul
           style={{
             listStyle: "none",
@@ -396,89 +394,112 @@ export default function HomePage() {
             borderTop: "1px solid rgba(245,245,242,0.07)",
           }}
         >
-          {RECENT_ANALYSES.map((item, index) => (
+          {loading ? (
             <li
-              key={index}
               style={{
-                borderBottom: "1px solid rgba(245,245,242,0.07)",
+                padding: "20px 0",
+                textAlign: "center",
+                fontFamily: MONO,
+                fontSize: 11,
+                color: "rgba(245,245,242,0.3)",
               }}
             >
-              <button
-                onClick={() => router.push("/result")}
-                aria-label={`View analysis for ${item.title}, ${STATUS_LABEL[item.status]}, ${item.profit}`}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "14px 0",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  width: "100%",
-                  textAlign: "left",
-                }}
-              >
-                {/* Status dot */}
-                <div
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: 3,
-                    background: STATUS_DOT_COLOR[item.status],
-                    flexShrink: 0,
-                  }}
-                  aria-hidden="true"
-                />
-
-                {/* Title */}
-                <span
-                  style={{
-                    fontFamily: DISPLAY,
-                    fontSize: 15,
-                    fontWeight: 500,
-                    color: "#F5F5F2",
-                    flex: 1,
-                  }}
-                >
-                  {item.title}
-                </span>
-
-                {/* Status + time */}
-                <span
-                  style={{
-                    fontFamily: MONO,
-                    fontSize: 10,
-                    color: "rgba(245,245,242,0.4)",
-                    textTransform: "uppercase",
-                    letterSpacing: 0.5,
-                    marginRight: 12,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {STATUS_LABEL[item.status]} · {item.time}
-                </span>
-
-                {/* Profit */}
-                <span
-                  style={{
-                    fontFamily: MONO,
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: item.profit.startsWith("+")
-                      ? ACCENT
-                      : "rgba(245,245,242,0.4)",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {item.profit}
-                </span>
-              </button>
+              Loading...
             </li>
-          ))}
+          ) : recentAnalyses.length === 0 ? (
+            <li
+              style={{
+                padding: "20px 0",
+                textAlign: "center",
+                fontFamily: MONO,
+                fontSize: 11,
+                color: "rgba(245,245,242,0.3)",
+              }}
+            >
+              No analyses yet — scan or search a product
+            </li>
+          ) : (
+            recentAnalyses.map((item) => {
+              const rec = normalizeRec(item.recommendation);
+              const profit = item.net_profit ?? 0;
+              return (
+                <li
+                  key={item.id}
+                  style={{
+                    borderBottom: "1px solid rgba(245,245,242,0.07)",
+                  }}
+                >
+                  <button
+                    onClick={() => router.push(`/result?id=${item.id}`)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      padding: "14px 0",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      width: "100%",
+                      textAlign: "left",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: 3,
+                        background: STATUS_DOT_COLOR[rec],
+                        flexShrink: 0,
+                      }}
+                      aria-hidden="true"
+                    />
+                    <span
+                      style={{
+                        fontFamily: DISPLAY,
+                        fontSize: 15,
+                        fontWeight: 500,
+                        color: "#F5F5F2",
+                        flex: 1,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {item.product_title}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 10,
+                        color: "rgba(245,245,242,0.4)",
+                        textTransform: "uppercase",
+                        letterSpacing: 0.5,
+                        marginRight: 12,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {STATUS_LABEL[rec]} · {timeAgo(item.created_at)}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: profit >= 0 ? ACCENT : "rgba(245,245,242,0.4)",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {profit >= 0 ? "+" : ""}${Math.abs(profit).toFixed(0)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })
+          )}
         </ul>
       </section>
 
-      {/* 5. Quick actions */}
+      {/* Quick actions */}
       <section
         aria-label="Quick actions"
         style={{
@@ -488,10 +509,9 @@ export default function HomePage() {
           gap: 12,
         }}
       >
-        {/* Watchlist card */}
         <button
           onClick={() => router.push("/watchlist")}
-          aria-label="Open watchlist, 12 items"
+          aria-label="Open watchlist"
           style={{
             flex: 1,
             padding: 14,
@@ -525,14 +545,13 @@ export default function HomePage() {
               lineHeight: 1,
             }}
           >
-            12
+            —
           </span>
         </button>
 
-        {/* History card */}
         <button
           onClick={() => router.push("/history")}
-          aria-label="Open history, 47 analyses"
+          aria-label={`Open history, ${historyCount} analyses`}
           style={{
             flex: 1,
             padding: 14,
@@ -566,7 +585,7 @@ export default function HomePage() {
               lineHeight: 1,
             }}
           >
-            47
+            {historyCount}
           </span>
         </button>
       </section>
