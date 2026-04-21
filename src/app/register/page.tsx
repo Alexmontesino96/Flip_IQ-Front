@@ -72,23 +72,31 @@ function InputField({
   );
 }
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  const handleLogin = async () => {
+  const handleRegister = async () => {
     if (!email || !password) return;
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
     const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
 
     setLoading(false);
@@ -98,8 +106,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/home");
-    router.refresh();
+    setSuccess(true);
   };
 
   return (
@@ -112,7 +119,6 @@ export default function LoginPage() {
         padding: "40px 28px 32px",
       }}
     >
-      {/* Center section */}
       <section
         style={{
           flex: 1,
@@ -120,9 +126,7 @@ export default function LoginPage() {
           flexDirection: "column",
           justifyContent: "center",
         }}
-        aria-label="Login form"
       >
-        {/* Logo + branding */}
         <div
           style={{
             display: "flex",
@@ -155,54 +159,89 @@ export default function LoginPage() {
               margin: "10px 0 0",
             }}
           >
-            Decide before you buy.
+            Create your account
           </p>
         </div>
 
-        {/* Inputs */}
-        <div
-          style={{ display: "flex", flexDirection: "column", gap: 28 }}
-          role="group"
-          aria-label="Credentials"
-        >
-          <InputField
-            label="Email"
-            type="email"
-            value={email}
-            onChange={setEmail}
-            autoComplete="email"
-            inputMode="email"
-          />
-          <InputField
-            label="Password"
-            type="password"
-            value={password}
-            onChange={setPassword}
-            autoComplete="current-password"
-          />
-          {error && (
+        {success ? (
+          <div
+            style={{
+              padding: 20,
+              borderRadius: 16,
+              background: "rgba(212,255,61,0.08)",
+              border: "1px solid rgba(212,255,61,0.2)",
+              textAlign: "center",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: DISPLAY,
+                fontSize: 15,
+                color: ACCENT,
+                fontWeight: 600,
+                margin: "0 0 6px",
+              }}
+            >
+              Check your email
+            </p>
             <p
               style={{
                 fontFamily: DISPLAY,
                 fontSize: 13,
-                color: "#FF6464",
+                color: TEXT_DIM,
                 margin: 0,
+                lineHeight: 1.5,
               }}
             >
-              {error}
+              We sent a confirmation link to {email}
             </p>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: 28 }}
+            role="group"
+            aria-label="Registration"
+          >
+            <InputField
+              label="Email"
+              type="email"
+              value={email}
+              onChange={setEmail}
+              autoComplete="email"
+              inputMode="email"
+            />
+            <InputField
+              label="Password"
+              type="password"
+              value={password}
+              onChange={setPassword}
+              autoComplete="new-password"
+            />
+            {error && (
+              <p
+                style={{
+                  fontFamily: DISPLAY,
+                  fontSize: 13,
+                  color: "#FF6464",
+                  margin: 0,
+                }}
+              >
+                {error}
+              </p>
+            )}
+          </div>
+        )}
       </section>
 
-      {/* Bottom section */}
-      <section
-        style={{ display: "flex", flexDirection: "column", gap: 20 }}
-        aria-label="Actions"
-      >
-        <BigBtn onClick={handleLogin} style={{ opacity: loading ? 0.6 : 1 }}>
-          {loading ? "Signing in..." : "Continue →"}
-        </BigBtn>
+      <section style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        {!success && (
+          <BigBtn
+            onClick={handleRegister}
+            style={{ opacity: loading ? 0.6 : 1 }}
+          >
+            {loading ? "Creating account..." : "Create account →"}
+          </BigBtn>
+        )}
 
         <p
           style={{
@@ -213,21 +252,20 @@ export default function LoginPage() {
             margin: 0,
           }}
         >
-          No account?{" "}
+          Already have an account?{" "}
           <a
-            href="/register"
+            href="/login"
             onClick={(e) => {
               e.preventDefault();
-              router.push("/register");
+              router.push("/login");
             }}
             style={{
               color: ACCENT,
               textDecoration: "none",
               fontWeight: 600,
             }}
-            aria-label="Create a new account"
           >
-            Create account
+            Sign in
           </a>
         </p>
       </section>

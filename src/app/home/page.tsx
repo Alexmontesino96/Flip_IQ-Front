@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import TopBar from "@/components/ui/TopBar";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
 
@@ -40,36 +42,86 @@ const STATUS_LABEL: Record<"buy" | "watch" | "pass", string> = {
 
 export default function HomePage() {
   const router = useRouter();
+  const [userName, setUserName] = useState("there");
 
-  const proButton = (
-    <button
-      onClick={() => router.push("/plans")}
-      aria-label="Upgrade to PRO"
-      style={{
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        border: "1px solid rgba(245,245,242,0.12)",
-        background: "transparent",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 0,
-      }}
-    >
-      <span
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.email) {
+        setUserName(user.email.split("@")[0]);
+      }
+    });
+  }, []);
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
+
+  const rightActions = (
+    <div style={{ display: "flex", gap: 6 }}>
+      <button
+        onClick={() => router.push("/plans")}
+        aria-label="Upgrade to PRO"
         style={{
-          fontFamily: MONO,
-          fontSize: 10,
-          fontWeight: 600,
-          color: "#F5F5F2",
-          letterSpacing: 0.5,
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          border: "1px solid rgba(245,245,242,0.12)",
+          background: "transparent",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 0,
         }}
       >
-        PRO
-      </span>
-    </button>
+        <span
+          style={{
+            fontFamily: MONO,
+            fontSize: 10,
+            fontWeight: 600,
+            color: "#F5F5F2",
+            letterSpacing: 0.5,
+          }}
+        >
+          PRO
+        </span>
+      </button>
+      <button
+        onClick={handleLogout}
+        aria-label="Sign out"
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          border: "1px solid rgba(245,245,242,0.12)",
+          background: "transparent",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 0,
+        }}
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#F5F5F2"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
+        </svg>
+      </button>
+    </div>
   );
 
   return (
@@ -84,7 +136,7 @@ export default function HomePage() {
       }}
     >
       {/* 1. TopBar */}
-      <TopBar showLogo accent={ACCENT} right={proButton} />
+      <TopBar showLogo accent={ACCENT} right={rightActions} />
 
       {/* 2. Greeting section */}
       <section aria-label="Greeting" style={{ padding: "24px 20px 32px" }}>
@@ -98,7 +150,7 @@ export default function HomePage() {
             margin: "0 0 10px",
           }}
         >
-          Good afternoon, Alex
+          Good afternoon, {userName}
         </p>
         <h1
           style={{
