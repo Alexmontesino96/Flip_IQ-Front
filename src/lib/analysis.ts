@@ -1,7 +1,4 @@
-import { getClientId, getVerifiedEmail } from "./usage";
-
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://flip-iq-fastapi.onrender.com";
+import { API_URL, getAuthHeaders } from "./api";
 
 export class ApiError extends Error {
   status: number;
@@ -195,13 +192,12 @@ export async function runAnalysisStream(
     body.keyword = query.trim();
   }
 
+  const authHeaders = await getAuthHeaders();
   const headers: Record<string, string> = {
+    ...authHeaders,
     "Content-Type": "application/json",
-    "X-Client-ID": getClientId(),
     Accept: "text/event-stream",
   };
-  const email = getVerifiedEmail();
-  if (email) headers["X-Verified-Email"] = email;
 
   const res = await fetch(`${API_URL}/api/v1/analysis/stream`, {
     method: "POST",
@@ -327,12 +323,11 @@ export async function runAnalysis(
     body.keyword = query.trim();
   }
 
+  const authHeaders = await getAuthHeaders();
   const headers: Record<string, string> = {
+    ...authHeaders,
     "Content-Type": "application/json",
-    "X-Client-ID": getClientId(),
   };
-  const email = getVerifiedEmail();
-  if (email) headers["X-Verified-Email"] = email;
 
   const res = await fetch(`${API_URL}/api/v1/analysis/`, {
     method: "POST",
