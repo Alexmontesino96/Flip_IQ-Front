@@ -1,8 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getRecentSearches, addRecentSearch } from "@/lib/history";
+import {
+  fetchProductSuggestions,
+  registerSuggestionSelect,
+  ProductSuggestion,
+} from "@/lib/search";
 import TopBar from "@/components/ui/TopBar";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
 
@@ -12,6 +17,33 @@ export default function SearchPage() {
   const [recentPills, setRecentPills] = useState<string[]>(() =>
     getRecentSearches()
   );
+  const [suggestions, setSuggestions] = useState<ProductSuggestion[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Debounced suggestion fetch
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      // Clear handled via cleanup — no direct setState in effect body
+      const handle = requestAnimationFrame(() => setSuggestions([]));
+      return () => cancelAnimationFrame(handle);
+    }
+
+    const timer = setTimeout(() => {
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      setLoadingSuggestions(true);
+      fetchProductSuggestions(trimmed, 8, controller.signal)
+        .then((res) => setSuggestions(res.results))
+        .catch(() => {})
+        .finally(() => setLoadingSuggestions(false));
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query]);
 
   const handleSearch = useCallback(
     (q: string) => {
@@ -23,6 +55,23 @@ export default function SearchPage() {
     },
     [router]
   );
+
+  const handleSuggestionClick = useCallback(
+    (s: ProductSuggestion) => {
+      if (s.id) {
+        registerSuggestionSelect(s.id);
+      }
+      const searchTerm = s.title;
+      addRecentSearch(searchTerm);
+      setRecentPills(getRecentSearches());
+      router.push(`/?q=${encodeURIComponent(searchTerm)}`);
+    },
+    [router]
+  );
+
+  const showSuggestions = query.trim().length >= 2 && suggestions.length > 0;
+  const showRecent =
+    !showSuggestions && recentPills.length > 0 && !query.trim();
 
   return (
     <div
@@ -90,7 +139,10 @@ export default function SearchPage() {
 
           {query.length > 0 && (
             <button
-              onClick={() => setQuery("")}
+              onClick={() => {
+                setQuery("");
+                setSuggestions([]);
+              }}
               aria-label="Clear search"
               style={{
                 background: "transparent",
@@ -112,7 +164,148 @@ export default function SearchPage() {
         </div>
       </div>
 
-      {/* Search button */}
+      {/* Suggestions dropdown */}
+      {showSuggestions && (
+        <div style={{ padding: "0 20px" }}>
+          <ul
+            style={{
+              listStyle: "none",
+              margin: 0,
+              padding: 0,
+              borderBottom: "1px solid rgba(245,245,242,0.07)",
+            }}
+            role="listbox"
+            aria-label="Search suggestions"
+          >
+            {suggestions.map((s, i) => (
+              <li
+                key={s.id ?? `s-${i}`}
+                role="option"
+                aria-selected={false}
+                style={{ borderBottom: "1px solid rgba(245,245,242,0.05)" }}
+              >
+                <button
+                  onClick={() => handleSuggestionClick(s)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "12px 0",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    width: "100%",
+                    textAlign: "left",
+                  }}
+                >
+                  {/* Image or placeholder */}
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 8,
+                      background: "rgba(245,245,242,0.06)",
+                      flexShrink: 0,
+                      overflow: "hidden",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {s.image_url ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={s.image_url}
+                        alt=""
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="rgba(245,245,242,0.2)"
+                        strokeWidth="1.5"
+                      >
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="M3 16l5-5 4 4 4-6 5 7" />
+                      </svg>
+                    )}
+                  </div>
+
+                  {/* Text */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontFamily: DISPLAY,
+                        fontSize: 14,
+                        fontWeight: 500,
+                        color: "#F5F5F2",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {s.title}
+                    </div>
+                    {(s.brand || s.category) && (
+                      <div
+                        style={{
+                          fontFamily: MONO,
+                          fontSize: 10,
+                          color: "rgba(245,245,242,0.35)",
+                          marginTop: 2,
+                        }}
+                      >
+                        {[s.brand, s.category].filter(Boolean).join(" · ")}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Price hint */}
+                  {s.price_hint != null && s.price_hint > 0 && (
+                    <span
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: ACCENT,
+                        flexShrink: 0,
+                      }}
+                    >
+                      ~${s.price_hint.toFixed(0)}
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Loading indicator */}
+      {loadingSuggestions &&
+        query.trim().length >= 2 &&
+        suggestions.length === 0 && (
+          <div
+            style={{
+              padding: "20px",
+              textAlign: "center",
+              fontFamily: MONO,
+              fontSize: 10,
+              color: "rgba(245,245,242,0.3)",
+            }}
+          >
+            Searching...
+          </div>
+        )}
+
+      {/* Analyze button */}
       {query.trim() && (
         <div style={{ padding: "16px 20px 0" }}>
           <button
@@ -136,7 +329,7 @@ export default function SearchPage() {
       )}
 
       {/* Recent Searches */}
-      {recentPills.length > 0 && (
+      {showRecent && (
         <div style={{ padding: "24px 20px 0" }}>
           <p
             style={{
@@ -188,7 +381,7 @@ export default function SearchPage() {
       )}
 
       {/* Empty state */}
-      {recentPills.length === 0 && !query.trim() && (
+      {!showSuggestions && !showRecent && !query.trim() && (
         <div
           style={{
             padding: "60px 20px",
