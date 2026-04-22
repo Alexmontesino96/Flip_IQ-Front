@@ -488,7 +488,10 @@ function getSuggestionSourceLabel(source: string | null) {
 }
 
 export default function FlipIQCalculator() {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("q") || "";
+  });
   const [costPrice, setCostPrice] = useState("");
   const [condition, setCondition] = useState("new");
   const [result, setResult] = useState<AnalysisResult | null>(null);
