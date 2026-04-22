@@ -492,8 +492,16 @@ export default function FlipIQCalculator() {
     if (typeof window === "undefined") return "";
     return new URLSearchParams(window.location.search).get("q") || "";
   });
-  const [costPrice, setCostPrice] = useState("");
-  const [condition, setCondition] = useState("new");
+  const [costPrice, setCostPrice] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("cost") || "";
+  });
+  const [condition, setCondition] = useState(() => {
+    if (typeof window === "undefined") return "new";
+    return (
+      new URLSearchParams(window.location.search).get("condition") || "new"
+    );
+  });
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -522,6 +530,7 @@ export default function FlipIQCalculator() {
   const suggestionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suggestionAbortRef = useRef<AbortController | null>(null);
   const selectedSuggestionTitleRef = useRef<string | null>(null);
+  const autoExecutedRef = useRef(false);
   const analysisActive = loading || aiLoading;
 
   const LOADING_STEPS = [
@@ -755,6 +764,22 @@ export default function FlipIQCalculator() {
     },
     [executeAnalysisFallback]
   );
+
+  // Auto-execute when navigated from /search with all params
+  useEffect(() => {
+    if (autoExecutedRef.current) return;
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("auto") !== "1") return;
+    const q = params.get("q");
+    const c = params.get("cost");
+    const cond = params.get("condition") || "new";
+    if (!q || !c || parseFloat(c) <= 0) return;
+    autoExecutedRef.current = true;
+    // Clean URL params without reload
+    window.history.replaceState({}, "", "/free");
+    executeAnalysis(q, c, cond);
+  }, [executeAnalysis]);
 
   const costValid = costPrice !== "" && parseFloat(costPrice) > 0;
 

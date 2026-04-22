@@ -298,7 +298,7 @@ export default function ScanPage() {
 
       {/* 6. Bottom button */}
       <div style={{ padding: "20px 20px 24px" }}>
-        <BigBtn onClick={() => router.push("/")} accent={ACCENT}>
+        <BigBtn onClick={() => router.push("/free")} accent={ACCENT}>
           Analyze →
         </BigBtn>
       </div>

@@ -1,5 +1,5 @@
-import FlipIQCalculator from "@/components/FlipIQCalculator";
+import Landing from "@/components/Landing";
 
 export default function Home() {
-  return <FlipIQCalculator />;
+  return <Landing />;
 }
