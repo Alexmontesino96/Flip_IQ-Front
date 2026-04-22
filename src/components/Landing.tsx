@@ -393,6 +393,7 @@ export default function Landing() {
     return saved === "en" || saved === "es" ? saved : "es";
   });
   const [scrolled, setScrolled] = useState(false);
+  const [showSticky, setShowSticky] = useState(false);
   const t = T[lang];
 
   // Pipeline animation state
@@ -419,7 +420,10 @@ export default function Landing() {
 
   // Nav scroll
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 20);
+    const handler = () => {
+      setScrolled(window.scrollY > 20);
+      setShowSticky(window.scrollY > 600);
+    };
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
   }, []);
@@ -566,6 +570,7 @@ export default function Landing() {
     >
       {/* ═══ NAV ═══ */}
       <nav
+        className="ln-nav"
         style={{
           position: "fixed",
           top: 0,
@@ -618,6 +623,7 @@ export default function Landing() {
         </div>
 
         <div
+          className="ln-nav-links"
           style={{
             display: "flex",
             alignItems: "center",
@@ -643,7 +649,10 @@ export default function Landing() {
           </a>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div
+          className="ln-nav-actions"
+          style={{ display: "flex", alignItems: "center", gap: 14 }}
+        >
           {/* Lang toggle */}
           <div
             style={{
@@ -727,6 +736,7 @@ export default function Landing() {
 
       {/* ═══ HERO ═══ */}
       <section
+        className="ln-hero"
         style={{
           position: "relative",
           padding: "160px 40px 100px",
@@ -753,6 +763,7 @@ export default function Landing() {
         />
 
         <div
+          className="ln-hero-grid"
           style={{
             position: "relative",
             maxWidth: 1360,
@@ -764,7 +775,7 @@ export default function Landing() {
           }}
         >
           {/* Left */}
-          <div>
+          <div className="ln-hero-left">
             <div
               style={{
                 display: "inline-flex",
@@ -795,6 +806,7 @@ export default function Landing() {
             </div>
 
             <h1
+              className="ln-h1"
               style={{
                 margin: "0 0 24px",
                 fontWeight: 900,
@@ -834,6 +846,7 @@ export default function Landing() {
             </h1>
 
             <p
+              className="ln-sub"
               style={{
                 maxWidth: 520,
                 fontSize: 19,
@@ -847,6 +860,7 @@ export default function Landing() {
             </p>
 
             <div
+              className="ln-hero-actions"
               style={{
                 display: "flex",
                 gap: 14,
@@ -899,6 +913,7 @@ export default function Landing() {
             </div>
 
             <div
+              className="ln-hero-stats"
               style={{
                 display: "flex",
                 gap: 48,
@@ -913,6 +928,7 @@ export default function Landing() {
               ].map((s) => (
                 <div key={s.l}>
                   <div
+                    className="n"
                     style={{
                       fontWeight: 800,
                       fontSize: 32,
@@ -923,6 +939,7 @@ export default function Landing() {
                     {s.n}
                   </div>
                   <span
+                    className="l"
                     style={{
                       display: "block",
                       marginTop: 4,
@@ -941,7 +958,10 @@ export default function Landing() {
           </div>
 
           {/* Right — Orb */}
-          <div style={{ position: "relative", height: 560 }}>
+          <div
+            className="ln-hero-right"
+            style={{ position: "relative", height: 560 }}
+          >
             <div
               style={{
                 position: "absolute",
@@ -966,6 +986,7 @@ export default function Landing() {
 
               {/* Badges */}
               <div
+                className="ln-orb-badge ln-badge-tl"
                 style={{
                   position: "absolute",
                   top: 10,
@@ -999,6 +1020,7 @@ export default function Landing() {
                 ebay · amazon comps
               </div>
               <div
+                className="ln-orb-badge ln-badge-tr"
                 style={{
                   position: "absolute",
                   top: 50,
@@ -1032,6 +1054,7 @@ export default function Landing() {
                 median sell price
               </div>
               <div
+                className="ln-orb-badge ln-badge-br"
                 style={{
                   position: "absolute",
                   bottom: 30,
@@ -1065,6 +1088,7 @@ export default function Landing() {
                 {t.enginesRunning}
               </div>
               <div
+                className="ln-orb-badge ln-badge-bl"
                 style={{
                   position: "absolute",
                   bottom: 60,
@@ -1099,6 +1123,7 @@ export default function Landing() {
 
               {/* Orb sphere */}
               <div
+                className="ln-orb-wrap"
                 style={{
                   position: "relative",
                   width: 540,
@@ -1148,6 +1173,7 @@ export default function Landing() {
 
                 {/* Center readout */}
                 <div
+                  className="ln-orb-center"
                   style={{
                     position: "absolute",
                     inset: 0,
@@ -1161,6 +1187,7 @@ export default function Landing() {
                   }}
                 >
                   <div
+                    className="n"
                     style={{
                       fontWeight: 900,
                       fontSize: 128,
@@ -1172,6 +1199,7 @@ export default function Landing() {
                   >
                     {heroDisplay.prog}
                     <span
+                      className="u"
                       style={{
                         fontSize: 48,
                         letterSpacing: -2,
@@ -1183,6 +1211,7 @@ export default function Landing() {
                     </span>
                   </div>
                   <div
+                    className="lbl"
                     style={{
                       fontFamily: MONO,
                       fontSize: 10,
@@ -1250,6 +1279,7 @@ export default function Landing() {
         }}
       >
         <div
+          className="ln-sec-head"
           style={{
             display: "flex",
             alignItems: "flex-end",
@@ -1299,12 +1329,16 @@ export default function Landing() {
               .
             </h2>
           </div>
-          <div style={{ maxWidth: 320, color: DIM, fontSize: 15 }}>
+          <div
+            className="ln-sec-aside"
+            style={{ maxWidth: 320, color: DIM, fontSize: 15 }}
+          >
             {t.sectionHowAside}
           </div>
         </div>
 
         <div
+          className="ln-steps"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(3, 1fr)",
@@ -1317,6 +1351,7 @@ export default function Landing() {
         >
           {/* Step 1 — Scan */}
           <div
+            className="ln-step"
             style={{
               background: BG,
               padding: 32,
@@ -1358,6 +1393,7 @@ export default function Landing() {
               {t.step1p}
             </p>
             <div
+              className="ln-step-vis"
               style={{
                 flex: 1,
                 border: `1px solid ${LINE}`,
@@ -1483,6 +1519,7 @@ export default function Landing() {
 
           {/* Step 2 — Analyze */}
           <div
+            className="ln-step"
             style={{
               background: BG,
               padding: 32,
@@ -1524,6 +1561,7 @@ export default function Landing() {
               {t.step2p}
             </p>
             <div
+              className="ln-step-vis"
               style={{
                 flex: 1,
                 border: `1px solid ${LINE}`,
@@ -1604,6 +1642,7 @@ export default function Landing() {
 
           {/* Step 3 — Verdict */}
           <div
+            className="ln-step"
             style={{
               background: BG,
               padding: 32,
@@ -1645,6 +1684,7 @@ export default function Landing() {
               {t.step3p}
             </p>
             <div
+              className="ln-step-vis"
               style={{
                 flex: 1,
                 border: `1px solid ${LINE}`,
@@ -1875,6 +1915,7 @@ export default function Landing() {
       >
         <div style={{ maxWidth: 1360, margin: "0 auto" }}>
           <div
+            className="ln-sec-head"
             style={{
               display: "flex",
               alignItems: "flex-end",
@@ -1925,12 +1966,16 @@ export default function Landing() {
                 .
               </h2>
             </div>
-            <div style={{ maxWidth: 320, color: DIM, fontSize: 15 }}>
+            <div
+              className="ln-sec-aside"
+              style={{ maxWidth: 320, color: DIM, fontSize: 15 }}
+            >
               {t.casesAside}
             </div>
           </div>
 
           <div
+            className="ln-cases"
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(3, 1fr)",
@@ -2111,6 +2156,7 @@ export default function Landing() {
         style={{ padding: "90px 40px", borderBottom: `1px solid ${LINE}` }}
       >
         <div
+          className="ln-stats-grid"
           style={{
             maxWidth: 1360,
             margin: "0 auto",
@@ -2127,6 +2173,7 @@ export default function Landing() {
           ].map((s) => (
             <div key={s.l}>
               <div
+                className="n"
                 style={{
                   fontWeight: 900,
                   fontSize: "clamp(44px, 4.5vw, 64px)",
@@ -2142,6 +2189,7 @@ export default function Landing() {
                 <em style={{ color: LIME, fontStyle: "normal" }}>{s.n[1]}</em>
               </div>
               <div
+                className="k"
                 style={{
                   marginTop: 12,
                   fontFamily: MONO,
@@ -2168,6 +2216,7 @@ export default function Landing() {
         }}
       >
         <div
+          className="ln-sec-head"
           style={{
             display: "flex",
             alignItems: "flex-end",
@@ -2216,12 +2265,16 @@ export default function Landing() {
               .
             </h2>
           </div>
-          <div style={{ maxWidth: 320, color: DIM, fontSize: 15 }}>
+          <div
+            className="ln-sec-aside"
+            style={{ maxWidth: 320, color: DIM, fontSize: 15 }}
+          >
             {t.pricingAside}
           </div>
         </div>
 
         <div
+          className="ln-plans"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(3, 1fr)",
@@ -2268,6 +2321,7 @@ export default function Landing() {
 
       {/* ═══ FINAL CTA ═══ */}
       <section
+        className="ln-final"
         style={{
           padding: "140px 40px",
           position: "relative",
@@ -2285,6 +2339,7 @@ export default function Landing() {
           }}
         >
           <h2
+            className="ln-final-h2"
             style={{
               margin: "0 0 24px",
               fontSize: "clamp(48px, 6vw, 88px)",
@@ -2309,7 +2364,10 @@ export default function Landing() {
           >
             {t.finalP}
           </p>
-          <div style={{ display: "flex", justifyContent: "center", gap: 14 }}>
+          <div
+            className="actions"
+            style={{ display: "flex", justifyContent: "center", gap: 14 }}
+          >
             <Link
               href="/free"
               style={{
@@ -2377,6 +2435,7 @@ export default function Landing() {
         }}
       >
         <div
+          className="ln-foot-inner"
           style={{
             maxWidth: 1360,
             margin: "0 auto",
@@ -2420,6 +2479,7 @@ export default function Landing() {
             </em>
           </div>
           <div
+            className="ln-foot-cols"
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(3, auto)",
@@ -2454,6 +2514,7 @@ export default function Landing() {
           </div>
         </div>
         <div
+          className="ln-foot-bot"
           style={{
             maxWidth: 1360,
             margin: "48px auto 0",
@@ -2474,35 +2535,204 @@ export default function Landing() {
         </div>
       </footer>
 
-      {/* ═══ Keyframe animations ═══ */}
-      <style>{`
-        @keyframes landing-pulse {
-          0% { box-shadow: 0 0 0 0 rgba(212,255,58,0.6); }
-          100% { box-shadow: 0 0 0 10px rgba(212,255,58,0); }
-        }
-        @keyframes landing-ticker {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-        @keyframes landing-scanMove {
-          0%, 100% { transform: translateY(-60px); opacity: 0; }
-          20% { opacity: 1; }
-          50% { transform: translateY(60px); opacity: 1; }
-          80% { opacity: 0; }
-        }
-        @keyframes landing-blink { 50% { opacity: 0; } }
+      {/* ═══ Sticky Mobile CTA ═══ */}
+      <div className={`ln-sticky ${showSticky ? "ln-sticky-show" : ""}`}>
+        <div
+          style={{
+            background: BG2,
+            border: `1px solid ${LINE2}`,
+            borderRadius: 16,
+            padding: "8px 8px 8px 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 10,
+            boxShadow: "0 16px 40px rgba(0,0,0,0.5)",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontFamily: MONO,
+                fontSize: 13,
+                fontWeight: 600,
+                color: INK,
+                letterSpacing: 0,
+                marginBottom: 1,
+              }}
+            >
+              FlipIQ
+            </div>
+            <div
+              style={{
+                fontFamily: MONO,
+                fontSize: 11,
+                color: DIM,
+                letterSpacing: 0.5,
+              }}
+            >
+              {t.scanFree}
+            </div>
+          </div>
+          <Link
+            href="/free"
+            style={{
+              padding: "11px 16px",
+              borderRadius: 11,
+              background: LIME,
+              color: BG,
+              fontFamily: MONO,
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: 1.5,
+              textTransform: "uppercase",
+              border: "none",
+              textDecoration: "none",
+            }}
+          >
+            {t.scanFree} →
+          </Link>
+        </div>
+      </div>
 
-        @media (max-width: 1100px) {
-          .landing-hero-grid { grid-template-columns: 1fr !important; }
-          .landing-steps { grid-template-columns: 1fr !important; }
-          .landing-cases { grid-template-columns: 1fr !important; }
-          .landing-stats { grid-template-columns: repeat(2, 1fr) !important; }
-          .landing-plans { grid-template-columns: 1fr !important; }
-        }
-        @media (max-width: 640px) {
-          .landing-nav-links { display: none !important; }
-        }
-      `}</style>
+      <style>{`
+  @keyframes landing-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(212,255,58,0.6); }
+    100% { box-shadow: 0 0 0 10px rgba(212,255,58,0); }
+  }
+  @keyframes landing-ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes landing-scanMove {
+    0%, 100% { transform: translateY(-60px); opacity: 0; }
+    20% { opacity: 1; }
+    50% { transform: translateY(60px); opacity: 1; }
+    80% { opacity: 0; }
+  }
+  @keyframes landing-blink { 50% { opacity: 0; } }
+
+  /* Sticky CTA - hidden by default, shown on mobile */
+  .ln-sticky {
+    display: none;
+  }
+
+  /* ═══ Tablet ═══ */
+  @media (max-width: 1100px) {
+    .ln-hero-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+    .ln-hero-right { height: 420px !important; }
+    .ln-orb-wrap { width: 420px !important; height: 420px !important; }
+    .ln-steps { grid-template-columns: 1fr !important; }
+    .ln-step { min-height: auto !important; }
+    .ln-cases { grid-template-columns: 1fr !important; }
+    .ln-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .ln-plans { grid-template-columns: 1fr !important; }
+    .ln-sec-head { flex-direction: column !important; align-items: flex-start !important; }
+    .ln-foot-cols { grid-template-columns: repeat(2, auto) !important; gap: 32px !important; }
+  }
+
+  /* ═══ Mobile ═══ */
+  @media (max-width: 768px) {
+    /* Nav */
+    .ln-nav { padding: 14px 20px !important; }
+    .ln-nav-links { display: none !important; }
+    .ln-nav-actions { gap: 8px !important; }
+    .ln-nav-actions a { padding: 8px 12px !important; font-size: 10px !important; letter-spacing: 1px !important; }
+
+    /* Hero */
+    .ln-hero { padding: 100px 20px 32px !important; min-height: auto !important; }
+    .ln-hero-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+    .ln-hero-right { height: auto !important; aspect-ratio: 1/1; max-width: 320px; margin: 0 auto; }
+    .ln-orb-wrap { width: 100% !important; height: 100% !important; }
+    .ln-orb-center .n { font-size: 84px !important; letter-spacing: -3.5px !important; }
+    .ln-orb-center .n .u { font-size: 32px !important; }
+    .ln-orb-center .lbl { font-size: 9px !important; letter-spacing: 2.5px !important; margin-top: 10px !important; }
+    .ln-h1 { font-size: 42px !important; letter-spacing: -1.8px !important; }
+    .ln-sub { font-size: 15px !important; max-width: 320px !important; }
+    .ln-hero-actions { flex-direction: column !important; }
+    .ln-hero-actions a { width: 100%; text-align: center; justify-content: center; padding: 15px 22px !important; border-radius: 14px !important; }
+    .ln-hero-stats { gap: 20px !important; }
+    .ln-hero-stats > div .n { font-size: 20px !important; }
+    .ln-hero-stats > div .l { font-size: 9px !important; }
+
+    /* Orb badges - only show 2 on mobile */
+    .ln-badge-tr, .ln-badge-bl { display: none !important; }
+    .ln-badge-tl { top: 4px !important; left: -8px !important; padding: 7px 10px !important; border-radius: 10px !important; }
+    .ln-badge-tl, .ln-badge-tl b { font-size: 8px !important; }
+    .ln-badge-tl b { font-size: 12px !important; }
+    .ln-badge-br { bottom: 20px !important; right: -8px !important; padding: 7px 10px !important; border-radius: 10px !important; }
+    .ln-badge-br, .ln-badge-br b { font-size: 8px !important; }
+    .ln-badge-br b { font-size: 12px !important; }
+
+    /* Section heads */
+    .ln-sec-head { flex-direction: column !important; align-items: flex-start !important; margin-bottom: 28px !important; }
+    .ln-sec-head h2 { font-size: 34px !important; letter-spacing: -1.4px !important; }
+    .ln-sec-aside { font-size: 14px !important; }
+
+    /* How it works - steps */
+    .ln-steps { grid-template-columns: 1fr !important; gap: 14px !important; border: none !important; border-radius: 0 !important; background: transparent !important; }
+    .ln-step { min-height: auto !important; border-radius: 18px !important; border: 1px solid rgba(245,245,242,0.08) !important; background: #0E0E0E !important; padding: 20px !important; }
+    .ln-step-vis { height: 160px !important; border-radius: 12px !important; }
+
+    /* Cases - horizontal scroll */
+    .ln-cases {
+      grid-template-columns: none !important;
+      display: flex !important;
+      gap: 12px !important;
+      overflow-x: auto !important;
+      scroll-snap-type: x mandatory !important;
+      margin: 0 -20px !important;
+      padding: 0 20px 4px !important;
+      scrollbar-width: none !important;
+    }
+    .ln-cases::-webkit-scrollbar { display: none; }
+    .ln-cases > div {
+      flex: 0 0 280px !important;
+      scroll-snap-align: start !important;
+    }
+
+    /* Stats */
+    .ln-stats-grid { grid-template-columns: 1fr 1fr !important; gap: 20px !important; }
+    .ln-stats-grid > div .n { font-size: 38px !important; letter-spacing: -1.5px !important; }
+    .ln-stats-grid > div .k { font-size: 10px !important; }
+
+    /* Pricing */
+    .ln-plans { grid-template-columns: 1fr !important; gap: 12px !important; }
+
+    /* Sections padding */
+    section { padding-left: 20px !important; padding-right: 20px !important; }
+
+    /* Final CTA */
+    .ln-final { padding: 56px 20px 48px !important; }
+    .ln-final-h2 { font-size: 36px !important; letter-spacing: -1.5px !important; }
+    .ln-final .actions { flex-direction: column !important; }
+    .ln-final .actions a { width: 100%; text-align: center; justify-content: center; }
+
+    /* Footer */
+    .ln-foot-inner { flex-direction: column !important; }
+    .ln-foot-cols { grid-template-columns: 1fr 1fr !important; gap: 20px !important; }
+    .ln-foot-bot { flex-direction: column !important; gap: 6px !important; }
+
+    /* Sticky CTA */
+    .ln-sticky {
+      display: block;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 30;
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+      background: linear-gradient(180deg, rgba(10,10,10,0) 0%, rgba(10,10,10,0.95) 40%, #0A0A0A 100%);
+      transform: translateY(110%);
+      transition: transform 0.3s cubic-bezier(.2,.9,.3,1);
+      pointer-events: none;
+    }
+    .ln-sticky-show {
+      transform: translateY(0) !important;
+      pointer-events: auto !important;
+    }
+  }
+`}</style>
     </div>
   );
 }
