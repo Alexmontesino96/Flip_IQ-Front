@@ -8,6 +8,7 @@ import {
   registerSuggestionSelect,
   ProductSuggestion,
 } from "@/lib/search";
+import { runAnalysisStream, AnalysisResult } from "@/lib/analysis";
 import TopBar from "@/components/ui/TopBar";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
 
@@ -30,6 +31,12 @@ export default function SearchPage() {
 
   // Step 3: Condition
   const [condition, setCondition] = useState("used");
+
+  // Analysis state
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisStage, setAnalysisStage] = useState("");
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   const costValue = cost ? parseFloat(cost) : null;
   const canAnalyze = picked !== null && costValue !== null && costValue > 0;
@@ -81,31 +88,74 @@ export default function SearchPage() {
     setHasSearched(false);
   }, []);
 
+  const executeAnalysis = useCallback(
+    (q: string, costStr: string, cond: string) => {
+      setAnalyzing(true);
+      setAnalysisProgress(0);
+      setAnalysisStage("Starting...");
+      setAnalysisError(null);
+
+      runAnalysisStream(
+        q,
+        parseFloat(costStr),
+        cond,
+        (_result: AnalysisResult) => {
+          // Analysis data received — navigate to result
+          // The analysis is saved server-side, we get the ID from the response
+        },
+        () => {
+          // AI complete update — we already navigated
+        },
+        (err) => {
+          setAnalyzing(false);
+          setAnalysisError(err.message);
+        },
+        (progress) => {
+          setAnalysisProgress(progress.progress);
+          setAnalysisStage(progress.message);
+          // When analysis stage is complete, the server saved it — check history for the ID
+          if (progress.progress >= 100) {
+            // Small delay to let server finish saving
+            setTimeout(async () => {
+              try {
+                const { fetchHistory } = await import("@/lib/history");
+                const history = await fetchHistory(1);
+                if (history.length > 0) {
+                  router.push(`/result?id=${history[0].id}`);
+                } else {
+                  setAnalyzing(false);
+                }
+              } catch {
+                setAnalyzing(false);
+              }
+            }, 500);
+          }
+        }
+      ).catch((err) => {
+        setAnalyzing(false);
+        setAnalysisError(
+          err instanceof Error ? err.message : "Analysis failed"
+        );
+      });
+    },
+    [router]
+  );
+
   const handleAnalyze = useCallback(() => {
-    if (!canAnalyze) return;
+    if (!canAnalyze || analyzing) return;
     const q = picked!.title;
-    const params = new URLSearchParams({
-      q,
-      cost: cost,
-      condition,
-      auto: "1",
-    });
-    router.push(`/free?${params.toString()}`);
-  }, [canAnalyze, picked, cost, condition, router]);
+    addRecentSearch(q);
+    setRecentPills(getRecentSearches());
+    executeAnalysis(q, cost, condition);
+  }, [canAnalyze, analyzing, picked, cost, condition, executeAnalysis]);
 
   const handleDirectAnalyze = useCallback(() => {
     const trimmed = query.trim();
-    if (!trimmed || !costValue || costValue <= 0) return;
+    if (!trimmed || !costValue || costValue <= 0 || analyzing) return;
     addRecentSearch(trimmed);
     setRecentPills(getRecentSearches());
-    const params = new URLSearchParams({
-      q: trimmed,
-      cost: cost,
-      condition,
-      auto: "1",
-    });
-    router.push(`/free?${params.toString()}`);
-  }, [query, cost, costValue, condition, router]);
+    executeAnalysis(trimmed, cost, condition);
+  }, [query, cost, costValue, condition, analyzing, executeAnalysis]);
 
   const showSuggestions =
     picked === null && query.trim().length >= 2 && suggestions.length > 0;
@@ -132,6 +182,111 @@ export default function SearchPage() {
       }}
     >
       <TopBar title="Search" accent={ACCENT} onBack={() => router.back()} />
+
+      {/* ── Analyzing overlay ── */}
+      {analyzing && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 20,
+            background: "#0A0A0A",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 20,
+            padding: 40,
+          }}
+        >
+          {/* Progress circle */}
+          <div
+            style={{
+              width: 120,
+              height: 120,
+              borderRadius: "50%",
+              border: `2px solid rgba(245,245,242,0.08)`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "relative",
+            }}
+          >
+            <svg
+              width="120"
+              height="120"
+              style={{ position: "absolute", transform: "rotate(-90deg)" }}
+            >
+              <circle
+                cx="60"
+                cy="60"
+                r="58"
+                fill="none"
+                stroke={ACCENT}
+                strokeWidth="2"
+                strokeDasharray={`${2 * Math.PI * 58}`}
+                strokeDashoffset={`${2 * Math.PI * 58 * (1 - analysisProgress / 100)}`}
+                strokeLinecap="round"
+                style={{ transition: "stroke-dashoffset 0.5s ease" }}
+              />
+            </svg>
+            <span
+              style={{
+                fontFamily: DISPLAY,
+                fontSize: 32,
+                fontWeight: 700,
+                color: "#F5F5F2",
+                letterSpacing: -1,
+              }}
+            >
+              {Math.round(analysisProgress)}%
+            </span>
+          </div>
+
+          <div style={{ textAlign: "center" }}>
+            <div
+              style={{
+                fontFamily: DISPLAY,
+                fontSize: 16,
+                fontWeight: 600,
+                color: "#F5F5F2",
+                marginBottom: 6,
+              }}
+            >
+              Analyzing...
+            </div>
+            <div
+              style={{
+                fontFamily: MONO,
+                fontSize: 10,
+                color: "rgba(245,245,242,0.4)",
+                letterSpacing: 0.5,
+              }}
+            >
+              {analysisStage}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Analysis error ── */}
+      {analysisError && !analyzing && (
+        <div
+          style={{
+            margin: "0 20px",
+            padding: "14px 16px",
+            borderRadius: 12,
+            background: "rgba(255,100,100,0.1)",
+            border: "1px solid rgba(255,100,100,0.2)",
+            fontFamily: DISPLAY,
+            fontSize: 13,
+            color: "#FF6464",
+            marginBottom: 8,
+          }}
+        >
+          {analysisError}
+        </div>
+      )}
 
       <div style={{ flex: 1, overflowY: "auto" }}>
         {/* ── Step 1: Product ── */}
@@ -712,13 +867,15 @@ export default function SearchPage() {
         {picked ? (
           <button
             onClick={handleAnalyze}
-            disabled={!canAnalyze}
+            disabled={!canAnalyze || analyzing}
             style={{
               width: "100%",
               padding: "16px 20px",
               borderRadius: 14,
-              background: canAnalyze ? ACCENT : "rgba(245,245,242,0.06)",
-              color: canAnalyze ? "#0A0A0A" : "rgba(245,245,242,0.3)",
+              background:
+                canAnalyze && !analyzing ? ACCENT : "rgba(245,245,242,0.06)",
+              color:
+                canAnalyze && !analyzing ? "#0A0A0A" : "rgba(245,245,242,0.3)",
               border: "none",
               fontFamily: DISPLAY,
               fontSize: 15,
