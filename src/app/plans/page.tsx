@@ -30,8 +30,8 @@ const PLANS: Plan[] = [
     limit: "5 scans/day",
     feats: [
       "eBay comps only",
-      "Keyword search",
-      "Sourcing guide",
+      "Keyword search only",
+      "Basic flip score",
       "1 watchlist",
     ],
   },
@@ -42,7 +42,6 @@ const PLANS: Plan[] = [
     tag: "Most picked",
     limit: "25 scans/day",
     feats: [
-      "Everything in Free",
       "eBay + Amazon comps",
       "Barcode scanning",
       "Full flip score",
@@ -59,9 +58,9 @@ const PLANS: Plan[] = [
     feats: [
       "Everything in Basic",
       "Market Intelligence AI",
+      "CSV export",
       "Push + email alerts",
       "Unlimited watchlists",
-      "CSV export",
       "Priority support",
     ],
   },

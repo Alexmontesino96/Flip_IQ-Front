@@ -69,28 +69,28 @@ const T = {
       "Cancelas cuando quieras. Si no te rinde, te devolvemos los primeros 30 dias.",
     freeTier: "Free",
     freeTag: "Para probar el agua antes de clavarte.",
-    freeF1: "10 analisis por mes",
-    freeF2: "Veredicto BUY / WATCH / PASS",
-    freeF3: "eBay + Amazon sold comps",
-    freeF4: "Historial de 7 dias",
+    freeF1: "5 escaneos por dia",
+    freeF2: "Solo comps de eBay",
+    freeF3: "Busqueda por keyword",
+    freeF4: "Flip score basico",
     freeCta: "Empezar gratis",
-    proTier: "Pro",
+    proTier: "Basic",
     proRibbon: "MAS ELEGIDO",
     proTag: "Para flippers que viven de esto.",
-    proF1: "Analisis ilimitados",
-    proF2: "Los 13 motores + AI rationale",
-    proF3: "FB Marketplace + MercadoLibre",
-    proF4: "Alertas de precio + watchlist",
-    proF5: "Export CSV + historial ilimitado",
+    proF1: "25 escaneos por dia",
+    proF2: "eBay + Amazon comps",
+    proF3: "Escaneo de barcode",
+    proF4: "Flip score completo",
+    proF5: "Alertas push + 5 watchlists",
     proCta: "Probar 14 dias",
-    teamTier: "Team",
-    teamTag: "Para stores con scouts en la calle.",
-    teamF1: "Todo lo de Pro, x 5 seats",
-    teamF2: "Dashboard compartido en vivo",
-    teamF3: "API + webhooks",
-    teamF4: "Reglas de compra por scout",
-    teamF5: "Priority support + onboarding 1:1",
-    teamCta: "Contactar ventas",
+    teamTier: "Premium",
+    teamTag: "Para power sellers serios.",
+    teamF1: "100 escaneos por dia",
+    teamF2: "Todo lo de Basic",
+    teamF3: "Market Intelligence AI",
+    teamF4: "Export CSV",
+    teamF5: "Alertas push + email + soporte prioritario",
+    teamCta: "Empezar Premium",
     finalH2a: "El proximo producto barato",
     finalH2b: "que te cambia la semana.",
     finalP: "Arranca gratis. Escanea los primeros 10 sin tarjeta.",
@@ -162,28 +162,28 @@ const T = {
     pricingAside: "Cancel anytime. 30-day money-back guarantee.",
     freeTier: "Free",
     freeTag: "Test the waters before you dive in.",
-    freeF1: "10 analyses per month",
-    freeF2: "BUY / WATCH / PASS verdict",
-    freeF3: "eBay + Amazon sold comps",
-    freeF4: "7-day history",
+    freeF1: "5 scans per day",
+    freeF2: "eBay comps only",
+    freeF3: "Keyword search",
+    freeF4: "Basic flip score",
     freeCta: "Start free",
-    proTier: "Pro",
+    proTier: "Basic",
     proRibbon: "MOST PICKED",
     proTag: "For flippers who live on this.",
-    proF1: "Unlimited analyses",
-    proF2: "All 13 engines + AI rationale",
-    proF3: "FB Marketplace + MercadoLibre",
-    proF4: "Price alerts + watchlist",
-    proF5: "CSV export + unlimited history",
+    proF1: "25 scans per day",
+    proF2: "eBay + Amazon comps",
+    proF3: "Barcode scanning",
+    proF4: "Full flip score",
+    proF5: "Push alerts + 5 watchlists",
     proCta: "Try 14 days",
-    teamTier: "Team",
-    teamTag: "For stores with scouts on the ground.",
-    teamF1: "Everything in Pro, x 5 seats",
-    teamF2: "Live shared dashboard",
-    teamF3: "API + webhooks",
-    teamF4: "Per-scout buy rules",
-    teamF5: "Priority support + 1:1 onboarding",
-    teamCta: "Contact sales",
+    teamTier: "Premium",
+    teamTag: "For serious power sellers.",
+    teamF1: "100 scans per day",
+    teamF2: "Everything in Basic",
+    teamF3: "Market Intelligence AI",
+    teamF4: "CSV export",
+    teamF5: "Push + email alerts + priority support",
+    teamCta: "Start Premium",
     finalH2a: "The next cheap find",
     finalH2b: "that changes your week.",
     finalP: "Start free. Scan your first 10 with no card.",
@@ -2293,10 +2293,10 @@ export default function Landing() {
             href="/free"
             featured={false}
           />
-          {/* Pro */}
+          {/* Basic */}
           <PlanCard
             tier={t.proTier}
-            price="29"
+            price="9.99"
             perMonth={t.perMonth}
             tagline={t.proTag}
             features={[t.proF1, t.proF2, t.proF3, t.proF4, t.proF5]}
@@ -2305,10 +2305,10 @@ export default function Landing() {
             featured
             ribbon={t.proRibbon}
           />
-          {/* Team */}
+          {/* Premium */}
           <PlanCard
             tier={t.teamTier}
-            price="99"
+            price="24.99"
             perMonth={t.perMonth}
             tagline={t.teamTag}
             features={[t.teamF1, t.teamF2, t.teamF3, t.teamF4, t.teamF5]}
