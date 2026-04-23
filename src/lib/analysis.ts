@@ -532,7 +532,7 @@ function formatEstimatedDaysToSell(value: unknown, confidence = 50): string {
   return "~7d";
 }
 
-function transformResponse(data: any): AnalysisResult {
+export function transformResponse(data: any): AnalysisResult {
   const primaryAnalysis = getPrimaryAnalysis(data);
   const primaryMarketplace =
     primaryAnalysis === data.amazon_analysis
@@ -672,4 +672,63 @@ function transformResponse(data: any): AnalysisResult {
     conditionInfo: extractConditionInfo(primaryAnalysis),
     executionInfo: extractExecutionInfo(data),
   };
+}
+
+export async function fetchAnalysisById(id: number): Promise<AnalysisResult> {
+  const authHeaders = await getAuthHeaders();
+  const res = await fetch(`${API_URL}/api/v1/analysis/${id}`, {
+    credentials: "include",
+    headers: authHeaders,
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, error.detail || `Error ${res.status}`);
+  }
+  const data = await res.json();
+  return transformResponse(data);
+}
+
+export async function shareAnalysis(
+  id: number
+): Promise<{ share_token: string; share_url: string }> {
+  const authHeaders = await getAuthHeaders();
+  const res = await fetch(`${API_URL}/api/v1/analysis/${id}/share`, {
+    method: "POST",
+    credentials: "include",
+    headers: authHeaders,
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, error.detail || `Error ${res.status}`);
+  }
+  return res.json();
+}
+
+export interface SharedAnalysisData {
+  id: number;
+  product: {
+    title: string;
+    brand: string | null;
+    image_url: string | null;
+  } | null;
+  cost_price: number;
+  marketplace: string;
+  estimated_sale_price: number | null;
+  net_profit: number | null;
+  roi_pct: number | null;
+  flip_score: number | null;
+  recommendation: string | null;
+  ai_explanation: string | null;
+  created_at: string;
+}
+
+export async function fetchSharedAnalysis(
+  token: string
+): Promise<SharedAnalysisData> {
+  const res = await fetch(`${API_URL}/api/v1/analysis/shared/${token}`);
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, error.detail || `Error ${res.status}`);
+  }
+  return res.json();
 }

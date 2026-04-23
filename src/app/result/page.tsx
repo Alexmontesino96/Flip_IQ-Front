@@ -1,59 +1,15 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import TopBar from "@/components/ui/TopBar";
 import TinyBadge from "@/components/ui/TinyBadge";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
-
-// ─── Mock data ────────────────────────────────────────────────────────────────
-const MOCK = {
-  recommendation: "buy",
-  opportunity_score: 78,
-  buy_box: { recommended_max_buy: 148.4, your_cost: 80.0, headroom: 68.4 },
-  sale_plan: { quick: 179, market: 199, stretch: 225 },
-  returns: { profit: 94.2, roi_pct: 117.8, margin_pct: 47.3 },
-  risk_score: 72,
-  confidence_score: 84,
-  velocity_score: 88,
-  velocity_days: "2–4",
-  comps: {
-    total_sold: 47,
-    median_price: 199,
-    p25: 175,
-    p75: 225,
-    sales_per_day: 2.3,
-  },
-  channels: [
-    {
-      name: "eBay",
-      fee: 13.25,
-      sale: 199,
-      net: 94.2,
-      roi: 117.8,
-      role: "recommended",
-    },
-    {
-      name: "Amazon FBA",
-      fee: 18.5,
-      sale: 229,
-      net: 86.9,
-      roi: 108.6,
-      role: "best_profit",
-    },
-    {
-      name: "Facebook",
-      fee: 5,
-      sale: 170,
-      net: 61.5,
-      roi: 76.9,
-      role: "test_only",
-    },
-  ],
-  ai_text:
-    "Stable market with clean comps and strong velocity. At $80 you have ~$68 of headroom over the safe max-buy. eBay is your recommended channel — fast rotation and reasonable fees.",
-};
-
-const PRODUCT_TITLE = "Apple AirPods Pro 2 (USB-C) — MagSafe";
+import {
+  fetchAnalysisById,
+  shareAnalysis,
+  AnalysisResult,
+} from "@/lib/analysis";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const fmt = (n: number, decimals = 2) =>
@@ -226,20 +182,92 @@ const MiniBarChart = ({ bars }: { bars: number[] }) => {
   );
 };
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-export default function ResultPage() {
+// ─── Score sublabel helpers ──────────────────────────────────────────────────
+function riskSublabel(safety: number): string {
+  if (safety >= 70) return "Low";
+  if (safety >= 40) return "Medium";
+  return "High";
+}
+function confidenceSublabel(v: number): string {
+  if (v >= 70) return "High";
+  if (v >= 40) return "Medium";
+  return "Low";
+}
+function velocitySublabel(v: number): string {
+  if (v >= 70) return "Fast";
+  if (v >= 40) return "Medium";
+  return "Slow";
+}
+
+// ─── Inner page (uses useSearchParams) ──────────────────────────────────────
+function ResultPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const idParam = searchParams.get("id");
+
+  const id = idParam ? Number(idParam) : null;
+  const idValid = id !== null && !isNaN(id);
+
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [loading, setLoading] = useState(idValid);
+  const [error, setError] = useState<string | null>(
+    !idParam
+      ? "No analysis ID provided."
+      : idParam && !idValid
+        ? "Invalid analysis ID."
+        : null
+  );
+
+  useEffect(() => {
+    if (!idValid) return;
+
+    const cancelled = false;
+    fetchAnalysisById(id)
+      .then((data) => {
+        if (!cancelled) setResult(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message || "Failed to load analysis.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+  }, [idParam]);
+
+  const [sharing, setSharing] = useState(false);
+  const [shared, setShared] = useState(false);
+
+  const handleShare = async () => {
+    if (!id || sharing) return;
+    setSharing(true);
+    try {
+      const { share_token } = await shareAnalysis(id);
+      const shareUrl = `${window.location.origin}/shared/${share_token}`;
+      if (navigator.share) {
+        await navigator.share({ title: "FlipIQ Analysis", url: shareUrl });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      }
+    } catch {
+      // user cancelled share or error
+    } finally {
+      setSharing(false);
+    }
+  };
 
   const shareButton = (
     <button
-      aria-label="Share result"
+      onClick={handleShare}
+      aria-label={shared ? "Link copied" : "Share result"}
       style={{
         width: 40,
         height: 40,
         borderRadius: 20,
-        border: "1px solid rgba(245,245,242,0.12)",
+        border: `1px solid ${shared ? ACCENT : "rgba(245,245,242,0.12)"}`,
         background: "transparent",
-        color: "#F5F5F2",
+        color: shared ? ACCENT : "#F5F5F2",
         cursor: "pointer",
         display: "flex",
         alignItems: "center",
@@ -247,30 +275,180 @@ export default function ResultPage() {
         padding: 0,
       }}
     >
-      {/* Upload / share icon */}
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 16 16"
-        fill="none"
-        aria-hidden="true"
-      >
-        <path
-          d="M8 1v9M5 4l3-3 3 3"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </svg>
+      {shared ? (
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M3 8l4 4 6-8"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ) : (
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M8 1v9M5 4l3-3 3 3"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </svg>
+      )}
     </button>
   );
+
+  // ── Loading state ──────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100dvh",
+          background: "#0A0A0A",
+          color: "#F5F5F2",
+          maxWidth: 520,
+          margin: "0 auto",
+          fontFamily: DISPLAY,
+        }}
+      >
+        <TopBar
+          title="Result"
+          accent={ACCENT}
+          onBack={() => router.back()}
+          right={shareButton}
+        />
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "80px 20px",
+            gap: 16,
+          }}
+        >
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              border: `2px solid ${ACCENT}`,
+              borderTopColor: "transparent",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+            }}
+          />
+          <span
+            style={{
+              fontFamily: MONO,
+              fontSize: 11,
+              letterSpacing: 1.5,
+              textTransform: "uppercase",
+              color: "rgba(245,245,242,0.5)",
+            }}
+          >
+            Loading analysis...
+          </span>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Error state ────────────────────────────────────────────────────────
+  if (error || !result) {
+    return (
+      <div
+        style={{
+          minHeight: "100dvh",
+          background: "#0A0A0A",
+          color: "#F5F5F2",
+          maxWidth: 520,
+          margin: "0 auto",
+          fontFamily: DISPLAY,
+        }}
+      >
+        <TopBar
+          title="Result"
+          accent={ACCENT}
+          onBack={() => router.back()}
+          right={shareButton}
+        />
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "80px 20px",
+            gap: 16,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: DISPLAY,
+              fontSize: 16,
+              color: "#ef4444",
+            }}
+          >
+            {error || "Analysis not found."}
+          </span>
+          <button
+            onClick={() => router.back()}
+            style={{
+              fontFamily: DISPLAY,
+              fontSize: 14,
+              fontWeight: 600,
+              color: ACCENT,
+              background: "transparent",
+              border: `1px solid ${ACCENT}`,
+              borderRadius: 12,
+              padding: "10px 24px",
+              cursor: "pointer",
+            }}
+          >
+            Go back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Derived values ─────────────────────────────────────────────────────
+  const r = result;
+  const maxBuy = parseFloat(r.maxBuy);
+  const headroom = parseFloat(r.headroom);
+  const costPrice = maxBuy - headroom;
+  const profit = parseFloat(r.mainProfit);
+  const roi = parseFloat(r.mainROI);
+  const margin = roi > 0 ? (profit / (profit + costPrice)) * 100 : 0;
+  const safety = 100 - r.risk; // risk inverted for display
+
+  // Channel data for the channels section
+  const channels = r.channels.map((ch) => {
+    const isRec = ch.channelRole === "recommended";
+    const isBestProfit = ch.channelRole === "best_profit";
+    const isTest = ch.channelRole === "test_only";
+    return { ...ch, isRec, isBestProfit, isTest };
+  });
 
   return (
     <div
@@ -332,7 +510,7 @@ export default function ResultPage() {
             textOverflow: "ellipsis",
           }}
         >
-          {PRODUCT_TITLE}
+          {r.product.title}
         </h1>
       </div>
 
@@ -365,7 +543,7 @@ export default function ResultPage() {
                 letterSpacing: -1,
               }}
             >
-              BUY
+              {r.recommendation}
             </div>
             <div
               style={{
@@ -377,13 +555,13 @@ export default function ResultPage() {
                 marginTop: 4,
               }}
             >
-              Opportunity {MOCK.opportunity_score}/100
+              Opportunity {r.flipScore}/100
             </div>
           </div>
           {/* Score circle */}
           <div
             role="img"
-            aria-label={`Score ${MOCK.opportunity_score} out of 100`}
+            aria-label={`Score ${r.flipScore} out of 100`}
             style={{
               width: 64,
               height: 64,
@@ -404,7 +582,7 @@ export default function ResultPage() {
                 color: "#0A0A0A",
               }}
             >
-              {MOCK.opportunity_score}
+              {r.flipScore}
             </span>
           </div>
         </div>
@@ -442,7 +620,7 @@ export default function ResultPage() {
               marginBottom: 16,
             }}
           >
-            ${fmt(MOCK.buy_box.recommended_max_buy)}
+            ${fmt(maxBuy)}
           </div>
           <div
             style={{
@@ -473,7 +651,7 @@ export default function ResultPage() {
                   color: "#F5F5F2",
                 }}
               >
-                ${fmt(MOCK.buy_box.your_cost)}
+                ${fmt(costPrice)}
               </div>
             </div>
             <div
@@ -505,7 +683,7 @@ export default function ResultPage() {
                   color: ACCENT,
                 }}
               >
-                +${fmt(MOCK.buy_box.headroom)}
+                +${fmt(headroom)}
               </div>
             </div>
           </div>
@@ -554,7 +732,7 @@ export default function ResultPage() {
                 marginBottom: 4,
               }}
             >
-              ${MOCK.sale_plan.quick}
+              ${fmt(parseFloat(r.quickPrice), 0)}
             </div>
             <div
               style={{
@@ -563,7 +741,7 @@ export default function ResultPage() {
                 color: "rgba(245,245,242,0.4)",
               }}
             >
-              3–5 days
+              3-5 days
             </div>
           </div>
 
@@ -601,7 +779,7 @@ export default function ResultPage() {
                 marginBottom: 4,
               }}
             >
-              ${MOCK.sale_plan.market}
+              ${fmt(parseFloat(r.marketPrice), 0)}
             </div>
             <div
               style={{
@@ -647,7 +825,7 @@ export default function ResultPage() {
                 marginBottom: 4,
               }}
             >
-              ${MOCK.sale_plan.stretch}
+              ${fmt(parseFloat(r.stretchPrice), 0)}
             </div>
             <div
               style={{
@@ -670,7 +848,6 @@ export default function ResultPage() {
         aria-label="Returns"
       >
         <SectionLabel>Returns</SectionLabel>
-        {/* Outer wrapper acts as 1px gap separator */}
         <div
           style={{
             background: "rgba(245,245,242,0.08)",
@@ -683,13 +860,13 @@ export default function ResultPage() {
           {[
             {
               label: "Net profit",
-              value: `+$${fmt(MOCK.returns.profit)}`,
+              value: `+$${fmt(profit)}`,
               accent: true,
             },
-            { label: "ROI", value: `${MOCK.returns.roi_pct}%`, accent: false },
+            { label: "ROI", value: `${fmt(roi, 1)}%`, accent: false },
             {
               label: "Margin",
-              value: `${MOCK.returns.margin_pct}%`,
+              value: `${fmt(margin, 1)}%`,
               accent: false,
             },
           ].map((cell) => (
@@ -741,17 +918,20 @@ export default function ResultPage() {
       >
         <SectionLabel>Scores</SectionLabel>
         <Card style={{ padding: "20px 20px 6px" }}>
-          {/* Risk: display as safety (100 - risk) */}
-          <ScoreBar label="Risk" value={100 - MOCK.risk_score} sublabel="Low" />
+          <ScoreBar
+            label="Risk"
+            value={safety}
+            sublabel={riskSublabel(safety)}
+          />
           <ScoreBar
             label="Confidence"
-            value={MOCK.confidence_score}
-            sublabel="High"
+            value={r.confidence}
+            sublabel={confidenceSublabel(r.confidence)}
           />
           <ScoreBar
             label="Velocity"
-            value={MOCK.velocity_score}
-            sublabel="Fast"
+            value={r.velocity}
+            sublabel={velocitySublabel(r.velocity)}
           />
         </Card>
       </section>
@@ -759,145 +939,145 @@ export default function ResultPage() {
       {/* ═══════════════════════════════════════════════════════════════════
           6. CHANNELS
       ════════════════════════════════════════════════════════════════════ */}
-      <section
-        style={{ padding: "0 20px", marginBottom: 20 }}
-        aria-label="Best channels"
-      >
-        <SectionLabel>Best channel</SectionLabel>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {MOCK.channels.map((ch) => {
-            const isRec = ch.role === "recommended";
-            const isBestProfit = ch.role === "best_profit";
-            const isTest = ch.role === "test_only";
+      {channels.length > 0 && (
+        <section
+          style={{ padding: "0 20px", marginBottom: 20 }}
+          aria-label="Best channels"
+        >
+          <SectionLabel>Best channel</SectionLabel>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {channels.map((ch) => {
+              return (
+                <div
+                  key={ch.id}
+                  style={{
+                    background: ch.isRec
+                      ? "rgba(212,255,61,0.07)"
+                      : "rgba(245,245,242,0.03)",
+                    border: ch.isRec
+                      ? "1px solid rgba(212,255,61,0.22)"
+                      : "1px solid rgba(245,245,242,0.08)",
+                    borderRadius: 16,
+                    padding: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                  }}
+                >
+                  {/* Left side */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        marginBottom: 6,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: DISPLAY,
+                          fontSize: 15,
+                          fontWeight: 700,
+                          color: ch.isRec ? ACCENT : "#F5F5F2",
+                        }}
+                      >
+                        {ch.label}
+                      </span>
+                      {ch.isRec && (
+                        <TinyBadge color="#0A0A0A" bg={ACCENT}>
+                          Best
+                        </TinyBadge>
+                      )}
+                      {ch.isBestProfit && (
+                        <TinyBadge color={ACCENT} bg="rgba(212,255,61,0.1)">
+                          +profit
+                        </TinyBadge>
+                      )}
+                      {ch.isTest && (
+                        <TinyBadge
+                          color="rgba(245,245,242,0.5)"
+                          bg="rgba(245,245,242,0.06)"
+                        >
+                          test
+                        </TinyBadge>
+                      )}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 9,
+                        letterSpacing: 1,
+                        color: "rgba(245,245,242,0.45)",
+                      }}
+                    >
+                      Sale ${ch.salePrice} &nbsp;&middot;&nbsp; Fee ${ch.fees}
+                    </div>
+                  </div>
 
-            return (
-              <div
-                key={ch.name}
-                style={{
-                  background: isRec
-                    ? "rgba(212,255,61,0.07)"
-                    : "rgba(245,245,242,0.03)",
-                  border: isRec
-                    ? "1px solid rgba(212,255,61,0.22)"
-                    : "1px solid rgba(245,245,242,0.08)",
-                  borderRadius: 16,
-                  padding: "16px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 8,
-                }}
-              >
-                {/* Left side */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      marginBottom: 6,
-                    }}
-                  >
-                    <span
+                  {/* Right side */}
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div
                       style={{
                         fontFamily: DISPLAY,
                         fontSize: 15,
                         fontWeight: 700,
-                        color: isRec ? ACCENT : "#F5F5F2",
+                        color: ch.isRec ? ACCENT : "#F5F5F2",
+                        marginBottom: 2,
                       }}
                     >
-                      {ch.name}
-                    </span>
-                    {isRec && (
-                      <TinyBadge color="#0A0A0A" bg={ACCENT}>
-                        Best
-                      </TinyBadge>
-                    )}
-                    {isBestProfit && (
-                      <TinyBadge color={ACCENT} bg="rgba(212,255,61,0.1)">
-                        +profit
-                      </TinyBadge>
-                    )}
-                    {isTest && (
-                      <TinyBadge
-                        color="rgba(245,245,242,0.5)"
-                        bg="rgba(245,245,242,0.06)"
-                      >
-                        test
-                      </TinyBadge>
-                    )}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: MONO,
-                      fontSize: 9,
-                      letterSpacing: 1,
-                      color: "rgba(245,245,242,0.45)",
-                    }}
-                  >
-                    Sale ${ch.sale} &nbsp;·&nbsp; Fee ${ch.fee}
+                      +${ch.profit}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 9,
+                        letterSpacing: 1,
+                        color: "rgba(245,245,242,0.45)",
+                      }}
+                    >
+                      ROI {ch.roi}%
+                    </div>
                   </div>
                 </div>
-
-                {/* Right side */}
-                <div style={{ textAlign: "right", flexShrink: 0 }}>
-                  <div
-                    style={{
-                      fontFamily: DISPLAY,
-                      fontSize: 15,
-                      fontWeight: 700,
-                      color: isRec ? ACCENT : "#F5F5F2",
-                      marginBottom: 2,
-                    }}
-                  >
-                    +${fmt(ch.net)}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: MONO,
-                      fontSize: 9,
-                      letterSpacing: 1,
-                      color: "rgba(245,245,242,0.45)",
-                    }}
-                  >
-                    ROI {ch.roi}%
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════
           7. AI VERDICT
       ════════════════════════════════════════════════════════════════════ */}
-      <section
-        style={{ padding: "0 20px", marginBottom: 20 }}
-        aria-label="AI verdict"
-      >
-        <SectionLabel dot>AI Verdict</SectionLabel>
-        <div
-          style={{
-            background: "rgba(245,245,242,0.03)",
-            border: "1px solid rgba(245,245,242,0.08)",
-            borderRadius: 20,
-            padding: "18px 20px",
-          }}
+      {r.aiExplanation && (
+        <section
+          style={{ padding: "0 20px", marginBottom: 20 }}
+          aria-label="AI verdict"
         >
-          <p
+          <SectionLabel dot>AI Verdict</SectionLabel>
+          <div
             style={{
-              fontFamily: DISPLAY,
-              fontSize: 14,
-              color: "rgba(245,245,242,0.85)",
-              lineHeight: 1.55,
-              margin: 0,
+              background: "rgba(245,245,242,0.03)",
+              border: "1px solid rgba(245,245,242,0.08)",
+              borderRadius: 20,
+              padding: "18px 20px",
             }}
           >
-            {MOCK.ai_text}
-          </p>
-        </div>
-      </section>
+            <p
+              style={{
+                fontFamily: DISPLAY,
+                fontSize: 14,
+                color: "rgba(245,245,242,0.85)",
+                lineHeight: 1.55,
+                margin: 0,
+              }}
+            >
+              {r.aiExplanation}
+            </p>
+          </div>
+        </section>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════
           8. COMPS
@@ -906,7 +1086,9 @@ export default function ResultPage() {
         style={{ padding: "0 20px", marginBottom: 20 }}
         aria-label="Comparable sales"
       >
-        <SectionLabel>Comps · eBay Sold · 20d</SectionLabel>
+        <SectionLabel>
+          Comps &middot; {r.product.market_source_label} Sold &middot; 20d
+        </SectionLabel>
         <Card>
           {/* 3 stat columns */}
           <div
@@ -916,9 +1098,15 @@ export default function ResultPage() {
             }}
           >
             {[
-              { label: "Sold", value: String(MOCK.comps.total_sold) },
-              { label: "Median", value: `$${MOCK.comps.median_price}` },
-              { label: "Per day", value: String(MOCK.comps.sales_per_day) },
+              { label: "Sold", value: String(r.product.comps) },
+              {
+                label: "Median",
+                value: `$${Math.round(r.product.median_price)}`,
+              },
+              {
+                label: "Per day",
+                value: String(r.product.sales_per_day.toFixed(1)),
+              },
             ].map((s, i, arr) => (
               <div
                 key={s.label}
@@ -959,8 +1147,17 @@ export default function ResultPage() {
             ))}
           </div>
 
-          {/* Mini bar chart */}
-          <MiniBarChart bars={[6, 9, 14, 11, 5, 2]} />
+          {/* Mini bar chart — approximate distribution from min/median/max */}
+          <MiniBarChart
+            bars={[
+              Math.max(1, Math.round(r.product.comps * 0.15)),
+              Math.max(1, Math.round(r.product.comps * 0.25)),
+              Math.max(1, Math.round(r.product.comps * 0.3)),
+              Math.max(1, Math.round(r.product.comps * 0.2)),
+              Math.max(1, Math.round(r.product.comps * 0.07)),
+              Math.max(1, Math.round(r.product.comps * 0.03)),
+            ]}
+          />
 
           {/* Price range labels */}
           <div
@@ -971,9 +1168,9 @@ export default function ResultPage() {
             }}
           >
             {[
-              `$${MOCK.comps.p25}`,
-              `$${MOCK.comps.median_price}`,
-              `$${MOCK.comps.p75}`,
+              `$${Math.round(r.product.min_price)}`,
+              `$${Math.round(r.product.median_price)}`,
+              `$${Math.round(r.product.max_price)}`,
             ].map((label) => (
               <span
                 key={label}
@@ -1021,7 +1218,7 @@ export default function ResultPage() {
             gap: 6,
           }}
         >
-          <span aria-hidden="true">★</span> Add to watchlist
+          <span aria-hidden="true">&#9733;</span> Add to watchlist
         </button>
 
         {/* Primary: New analysis */}
@@ -1046,9 +1243,42 @@ export default function ResultPage() {
             letterSpacing: -0.2,
           }}
         >
-          New analysis <span aria-hidden="true">→</span>
+          New analysis <span aria-hidden="true">&rarr;</span>
         </button>
       </div>
     </div>
+  );
+}
+
+// ─── Page (wrapped in Suspense for useSearchParams) ──────────────────────────
+export default function ResultPage() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          style={{
+            minHeight: "100dvh",
+            background: "#0A0A0A",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              border: "2px solid #D4FF3D",
+              borderTopColor: "transparent",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+            }}
+          />
+        </div>
+      }
+    >
+      <ResultPageInner />
+    </Suspense>
   );
 }
