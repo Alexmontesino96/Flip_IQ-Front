@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { fetchHistory, AnalysisHistoryItem } from "@/lib/history";
-import { fetchBilling, BillingStatus } from "@/lib/usage";
+import { fetchBilling, checkStatus, BillingStatus } from "@/lib/usage";
 import TopBar from "@/components/ui/TopBar";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
 
@@ -67,8 +67,20 @@ export default function HomePage() {
       setLoading(false);
     });
 
-    fetchBilling().then((b) => {
-      if (b) setBilling(b);
+    // Try billing endpoint first, fall back to checkStatus
+    fetchBilling().then(async (b) => {
+      if (b) {
+        setBilling(b);
+      } else {
+        const s = await checkStatus();
+        setBilling({
+          plan: s.tier,
+          daily_limit: s.remaining + 5, // approximate
+          scans_used_today: 5 - Math.min(s.remaining, 5),
+          scans_remaining_today: s.remaining,
+          reset_in_seconds: 0,
+        });
+      }
     });
   }, []);
 

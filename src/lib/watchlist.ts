@@ -1,26 +1,22 @@
 import { API_URL, getAuthHeaders } from "./api";
 
+export interface WatchlistItem {
+  id: number;
+  product_id: number;
+  product_title: string | null;
+  target_buy_price: number | null;
+  notes: string | null;
+  added_at: string;
+}
+
 export interface Watchlist {
   id: number;
   name: string;
+  items: WatchlistItem[];
   created_at: string;
 }
 
-export interface WatchlistItem {
-  id: number;
-  watchlist_id: number;
-  product_id: number | null;
-  product_title: string;
-  target_price: number | null;
-  current_price: number | null;
-  cost_price: number | null;
-  last_analysis_id: number | null;
-  recommendation: string | null;
-  flip_score: number | null;
-  net_profit: number | null;
-  created_at: string;
-}
-
+/** GET /api/v1/watchlists/ — returns all watchlists with items nested */
 export async function fetchWatchlists(): Promise<Watchlist[]> {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API_URL}/api/v1/watchlists/`, {
@@ -31,6 +27,7 @@ export async function fetchWatchlists(): Promise<Watchlist[]> {
   return res.json();
 }
 
+/** POST /api/v1/watchlists/ — create a new watchlist */
 export async function createWatchlist(name: string): Promise<Watchlist | null> {
   const headers = await getAuthHeaders();
   const res = await fetch(`${API_URL}/api/v1/watchlists/`, {
@@ -43,39 +40,29 @@ export async function createWatchlist(name: string): Promise<Watchlist | null> {
   return res.json();
 }
 
-export async function fetchWatchlistItems(
-  watchlistId: number
-): Promise<WatchlistItem[]> {
-  const headers = await getAuthHeaders();
-  const res = await fetch(`${API_URL}/api/v1/watchlists/${watchlistId}/items`, {
-    credentials: "include",
-    headers,
-  });
-  if (!res.ok) return [];
-  return res.json();
-}
-
+/** POST /api/v1/watchlists/{id}/items — add item (product_id required) */
 export async function addWatchlistItem(
   watchlistId: number,
-  item: {
-    product_title: string;
-    product_id?: number | null;
-    target_price?: number | null;
-    cost_price?: number | null;
-    last_analysis_id?: number | null;
-  }
+  productId: number,
+  targetBuyPrice?: number | null,
+  notes?: string | null
 ): Promise<WatchlistItem | null> {
   const headers = await getAuthHeaders();
+  const body: Record<string, unknown> = { product_id: productId };
+  if (targetBuyPrice != null) body.target_buy_price = targetBuyPrice;
+  if (notes != null) body.notes = notes;
+
   const res = await fetch(`${API_URL}/api/v1/watchlists/${watchlistId}/items`, {
     method: "POST",
     credentials: "include",
     headers: { ...headers, "Content-Type": "application/json" },
-    body: JSON.stringify(item),
+    body: JSON.stringify(body),
   });
   if (!res.ok) return null;
   return res.json();
 }
 
+/** DELETE /api/v1/watchlists/{wl_id}/items/{item_id} */
 export async function removeWatchlistItem(
   watchlistId: number,
   itemId: number

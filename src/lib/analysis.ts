@@ -37,6 +37,7 @@ export interface Channel {
 }
 
 export interface ResultProduct {
+  id: number | null;
   title: string;
   brand: string;
   image: string;
@@ -547,6 +548,7 @@ export function transformResponse(data: any): AnalysisResult {
 
   // Product info from API + market data from primary analysis
   const product: ResultProduct = {
+    id: data.product?.id ?? null,
     title: data.product?.title || "Unknown Product",
     brand: data.product?.brand || "",
     image: data.product?.image_url || "",

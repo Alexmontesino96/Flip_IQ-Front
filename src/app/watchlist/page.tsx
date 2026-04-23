@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   fetchWatchlists,
-  fetchWatchlistItems,
   createWatchlist,
   removeWatchlistItem,
   Watchlist,
@@ -13,44 +12,30 @@ import {
 import TopBar from "@/components/ui/TopBar";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
 
-function normalizeRec(rec: string | null): string {
-  if (!rec) return "—";
-  const r = rec.toLowerCase();
-  if (r === "buy") return "BUY";
-  if (r === "buy_small") return "BUY SM";
-  if (r === "watch") return "WATCH";
-  if (r === "pass") return "PASS";
-  return r.toUpperCase();
-}
-
-function recColor(rec: string | null): string {
-  if (!rec) return "rgba(245,245,242,0.4)";
-  const r = rec.toLowerCase();
-  if (r === "buy" || r === "buy_small") return ACCENT;
-  if (r === "watch") return "#FFB84D";
-  return "rgba(245,245,242,0.4)";
-}
-
 export default function WatchlistPage() {
   const router = useRouter();
   const [watchlist, setWatchlist] = useState<Watchlist | null>(null);
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    let lists = await fetchWatchlists();
+    setError(null);
+    try {
+      let lists = await fetchWatchlists();
 
-    // Auto-create default watchlist if none exists
-    if (lists.length === 0) {
-      const created = await createWatchlist("My Watchlist");
-      if (created) lists = [created];
-    }
+      if (lists.length === 0) {
+        const created = await createWatchlist("My Watchlist");
+        if (created) lists = [created];
+      }
 
-    if (lists.length > 0) {
-      setWatchlist(lists[0]);
-      const wlItems = await fetchWatchlistItems(lists[0].id);
-      setItems(wlItems);
+      if (lists.length > 0) {
+        setWatchlist(lists[0]);
+        setItems(lists[0].items || []);
+      }
+    } catch {
+      setError("Could not load watchlist");
     }
     setLoading(false);
   }, []);
@@ -125,13 +110,20 @@ export default function WatchlistPage() {
           >
             Loading watchlist...
           </div>
-        ) : items.length === 0 ? (
+        ) : error ? (
           <div
             style={{
               padding: "40px 0",
               textAlign: "center",
+              fontFamily: MONO,
+              fontSize: 11,
+              color: "rgba(245,245,242,0.3)",
             }}
           >
+            {error}
+          </div>
+        ) : items.length === 0 ? (
+          <div style={{ padding: "40px 0", textAlign: "center" }}>
             <div
               style={{
                 fontFamily: MONO,
@@ -165,135 +157,89 @@ export default function WatchlistPage() {
               listStyle: "none",
               margin: 0,
               padding: 0,
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
+              borderTop: "1px solid rgba(245,245,242,0.07)",
             }}
           >
-            {items.map((item) => {
-              const profit = item.net_profit ?? 0;
-              return (
-                <li key={item.id}>
+            {items.map((item) => (
+              <li
+                key={item.id}
+                style={{
+                  borderBottom: "1px solid rgba(245,245,242,0.07)",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "14px 0",
+                  }}
+                >
+                  {/* Thumbnail placeholder */}
                   <div
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      padding: "12px 0",
-                      borderBottom: "1px solid rgba(245,245,242,0.07)",
+                      width: 44,
+                      height: 44,
+                      borderRadius: 10,
+                      background: "rgba(245,245,242,0.06)",
+                      border: "1px solid rgba(245,245,242,0.08)",
+                      flexShrink: 0,
                     }}
-                  >
-                    {/* Rec color bar */}
+                  />
+
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
-                        width: 4,
-                        height: 36,
-                        borderRadius: 2,
-                        background: recColor(item.recommendation),
-                        flexShrink: 0,
-                      }}
-                    />
-
-                    {/* Info — clickable */}
-                    <button
-                      onClick={() => {
-                        if (item.last_analysis_id) {
-                          router.push(`/result?id=${item.last_analysis_id}`);
-                        }
-                      }}
-                      style={{
-                        flex: 1,
-                        minWidth: 0,
-                        background: "none",
-                        border: "none",
-                        cursor: item.last_analysis_id ? "pointer" : "default",
-                        textAlign: "left",
-                        padding: 0,
+                        fontFamily: DISPLAY,
+                        fontSize: 15,
+                        fontWeight: 500,
+                        color: "#F5F5F2",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        marginBottom: 3,
                       }}
                     >
-                      <div
-                        style={{
-                          fontFamily: DISPLAY,
-                          fontSize: 15,
-                          fontWeight: 500,
-                          color: "#F5F5F2",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          marginBottom: 3,
-                        }}
-                      >
-                        {item.product_title}
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: MONO,
-                          fontSize: 10,
-                          color: "rgba(245,245,242,0.4)",
-                          letterSpacing: 0.3,
-                          display: "flex",
-                          gap: 8,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        {item.recommendation && (
-                          <span
-                            style={{ color: recColor(item.recommendation) }}
-                          >
-                            {normalizeRec(item.recommendation)}
-                          </span>
-                        )}
-                        {item.target_price != null && (
-                          <span>target ${item.target_price}</span>
-                        )}
-                        {item.current_price != null && (
-                          <span>now ${item.current_price}</span>
-                        )}
-                        {item.cost_price != null && (
-                          <span>cost ${item.cost_price}</span>
-                        )}
-                        {item.flip_score != null && (
-                          <span>score {item.flip_score}</span>
-                        )}
-                      </div>
-                    </button>
-
-                    {/* Profit */}
-                    <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      {item.net_profit != null && (
-                        <div
-                          style={{
-                            fontFamily: MONO,
-                            fontSize: 13,
-                            fontWeight: 600,
-                            color: profit >= 0 ? ACCENT : "#FF6464",
-                          }}
-                        >
-                          {profit >= 0 ? "+" : ""}${Math.abs(profit).toFixed(2)}
-                        </div>
-                      )}
+                      {item.product_title || `Product #${item.product_id}`}
                     </div>
-
-                    {/* Remove button */}
-                    <button
-                      onClick={() => handleRemove(item.id)}
-                      aria-label={`Remove ${item.product_title}`}
+                    <div
                       style={{
-                        background: "none",
-                        border: "none",
-                        color: "rgba(245,245,242,0.25)",
-                        fontSize: 16,
-                        cursor: "pointer",
-                        padding: "4px",
-                        flexShrink: 0,
+                        fontFamily: MONO,
+                        fontSize: 10,
+                        color: "rgba(245,245,242,0.4)",
+                        letterSpacing: 0.3,
+                        display: "flex",
+                        gap: 8,
                       }}
                     >
-                      ×
-                    </button>
+                      {item.target_buy_price != null && (
+                        <span>target ${item.target_buy_price}</span>
+                      )}
+                      {item.notes && <span>{item.notes}</span>}
+                    </div>
                   </div>
-                </li>
-              );
-            })}
+
+                  {/* Remove */}
+                  <button
+                    onClick={() => handleRemove(item.id)}
+                    aria-label={`Remove ${item.product_title || "item"}`}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "rgba(245,245,242,0.25)",
+                      fontSize: 18,
+                      cursor: "pointer",
+                      padding: "4px 2px",
+                      flexShrink: 0,
+                      lineHeight: 1,
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              </li>
+            ))}
           </ul>
         )}
       </div>

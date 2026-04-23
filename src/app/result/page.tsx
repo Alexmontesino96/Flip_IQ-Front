@@ -10,6 +10,11 @@ import {
   shareAnalysis,
   AnalysisResult,
 } from "@/lib/analysis";
+import {
+  fetchWatchlists,
+  createWatchlist,
+  addWatchlistItem,
+} from "@/lib/watchlist";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const fmt = (n: number, decimals = 2) =>
@@ -236,6 +241,8 @@ function ResultPageInner() {
 
   const [sharing, setSharing] = useState(false);
   const [shared, setShared] = useState(false);
+  const [watchlistAdded, setWatchlistAdded] = useState(false);
+  const [watchlistAdding, setWatchlistAdding] = useState(false);
 
   const handleShare = async () => {
     if (!id || sharing) return;
@@ -254,6 +261,29 @@ function ResultPageInner() {
       // user cancelled share or error
     } finally {
       setSharing(false);
+    }
+  };
+
+  const handleAddToWatchlist = async () => {
+    if (!result || watchlistAdding || watchlistAdded) return;
+    const productId = result.product?.id;
+    if (!productId) return;
+
+    setWatchlistAdding(true);
+    try {
+      let lists = await fetchWatchlists();
+      if (lists.length === 0) {
+        const created = await createWatchlist("My Watchlist");
+        if (created) lists = [created];
+      }
+      if (lists.length > 0) {
+        const added = await addWatchlistItem(lists[0].id, productId);
+        if (added) setWatchlistAdded(true);
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setWatchlistAdding(false);
     }
   };
 
@@ -1200,31 +1230,43 @@ function ResultPageInner() {
       >
         {/* Secondary: Add to watchlist */}
         <button
-          aria-label="Add to watchlist"
+          onClick={handleAddToWatchlist}
+          disabled={watchlistAdding || watchlistAdded || !result?.product?.id}
+          aria-label={
+            watchlistAdded ? "Added to watchlist" : "Add to watchlist"
+          }
           style={{
             flex: 1,
             height: 50,
             borderRadius: 14,
-            border: "1px solid rgba(245,245,242,0.12)",
+            border: watchlistAdded
+              ? `1px solid ${ACCENT}`
+              : "1px solid rgba(245,245,242,0.12)",
             background: "transparent",
-            color: "#F5F5F2",
+            color: watchlistAdded ? ACCENT : "#F5F5F2",
             fontFamily: DISPLAY,
             fontSize: 14,
             fontWeight: 600,
-            cursor: "pointer",
+            cursor: watchlistAdding || watchlistAdded ? "default" : "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             gap: 6,
+            opacity: watchlistAdding ? 0.5 : 1,
           }}
         >
-          <span aria-hidden="true">&#9733;</span> Add to watchlist
+          <span aria-hidden="true">{watchlistAdded ? "✓" : "★"}</span>
+          {watchlistAdded
+            ? "Added"
+            : watchlistAdding
+              ? "Adding..."
+              : "Add to watchlist"}
         </button>
 
         {/* Primary: New analysis */}
         <button
           aria-label="Start new analysis"
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/search")}
           style={{
             flex: 1,
             height: 50,
