@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { fetchHistory, AnalysisHistoryItem } from "@/lib/history";
 import { fetchBilling, checkStatus, BillingStatus } from "@/lib/usage";
+import { fetchWatchlists } from "@/lib/watchlist";
 import TopBar from "@/components/ui/TopBar";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
 
@@ -52,6 +53,7 @@ export default function HomePage() {
   const [historyCount, setHistoryCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [billing, setBilling] = useState<BillingStatus | null>(null);
+  const [watchlistCount, setWatchlistCount] = useState(0);
 
   useEffect(() => {
     const supabase = createClient();
@@ -65,6 +67,11 @@ export default function HomePage() {
       setRecentAnalyses(items.slice(0, 3));
       setHistoryCount(items.length);
       setLoading(false);
+    });
+
+    fetchWatchlists().then((lists) => {
+      const total = lists.reduce((sum, wl) => sum + (wl.items?.length || 0), 0);
+      setWatchlistCount(total);
     });
 
     // Try billing endpoint first, fall back to checkStatus
@@ -669,7 +676,7 @@ export default function HomePage() {
               lineHeight: 1,
             }}
           >
-            —
+            {watchlistCount}
           </span>
         </button>
 
