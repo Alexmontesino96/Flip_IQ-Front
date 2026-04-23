@@ -44,6 +44,33 @@ export async function checkStatus(): Promise<{
   }
 }
 
+export interface BillingStatus {
+  plan: string;
+  daily_limit: number;
+  scans_used_today: number;
+  scans_remaining_today: number;
+  reset_in_seconds: number;
+}
+
+/** Fetch billing status from authenticated endpoint (reads real Redis data). */
+export async function fetchBilling(): Promise<BillingStatus | null> {
+  try {
+    // Dynamic import to avoid circular dependency
+    const { getAuthHeaders } = await import("./api");
+    const headers = await getAuthHeaders();
+    if (!headers["Authorization"]) return null; // not logged in
+
+    const res = await fetch(`${API_URL}/api/v1/billing/me`, {
+      credentials: "include",
+      headers,
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 export async function submitEmail(email: string): Promise<void> {
   const res = await fetch(`${API_URL}/api/v1/waitlist/`, {
     method: "POST",

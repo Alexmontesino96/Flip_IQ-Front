@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { fetchHistory, AnalysisHistoryItem } from "@/lib/history";
+import { fetchBilling, BillingStatus } from "@/lib/usage";
 import TopBar from "@/components/ui/TopBar";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
 
@@ -50,6 +51,7 @@ export default function HomePage() {
   );
   const [historyCount, setHistoryCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [billing, setBilling] = useState<BillingStatus | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -63,6 +65,10 @@ export default function HomePage() {
       setRecentAnalyses(items.slice(0, 3));
       setHistoryCount(items.length);
       setLoading(false);
+    });
+
+    fetchBilling().then((b) => {
+      if (b) setBilling(b);
     });
   }, []);
 
@@ -178,6 +184,112 @@ export default function HomePage() {
           What are you flipping today?
         </h1>
       </section>
+
+      {/* Scan usage */}
+      {billing && (
+        <section aria-label="Scan usage" style={{ padding: "0 20px 20px" }}>
+          <div
+            style={{
+              padding: "16px 18px",
+              borderRadius: 16,
+              background: "rgba(245,245,242,0.03)",
+              border: "1px solid rgba(245,245,242,0.08)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 10,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 9,
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                  color: "rgba(245,245,242,0.4)",
+                }}
+              >
+                Scans today
+              </span>
+              <button
+                onClick={() => router.push("/plans")}
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 9,
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                  color: ACCENT,
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              >
+                {billing.plan === "free"
+                  ? "Upgrade →"
+                  : billing.plan.toUpperCase()}
+              </button>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: 6,
+                marginBottom: 8,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: DISPLAY,
+                  fontSize: 28,
+                  fontWeight: 700,
+                  color: "#F5F5F2",
+                  letterSpacing: -1,
+                }}
+              >
+                {billing.scans_remaining_today}
+              </span>
+              <span
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  color: "rgba(245,245,242,0.4)",
+                }}
+              >
+                / {billing.daily_limit} remaining
+              </span>
+            </div>
+            {/* Progress bar */}
+            <div
+              style={{
+                height: 4,
+                borderRadius: 2,
+                background: "rgba(245,245,242,0.08)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${Math.min(100, (billing.scans_used_today / billing.daily_limit) * 100)}%`,
+                  borderRadius: 2,
+                  background:
+                    billing.scans_remaining_today === 0
+                      ? "#FF6464"
+                      : billing.scans_remaining_today <= 2
+                        ? "#FFB84D"
+                        : ACCENT,
+                  transition: "width 0.6s ease",
+                }}
+              />
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Action buttons */}
       <section

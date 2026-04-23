@@ -12,7 +12,7 @@ import {
   MarketplaceDetail,
   ApiError,
 } from "@/lib/analysis";
-import { checkStatus, submitEmail } from "@/lib/usage";
+import { checkStatus, fetchBilling, submitEmail } from "@/lib/usage";
 import EmailGate from "./EmailGate";
 import { trackEvent } from "@/lib/tracking";
 import {
@@ -540,12 +540,21 @@ export default function FlipIQCalculator() {
     "Generating recommendation...",
   ];
 
-  useEffect(() => {
-    checkStatus().then((s) => {
+  const refreshUsage = useCallback(async () => {
+    const b = await fetchBilling();
+    if (b) {
+      setRemaining(b.scans_remaining_today);
+      setTier(b.plan);
+    } else {
+      const s = await checkStatus();
       setRemaining(s.remaining);
       setTier(s.tier);
-    });
+    }
   }, []);
+
+  useEffect(() => {
+    void refreshUsage();
+  }, [refreshUsage]);
 
   useEffect(() => {
     if (!loading) return;
@@ -642,10 +651,7 @@ export default function FlipIQCalculator() {
           recommendation: r.recommendation,
           flipScore: r.flipScore,
         });
-        checkStatus().then((s) => {
-          setRemaining(s.remaining);
-          setTier(s.tier);
-        });
+        refreshUsage();
         setTimeout(
           () =>
             resultRef.current?.scrollIntoView({
@@ -670,7 +676,7 @@ export default function FlipIQCalculator() {
         }
       }
     },
-    []
+    [refreshUsage]
   );
 
   const executeAnalysis = useCallback(
@@ -710,10 +716,7 @@ export default function FlipIQCalculator() {
               recommendation: r.recommendation,
               flipScore: r.flipScore,
             });
-            checkStatus().then((s) => {
-              setRemaining(s.remaining);
-              setTier(s.tier);
-            });
+            refreshUsage();
             setTimeout(
               () =>
                 resultRef.current?.scrollIntoView({
@@ -814,10 +817,8 @@ export default function FlipIQCalculator() {
       // best-effort — email saved to localStorage regardless
     }
     setShowEmailGate(false);
-    // Refresh status — now verified with 100/day
-    const s = await checkStatus();
-    setRemaining(s.remaining);
-    setTier(s.tier);
+    // Refresh status — now verified with increased limit
+    await refreshUsage();
     // Retry the analysis (isRetry=true prevents re-showing gate)
     executeAnalysis(query, costPrice, condition, true);
   };
