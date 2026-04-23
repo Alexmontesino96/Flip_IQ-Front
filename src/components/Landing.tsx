@@ -2642,7 +2642,7 @@ export default function Landing() {
     /* Hero */
     .ln-hero { padding: 100px 20px 32px !important; min-height: auto !important; }
     .ln-hero-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
-    .ln-hero-right { height: auto !important; aspect-ratio: 1/1; max-width: 320px; margin: 0 auto; }
+    .ln-hero-right { height: 320px !important; width: 320px !important; max-width: 100% !important; margin: 0 auto !important; }
     .ln-orb-wrap { width: 100% !important; height: 100% !important; }
     .ln-orb-center .n { font-size: 84px !important; letter-spacing: -3.5px !important; }
     .ln-orb-center .n .u { font-size: 32px !important; }
