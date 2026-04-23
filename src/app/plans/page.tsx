@@ -8,10 +8,10 @@ import TinyBadge from "@/components/ui/TinyBadge";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
 
 // Usage:
-// Default selected plan is 'pro'. Clicking "Choose plan →" (or "Current" for free)
+// Default selected plan is 'basic'. Clicking "Choose plan →" (or "Current" for free)
 // would trigger subscription flow. BigBtn is disabled-style when plan=free.
 
-type PlanId = "free" | "pro" | "business" | "power";
+type PlanId = "free" | "basic" | "premium";
 
 interface Plan {
   id: PlanId;
@@ -27,45 +27,42 @@ const PLANS: Plan[] = [
     id: "free",
     name: "Free",
     price: 0,
-    limit: "20 analyses/mo",
-    feats: ["Basic eBay comps", "Sourcing guide", "1 watchlist"],
+    limit: "5 scans/day",
+    feats: [
+      "eBay comps only",
+      "Keyword search",
+      "Sourcing guide",
+      "1 watchlist",
+    ],
   },
   {
-    id: "pro",
-    name: "Pro",
-    price: 19,
+    id: "basic",
+    name: "Basic",
+    price: 9.99,
     tag: "Most picked",
-    limit: "400 analyses/mo",
+    limit: "25 scans/day",
     feats: [
       "Everything in Free",
-      "Barcode + full score",
-      "Push + email alerts",
-      "Unlimited watchlist",
+      "eBay + Amazon comps",
+      "Barcode scanning",
+      "Full flip score",
+      "Push alerts",
+      "5 watchlists",
     ],
   },
   {
-    id: "business",
-    name: "Business",
-    price: 49,
-    limit: "2,500 analyses/mo",
-    feats: [
-      "Everything in Pro",
-      "Multi-channel presets",
-      "CSV export",
-      "Custom buy-box rules",
-    ],
-  },
-  {
-    id: "power",
-    name: "Power",
-    price: 99,
+    id: "premium",
+    name: "Premium",
+    price: 24.99,
     tag: "Power sellers",
-    limit: "10,000 analyses/mo",
+    limit: "100 scans/day",
     feats: [
-      "Everything in Business",
-      "API + webhooks",
+      "Everything in Basic",
+      "Market Intelligence AI",
+      "Push + email alerts",
+      "Unlimited watchlists",
+      "CSV export",
       "Priority support",
-      "Team seats",
     ],
   },
 ];
@@ -74,7 +71,7 @@ function planCardStyle(
   isSelected: boolean,
   planId: PlanId
 ): React.CSSProperties {
-  if (isSelected && planId === "pro") {
+  if (isSelected && planId === "basic") {
     return {
       background: ACCENT,
       color: "#0A0A0A",
@@ -112,17 +109,17 @@ function planCardStyle(
 
 export default function PlansPage() {
   const router = useRouter();
-  const [selected, setSelected] = useState<PlanId>("pro");
+  const [selected, setSelected] = useState<PlanId>("basic");
 
-  const isProSelected = selected === "pro";
+  const isBasicSelected = selected === "basic";
   const textColor = (planId: PlanId) =>
-    planId === selected && planId === "pro" ? "#0A0A0A" : "#F5F5F2";
+    planId === selected && planId === "basic" ? "#0A0A0A" : "#F5F5F2";
   const mutedColor = (planId: PlanId) =>
-    planId === selected && planId === "pro"
+    planId === selected && planId === "basic"
       ? "rgba(0,0,0,0.5)"
       : "rgba(245,245,242,0.5)";
   const checkColor = (planId: PlanId) =>
-    planId === selected && planId === "pro" ? "#0A0A0A" : ACCENT;
+    planId === selected && planId === "basic" ? "#0A0A0A" : ACCENT;
 
   return (
     <div
@@ -211,9 +208,11 @@ export default function PlansPage() {
 
                 {plan.tag && (
                   <TinyBadge
-                    color={isSelected && plan.id === "pro" ? "#0A0A0A" : ACCENT}
+                    color={
+                      isSelected && plan.id === "basic" ? "#0A0A0A" : ACCENT
+                    }
                     bg={
-                      isSelected && plan.id === "pro"
+                      isSelected && plan.id === "basic"
                         ? "rgba(0,0,0,0.15)"
                         : "rgba(212,255,61,0.12)"
                     }
@@ -232,7 +231,9 @@ export default function PlansPage() {
                     flexShrink: 0,
                   }}
                 >
-                  {plan.price === 0 ? "Free" : `$${plan.price}/mo`}
+                  {plan.price === 0
+                    ? "Free"
+                    : `$${plan.price % 1 === 0 ? plan.price : plan.price.toFixed(2)}/mo`}
                 </span>
               </div>
 
