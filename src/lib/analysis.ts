@@ -75,6 +75,7 @@ export interface ExecutionInfo {
 }
 
 export interface AnalysisResult {
+  noCompsFound: boolean;
   product: ResultProduct;
   channels: Channel[];
   flipScore: number;
@@ -642,6 +643,7 @@ export function transformResponse(data: any): AnalysisResult {
   );
 
   return {
+    noCompsFound: Boolean(data.no_comps_found),
     product,
     channels,
     flipScore: data.flip_score ?? 0,

@@ -462,6 +462,274 @@ function ResultPageInner() {
     );
   }
 
+  // ── No comps found — special screen ────────────────────────────────────
+  if (result.noCompsFound) {
+    return (
+      <div
+        style={{
+          minHeight: "100dvh",
+          background: "#0A0A0A",
+          color: "#F5F5F2",
+          maxWidth: 520,
+          margin: "0 auto",
+          fontFamily: DISPLAY,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <TopBar title="Result" accent={ACCENT} onBack={() => router.back()} />
+
+        {/* Illustration */}
+        <div
+          style={{
+            padding: "40px 20px 0",
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          <svg width="160" height="160" viewBox="0 0 160 160" fill="none">
+            {/* Scatter dots */}
+            <circle cx="30" cy="50" r="3" fill="rgba(245,245,242,0.08)" />
+            <circle cx="130" cy="40" r="4" fill="rgba(245,245,242,0.06)" />
+            <circle cx="45" cy="120" r="3" fill="rgba(245,245,242,0.07)" />
+            <circle cx="120" cy="110" r="3" fill="rgba(245,245,242,0.06)" />
+            {/* Central circle */}
+            <circle
+              cx="80"
+              cy="80"
+              r="40"
+              fill="rgba(245,245,242,0.03)"
+              stroke="rgba(245,245,242,0.08)"
+              strokeWidth="1"
+            />
+            {/* Arc */}
+            <path
+              d="M 62 100 A 18 18 0 1 1 98 100"
+              fill="none"
+              stroke={ACCENT}
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            {/* Question mark */}
+            <text
+              x="80"
+              y="108"
+              textAnchor="middle"
+              fontFamily="JetBrains Mono"
+              fontSize="32"
+              fontWeight="700"
+              fill={ACCENT}
+            >
+              ?
+            </text>
+            {/* Dashed lines */}
+            <line
+              x1="80"
+              y1="80"
+              x2="140"
+              y2="72"
+              stroke="rgba(245,245,242,0.1)"
+              strokeWidth="1"
+              strokeDasharray="2 3"
+            />
+            <line
+              x1="80"
+              y1="80"
+              x2="32"
+              y2="110"
+              stroke="rgba(245,245,242,0.1)"
+              strokeWidth="1"
+              strokeDasharray="2 3"
+            />
+          </svg>
+        </div>
+
+        {/* Message */}
+        <div style={{ padding: "0 24px 20px", textAlign: "center" }}>
+          <div
+            style={{
+              fontFamily: MONO,
+              fontSize: 9,
+              letterSpacing: 2,
+              color: ACCENT,
+              textTransform: "uppercase",
+              marginBottom: 8,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+            }}
+          >
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: ACCENT,
+                display: "inline-block",
+              }}
+            />
+            Not enough data
+          </div>
+          <div
+            style={{
+              fontFamily: DISPLAY,
+              fontSize: 26,
+              fontWeight: 700,
+              color: "#F5F5F2",
+              letterSpacing: -0.8,
+              lineHeight: 1.1,
+              marginBottom: 10,
+            }}
+          >
+            We couldn&apos;t analyze this one
+          </div>
+          <div
+            style={{
+              fontFamily: DISPLAY,
+              fontSize: 14,
+              color: "rgba(245,245,242,0.6)",
+              lineHeight: 1.45,
+              letterSpacing: -0.1,
+            }}
+          >
+            We couldn&apos;t find reliable comps for your search. An analyst
+            will review this product manually so it resolves in seconds next
+            time.
+          </div>
+        </div>
+
+        {/* Query echo */}
+        {result.product?.title &&
+          result.product.title !== "Unknown Product" && (
+            <div style={{ padding: "0 20px 16px" }}>
+              <div
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 10,
+                  background: "rgba(245,245,242,0.04)",
+                  border: "1px solid rgba(245,245,242,0.08)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 9,
+                    letterSpacing: 1.5,
+                    color: "rgba(245,245,242,0.45)",
+                    textTransform: "uppercase",
+                    flexShrink: 0,
+                  }}
+                >
+                  Query
+                </span>
+                <span
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 13,
+                    color: "#F5F5F2",
+                    fontWeight: 500,
+                    flex: 1,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  &quot;{result.product.title}&quot;
+                </span>
+              </div>
+            </div>
+          )}
+
+        {/* ETA bar */}
+        <div style={{ padding: "0 20px 20px" }}>
+          <div
+            style={{
+              padding: 16,
+              borderRadius: 14,
+              background: `linear-gradient(135deg, ${ACCENT}12 0%, rgba(245,245,242,0.02) 100%)`,
+              border: `1px solid ${ACCENT}33`,
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+            }}
+          >
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                border: `1.5px solid ${ACCENT}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                fontFamily: MONO,
+                fontSize: 10,
+                fontWeight: 700,
+                color: ACCENT,
+                letterSpacing: 0.5,
+              }}
+            >
+              24h
+            </div>
+            <div style={{ flex: 1 }}>
+              <div
+                style={{
+                  fontFamily: DISPLAY,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#F5F5F2",
+                  letterSpacing: -0.2,
+                  marginBottom: 2,
+                }}
+              >
+                Manual review in ≈ 24 hours
+              </div>
+              <div
+                style={{
+                  fontFamily: DISPLAY,
+                  fontSize: 12,
+                  color: "rgba(245,245,242,0.55)",
+                  lineHeight: 1.4,
+                }}
+              >
+                No cost to you. Doesn&apos;t count against your quota.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div
+          style={{ padding: "0 20px", marginTop: "auto", paddingBottom: 40 }}
+        >
+          <button
+            onClick={() => router.push("/search")}
+            style={{
+              width: "100%",
+              padding: "16px 20px",
+              borderRadius: 14,
+              background: ACCENT,
+              color: "#0A0A0A",
+              border: "none",
+              fontFamily: DISPLAY,
+              fontSize: 15,
+              fontWeight: 700,
+              cursor: "pointer",
+              letterSpacing: -0.2,
+            }}
+          >
+            Try another product →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // ── Derived values ─────────────────────────────────────────────────────
   const r = result;
   const maxBuy = parseFloat(r.maxBuy);

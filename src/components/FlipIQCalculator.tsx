@@ -1427,8 +1427,106 @@ export default function FlipIQCalculator() {
           </>
         )}
 
+        {/* ══════════════ NO COMPS FOUND ══════════════ */}
+        {result && result.noCompsFound && (
+          <div
+            ref={resultRef}
+            className="fade-up"
+            style={{ textAlign: "center", padding: "20px 0 40px" }}
+          >
+            <svg
+              width="120"
+              height="120"
+              viewBox="0 0 160 160"
+              fill="none"
+              style={{ margin: "0 auto 16px" }}
+            >
+              <circle
+                cx="80"
+                cy="80"
+                r="40"
+                fill="rgba(245,245,242,0.03)"
+                stroke="rgba(245,245,242,0.08)"
+                strokeWidth="1"
+              />
+              <path
+                d="M 62 100 A 18 18 0 1 1 98 100"
+                fill="none"
+                stroke={ACCENT}
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <text
+                x="80"
+                y="108"
+                textAnchor="middle"
+                fontFamily="JetBrains Mono"
+                fontSize="32"
+                fontWeight="700"
+                fill={ACCENT}
+              >
+                ?
+              </text>
+              <line
+                x1="80"
+                y1="80"
+                x2="140"
+                y2="72"
+                stroke="rgba(245,245,242,0.1)"
+                strokeWidth="1"
+                strokeDasharray="2 3"
+              />
+              <line
+                x1="80"
+                y1="80"
+                x2="32"
+                y2="110"
+                stroke="rgba(245,245,242,0.1)"
+                strokeWidth="1"
+                strokeDasharray="2 3"
+              />
+            </svg>
+            <div
+              style={{
+                fontFamily: MONO,
+                fontSize: 9,
+                letterSpacing: 2,
+                color: ACCENT,
+                textTransform: "uppercase",
+                marginBottom: 8,
+              }}
+            >
+              Not enough data
+            </div>
+            <div
+              style={{
+                fontFamily: DISPLAY,
+                fontSize: 22,
+                fontWeight: 700,
+                color: "#F5F5F2",
+                letterSpacing: -0.8,
+                lineHeight: 1.1,
+                marginBottom: 10,
+              }}
+            >
+              We couldn&apos;t analyze this one
+            </div>
+            <div
+              style={{
+                fontFamily: DISPLAY,
+                fontSize: 13,
+                color: "rgba(245,245,242,0.6)",
+                lineHeight: 1.45,
+              }}
+            >
+              No reliable comps found. Try a different product name or check the
+              barcode.
+            </div>
+          </div>
+        )}
+
         {/* ══════════════ RESULT ══════════════ */}
-        {result && (
+        {result && !result.noCompsFound && (
           <div ref={resultRef} className="fade-up">
             {/* Product info */}
             <div
