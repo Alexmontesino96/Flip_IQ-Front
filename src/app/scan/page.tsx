@@ -1,30 +1,102 @@
 "use client";
 
-// Usage:
-// Navigate to /scan — mobile barcode scanning screen.
-// Simulates a live camera viewfinder with animated scan line.
-// Detected product + cost input feeds into the analyzer at /.
-
-import { useEffect, useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { addRecentSearch } from "@/lib/history";
+import { runAnalysisStream, AnalysisResult } from "@/lib/analysis";
 import TopBar from "@/components/ui/TopBar";
-import BigBtn from "@/components/ui/BigBtn";
-import TinyBadge from "@/components/ui/TinyBadge";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
+
+// Lazy-load scanner to avoid SSR issues with camera APIs
+const BarcodeScanner = dynamic(() => import("@/components/BarcodeScanner"), {
+  ssr: false,
+});
+
+type Phase = "scanning" | "form" | "analyzing";
 
 export default function ScanPage() {
   const router = useRouter();
-  const [tick, setTick] = useState(0);
-  const [cost, setCost] = useState("80.00");
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      setTick((t) => t + 1);
-    }, 50);
-    return () => clearInterval(id);
+  // Scan state
+  const [phase, setPhase] = useState<Phase>("scanning");
+  const [barcode, setBarcode] = useState("");
+
+  // Form state
+  const [cost, setCost] = useState("");
+  const [condition, setCondition] = useState("used");
+
+  // Analysis state
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisStage, setAnalysisStage] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const costValue = cost ? parseFloat(cost) : null;
+  const canAnalyze = barcode && costValue && costValue > 0;
+  const costInputRef = useRef<HTMLInputElement>(null);
+
+  const handleBarcodeScan = useCallback((code: string) => {
+    setBarcode(code);
+    setPhase("form");
+    // Auto-focus cost input after a tick
+    setTimeout(() => costInputRef.current?.focus(), 100);
   }, []);
 
-  const scanLineTop = `${30 + Math.sin(tick * 0.08) * 25}%`;
+  const handleAnalyze = useCallback(() => {
+    if (!canAnalyze) return;
+    setPhase("analyzing");
+    setAnalysisProgress(0);
+    setAnalysisStage("Starting...");
+    setError(null);
+
+    addRecentSearch(barcode);
+
+    runAnalysisStream(
+      barcode,
+      parseFloat(cost),
+      condition,
+      (_result: AnalysisResult) => {
+        // data received
+      },
+      () => {
+        // AI complete
+      },
+      (err) => {
+        setPhase("form");
+        setError(err.message);
+      },
+      (progress) => {
+        setAnalysisProgress(progress.progress);
+        setAnalysisStage(progress.message);
+        if (progress.progress >= 100) {
+          setTimeout(async () => {
+            try {
+              const { fetchHistory } = await import("@/lib/history");
+              const history = await fetchHistory(1);
+              if (history.length > 0) {
+                router.push(`/result?id=${history[0].id}`);
+              } else {
+                setPhase("form");
+              }
+            } catch {
+              setPhase("form");
+            }
+          }, 500);
+        }
+      }
+    ).catch((err) => {
+      setPhase("form");
+      setError(err instanceof Error ? err.message : "Analysis failed");
+    });
+  }, [barcode, cost, condition, canAnalyze, router]);
+
+  const handleRescan = useCallback(() => {
+    setBarcode("");
+    setCost("");
+    setCondition("used");
+    setError(null);
+    setPhase("scanning");
+  }, []);
 
   return (
     <div
@@ -36,272 +108,469 @@ export default function ScanPage() {
         color: "#F5F5F2",
         maxWidth: 480,
         margin: "0 auto",
+        position: "relative",
       }}
     >
-      {/* 1. TopBar */}
       <TopBar title="Scan" accent={ACCENT} onBack={() => router.back()} />
 
-      {/* 2. Camera viewport */}
-      <div
-        style={{
-          margin: "8px 20px 0",
-          borderRadius: 20,
-          overflow: "hidden",
-          aspectRatio: "4/3",
-          background: "#000",
-          position: "relative",
-          backgroundImage:
-            "linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 60%, #141414 100%)",
-        }}
-      >
-        {/* Center placeholder */}
+      {/* ═══ PHASE: SCANNING ═══ */}
+      {phase === "scanning" && (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          {/* Camera area */}
+          <div
+            style={{
+              margin: "8px 20px 0",
+              borderRadius: 20,
+              overflow: "hidden",
+              aspectRatio: "4/3",
+              background: "#000",
+              position: "relative",
+            }}
+          >
+            <BarcodeScanner
+              onScan={handleBarcodeScan}
+              onClose={() => router.back()}
+              inline
+            />
+          </div>
+
+          {/* Manual entry option */}
+          <div style={{ padding: "20px 20px 0", textAlign: "center" }}>
+            <div
+              style={{
+                fontFamily: MONO,
+                fontSize: 10,
+                color: "rgba(245,245,242,0.3)",
+                marginBottom: 12,
+              }}
+            >
+              Or enter barcode manually
+            </div>
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                alignItems: "center",
+              }}
+            >
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Enter UPC / EAN..."
+                value={barcode}
+                onChange={(e) => setBarcode(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && barcode.trim()) {
+                    handleBarcodeScan(barcode.trim());
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  border: `1px solid rgba(245,245,242,0.1)`,
+                  background: "rgba(245,245,242,0.04)",
+                  color: "#F5F5F2",
+                  fontFamily: MONO,
+                  fontSize: 14,
+                  outline: "none",
+                }}
+              />
+              <button
+                onClick={() => {
+                  if (barcode.trim()) handleBarcodeScan(barcode.trim());
+                }}
+                disabled={!barcode.trim()}
+                style={{
+                  padding: "12px 18px",
+                  borderRadius: 12,
+                  background: barcode.trim()
+                    ? ACCENT
+                    : "rgba(245,245,242,0.06)",
+                  color: barcode.trim() ? "#0A0A0A" : "rgba(245,245,242,0.3)",
+                  border: "none",
+                  fontFamily: MONO,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: barcode.trim() ? "pointer" : "default",
+                  letterSpacing: 0.5,
+                }}
+              >
+                GO
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ PHASE: FORM (barcode detected) ═══ */}
+      {phase === "form" && (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          {/* Detected barcode */}
+          <div style={{ padding: "16px 20px 0" }}>
+            <div
+              style={{
+                padding: "14px 16px",
+                borderRadius: 12,
+                background: `${ACCENT}14`,
+                border: `1px solid ${ACCENT}40`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 8,
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    color: ACCENT,
+                    marginBottom: 4,
+                  }}
+                >
+                  Barcode detected
+                </div>
+                <div
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 16,
+                    fontWeight: 600,
+                    color: "#F5F5F2",
+                    letterSpacing: 1,
+                  }}
+                >
+                  {barcode}
+                </div>
+              </div>
+              <button
+                onClick={handleRescan}
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                  color: "rgba(245,245,242,0.35)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Rescan
+              </button>
+            </div>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div
+              style={{
+                margin: "12px 20px 0",
+                padding: "12px 14px",
+                borderRadius: 10,
+                background: "rgba(255,100,100,0.1)",
+                border: "1px solid rgba(255,100,100,0.2)",
+                fontFamily: DISPLAY,
+                fontSize: 13,
+                color: "#FF6464",
+              }}
+            >
+              {error}
+            </div>
+          )}
+
+          {/* Cost input */}
+          <StepHeader number={1} label="Cost" />
+          <div style={{ padding: "0 20px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: 4,
+                borderBottom: `1px solid ${ACCENT}`,
+                paddingBottom: 8,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: DISPLAY,
+                  fontSize: 26,
+                  fontWeight: 600,
+                  color: "rgba(245,245,242,0.3)",
+                }}
+              >
+                $
+              </span>
+              <input
+                ref={costInputRef}
+                autoFocus
+                type="number"
+                inputMode="decimal"
+                value={cost}
+                onChange={(e) => setCost(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && canAnalyze) handleAnalyze();
+                }}
+                placeholder="0.00"
+                style={{
+                  flex: 1,
+                  border: "none",
+                  background: "transparent",
+                  color: "#F5F5F2",
+                  fontFamily: DISPLAY,
+                  fontSize: 32,
+                  fontWeight: 700,
+                  letterSpacing: -1.2,
+                  outline: "none",
+                  caretColor: ACCENT,
+                  minWidth: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  letterSpacing: 1.5,
+                  color: "rgba(245,245,242,0.3)",
+                }}
+              >
+                USD
+              </span>
+            </div>
+          </div>
+
+          {/* Condition */}
+          <StepHeader number={2} label="Condition" />
+          <div style={{ padding: "0 20px", display: "flex", gap: 8 }}>
+            <ConditionButton
+              label="New"
+              sub="sealed"
+              isActive={condition === "new"}
+              onClick={() => setCondition("new")}
+            />
+            <ConditionButton
+              label="Used"
+              sub="open · working"
+              isActive={condition === "used"}
+              onClick={() => setCondition("used")}
+            />
+          </div>
+
+          <div style={{ flex: 1 }} />
+
+          {/* Analyze button */}
+          <div style={{ padding: "20px" }}>
+            <button
+              onClick={handleAnalyze}
+              disabled={!canAnalyze}
+              style={{
+                width: "100%",
+                padding: "16px 20px",
+                borderRadius: 14,
+                background: canAnalyze ? ACCENT : "rgba(245,245,242,0.06)",
+                color: canAnalyze ? "#0A0A0A" : "rgba(245,245,242,0.3)",
+                border: "none",
+                fontFamily: DISPLAY,
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: canAnalyze ? "pointer" : "default",
+                letterSpacing: -0.2,
+              }}
+            >
+              {canAnalyze
+                ? `Analyze · $${parseFloat(cost).toFixed(0)} ${condition} →`
+                : "Analyze →"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ PHASE: ANALYZING ═══ */}
+      {phase === "analyzing" && (
         <div
           style={{
-            position: "absolute",
-            inset: 0,
+            flex: 1,
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
+            gap: 20,
+            padding: 40,
           }}
         >
           <div
             style={{
-              width: "60%",
-              height: "60%",
-              border: "1px dashed rgba(245,245,242,0.15)",
-              borderRadius: 4,
+              width: 120,
+              height: 120,
+              borderRadius: "50%",
+              border: "2px solid rgba(245,245,242,0.08)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              position: "relative",
             }}
           >
+            <svg
+              width="120"
+              height="120"
+              style={{ position: "absolute", transform: "rotate(-90deg)" }}
+            >
+              <circle
+                cx="60"
+                cy="60"
+                r="58"
+                fill="none"
+                stroke={ACCENT}
+                strokeWidth="2"
+                strokeDasharray={`${2 * Math.PI * 58}`}
+                strokeDashoffset={`${2 * Math.PI * 58 * (1 - analysisProgress / 100)}`}
+                strokeLinecap="round"
+                style={{ transition: "stroke-dashoffset 0.5s ease" }}
+              />
+            </svg>
             <span
+              style={{
+                fontFamily: DISPLAY,
+                fontSize: 32,
+                fontWeight: 700,
+                color: "#F5F5F2",
+                letterSpacing: -1,
+              }}
+            >
+              {Math.round(analysisProgress)}%
+            </span>
+          </div>
+
+          <div style={{ textAlign: "center" }}>
+            <div
+              style={{
+                fontFamily: DISPLAY,
+                fontSize: 16,
+                fontWeight: 600,
+                color: "#F5F5F2",
+                marginBottom: 6,
+              }}
+            >
+              Analyzing...
+            </div>
+            <div
               style={{
                 fontFamily: MONO,
                 fontSize: 10,
-                color: "rgba(245,245,242,0.2)",
-                letterSpacing: 3,
-                textTransform: "uppercase",
+                color: "rgba(245,245,242,0.4)",
+                letterSpacing: 0.5,
               }}
             >
-              CAMERA
-            </span>
+              {analysisStage}
+            </div>
+          </div>
+
+          <div
+            style={{
+              fontFamily: MONO,
+              fontSize: 11,
+              color: "rgba(245,245,242,0.3)",
+              marginTop: 8,
+            }}
+          >
+            {barcode}
           </div>
         </div>
-
-        {/* Corner brackets */}
-        {/* Top-left */}
-        <div
-          style={{
-            position: "absolute",
-            top: 20,
-            left: 20,
-            width: 28,
-            height: 28,
-            borderTop: `2px solid ${ACCENT}`,
-            borderLeft: `2px solid ${ACCENT}`,
-            borderRadius: "4px 0 0 0",
-          }}
-        />
-        {/* Top-right */}
-        <div
-          style={{
-            position: "absolute",
-            top: 20,
-            right: 20,
-            width: 28,
-            height: 28,
-            borderTop: `2px solid ${ACCENT}`,
-            borderRight: `2px solid ${ACCENT}`,
-            borderRadius: "0 4px 0 0",
-          }}
-        />
-        {/* Bottom-left */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 20,
-            left: 20,
-            width: 28,
-            height: 28,
-            borderBottom: `2px solid ${ACCENT}`,
-            borderLeft: `2px solid ${ACCENT}`,
-            borderRadius: "0 0 0 4px",
-          }}
-        />
-        {/* Bottom-right */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 20,
-            right: 20,
-            width: 28,
-            height: 28,
-            borderBottom: `2px solid ${ACCENT}`,
-            borderRight: `2px solid ${ACCENT}`,
-            borderRadius: "0 0 4px 0",
-          }}
-        />
-
-        {/* Animated scan line */}
-        <div
-          style={{
-            position: "absolute",
-            left: "15%",
-            right: "15%",
-            height: 1,
-            background: ACCENT,
-            boxShadow: `0 0 12px ${ACCENT}`,
-            opacity: 0.8,
-            top: scanLineTop,
-            transition: "top 50ms linear",
-          }}
-        />
-
-        {/* Bottom status bar */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 16,
-            left: 16,
-            right: 16,
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-          }}
-        >
-          <TinyBadge color={ACCENT} bg={`${ACCENT}22`}>
-            ● LIVE
-          </TinyBadge>
-          <span
-            style={{
-              fontFamily: MONO,
-              fontSize: 10,
-              color: "rgba(245,245,242,0.45)",
-              letterSpacing: 0.5,
-            }}
-          >
-            Point at the barcode
-          </span>
-        </div>
-      </div>
-
-      {/* 3. Detected product */}
-      <div style={{ padding: "16px 20px 0" }}>
-        <div
-          style={{
-            fontFamily: MONO,
-            fontSize: 9,
-            letterSpacing: 2,
-            color: ACCENT,
-            textTransform: "uppercase",
-            marginBottom: 6,
-          }}
-        >
-          ✓ DETECTED
-        </div>
-        <div
-          style={{
-            fontFamily: DISPLAY,
-            fontSize: 18,
-            fontWeight: 600,
-            color: "#F5F5F2",
-            lineHeight: 1.3,
-            marginBottom: 4,
-          }}
-        >
-          Apple AirPods Pro 2 (USB-C) — MagSafe
-        </div>
-        <div
-          style={{
-            fontFamily: MONO,
-            fontSize: 11,
-            color: "rgba(245,245,242,0.5)",
-          }}
-        >
-          UPC 194253397298 · Audio
-        </div>
-      </div>
-
-      {/* 4. Cost input */}
-      <div style={{ padding: "20px 20px 0" }}>
-        <div
-          style={{
-            fontFamily: MONO,
-            fontSize: 9,
-            letterSpacing: 2,
-            color: "rgba(245,245,242,0.45)",
-            textTransform: "uppercase",
-            marginBottom: 10,
-          }}
-        >
-          YOUR COST
-        </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            gap: 6,
-            borderBottom: `1.5px solid ${ACCENT}`,
-            paddingBottom: 8,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: DISPLAY,
-              fontSize: 28,
-              fontWeight: 600,
-              color: "rgba(245,245,242,0.5)",
-              lineHeight: 1,
-              paddingBottom: 2,
-            }}
-          >
-            $
-          </span>
-          <input
-            type="text"
-            inputMode="decimal"
-            value={cost}
-            onChange={(e) => setCost(e.target.value)}
-            style={{
-              flex: 1,
-              border: "none",
-              background: "transparent",
-              color: "#F5F5F2",
-              fontFamily: DISPLAY,
-              fontSize: 36,
-              fontWeight: 700,
-              letterSpacing: -1.5,
-              lineHeight: 1,
-              outline: "none",
-              padding: 0,
-              minWidth: 0,
-            }}
-            aria-label="Your cost in USD"
-          />
-          <span
-            style={{
-              fontFamily: MONO,
-              fontSize: 10,
-              color: "rgba(245,245,242,0.35)",
-              letterSpacing: 1.5,
-              paddingBottom: 4,
-            }}
-          >
-            USD
-          </span>
-        </div>
-      </div>
-
-      {/* 5. Spacer */}
-      <div style={{ flex: 1 }} />
-
-      {/* 6. Bottom button */}
-      <div style={{ padding: "20px 20px 24px" }}>
-        <BigBtn onClick={() => router.push("/free")} accent={ACCENT}>
-          Analyze →
-        </BigBtn>
-      </div>
+      )}
     </div>
+  );
+}
+
+function StepHeader({ number, label }: { number: number; label: string }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "16px 20px 8px",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: MONO,
+          fontSize: 10,
+          fontWeight: 700,
+          color: "#0A0A0A",
+          width: 18,
+          height: 18,
+          borderRadius: "50%",
+          background: ACCENT,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {number}
+      </span>
+      <span
+        style={{
+          fontFamily: MONO,
+          fontSize: 9,
+          letterSpacing: 2,
+          textTransform: "uppercase",
+          color: "rgba(245,245,242,0.35)",
+        }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function ConditionButton({
+  label,
+  sub,
+  isActive,
+  onClick,
+}: {
+  label: string;
+  sub: string;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        flex: 1,
+        padding: "12px 14px",
+        borderRadius: 12,
+        background: isActive ? ACCENT : "transparent",
+        border: isActive ? "none" : "1px solid rgba(245,245,242,0.1)",
+        cursor: "pointer",
+        textAlign: "left",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: DISPLAY,
+          fontSize: 15,
+          fontWeight: 700,
+          color: isActive ? "#0A0A0A" : "#F5F5F2",
+          letterSpacing: -0.3,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: MONO,
+          fontSize: 9,
+          letterSpacing: 1,
+          textTransform: "uppercase",
+          color: isActive ? "rgba(10,10,10,0.6)" : "rgba(245,245,242,0.35)",
+          marginTop: 2,
+        }}
+      >
+        {sub}
+      </div>
+    </button>
   );
 }
