@@ -110,6 +110,9 @@ export default function LoginPage() {
         display: "flex",
         flexDirection: "column",
         padding: "40px 28px 32px",
+        maxWidth: 430,
+        margin: "0 auto",
+        width: "100%",
       }}
     >
       {/* Center section */}
