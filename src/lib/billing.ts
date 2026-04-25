@@ -62,6 +62,32 @@ export async function createCheckout(
   return data.checkout_url;
 }
 
+/** POST /api/v1/billing/change-plan — upgrade/downgrade existing subscription */
+export async function changePlan(
+  priceId: string,
+  successUrl: string,
+  cancelUrl: string
+): Promise<string> {
+  const headers = await getAuthHeaders();
+  const res = await fetch(`${API_URL}/api/v1/billing/change-plan`, {
+    method: "POST",
+    credentials: "include",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      price_id: priceId,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to change plan");
+  }
+  const data = await res.json();
+  // change-plan may return checkout_url or just confirm the change
+  return data.checkout_url || data.message || "Plan changed";
+}
+
 /** POST /api/v1/billing/portal — creates Stripe Customer Portal session */
 export async function openPortal(returnUrl: string): Promise<string> {
   const headers = await getAuthHeaders();

@@ -10,6 +10,7 @@ import {
   fetchPlans,
   getSubscriptionStatus,
   createCheckout,
+  changePlan,
   openPortal,
   BillingPlan,
   SubscriptionStatus,
@@ -189,36 +190,78 @@ export default function PlansPage() {
 
     // Free selected — nothing to do
     if (selected === "free") {
-      router.push("/home");
+      if (subscription?.has_subscription) {
+        // Has subscription, wants to downgrade to free — open portal to cancel
+        setLoading(true);
+        try {
+          const portalUrl = await openPortal(window.location.href);
+          window.location.href = portalUrl;
+        } catch (err) {
+          setError(
+            err instanceof Error ? err.message : "Failed to open portal"
+          );
+          setLoading(false);
+        }
+      } else {
+        router.push("/home");
+      }
       return;
     }
 
-    // Upgrade/change — create Stripe checkout
     if (!selectedPlan?.stripePriceId) {
       setError("This plan is not available for purchase yet");
       return;
     }
 
+    const successUrl = `${window.location.origin}/plans/success?plan=${selected}`;
+    const cancelUrl = window.location.href;
+
     setLoading(true);
     try {
-      const successUrl = `${window.location.origin}/plans/success?plan=${selected}`;
-      const cancelUrl = window.location.href;
-      const checkoutUrl = await createCheckout(
-        selectedPlan.stripePriceId,
-        successUrl,
-        cancelUrl
-      );
-      window.location.href = checkoutUrl;
+      if (subscription?.has_subscription) {
+        // Already subscribed — upgrade/downgrade via change-plan
+        const result = await changePlan(
+          selectedPlan.stripePriceId,
+          successUrl,
+          cancelUrl
+        );
+        // If it returns a URL, redirect. Otherwise it changed instantly.
+        if (result.startsWith("http")) {
+          window.location.href = result;
+        } else {
+          router.push(`/plans/success?plan=${selected}`);
+        }
+      } else {
+        // No subscription — new checkout
+        const checkoutUrl = await createCheckout(
+          selectedPlan.stripePriceId,
+          successUrl,
+          cancelUrl
+        );
+        window.location.href = checkoutUrl;
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Checkout failed");
+      setError(
+        err instanceof Error ? err.message : "Failed to process plan change"
+      );
       setLoading(false);
     }
   };
+
+  const isUpgrade =
+    subscription?.has_subscription &&
+    !isCurrentPlan &&
+    selected !== "free" &&
+    selected !== currentPlan;
+
+  const isDowngrade = subscription?.has_subscription && selected === "free";
 
   const ctaLabel = () => {
     if (loading) return "Loading...";
     if (isCurrentPlan && subscription?.has_subscription) return "Manage plan";
     if (isCurrentPlan) return "Current plan";
+    if (isDowngrade) return "Downgrade to Free";
+    if (isUpgrade) return "Switch plan →";
     if (selected === "free") return "Continue with Free";
     return "Choose plan →";
   };
