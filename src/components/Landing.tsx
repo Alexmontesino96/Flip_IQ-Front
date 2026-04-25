@@ -2492,23 +2492,23 @@ export default function Landing() {
                 { label: t.howLink, href: "#how" },
                 { label: t.realCases, href: "#cases" },
                 { label: t.pricing, href: "#pricing" },
-                { label: t.changelog, href: "#" },
+                { label: t.changelog, href: "/changelog" },
               ]}
             />
             <FootCol
               title={t.company}
               links={[
-                { label: t.about, href: "#" },
-                { label: t.blog, href: "#" },
-                { label: t.contact, href: "#" },
+                { label: t.about, href: "/about" },
+                { label: t.blog, href: "/blog" },
+                { label: t.contact, href: "/contact" },
               ]}
             />
             <FootCol
               title={t.legal}
               links={[
-                { label: t.terms, href: "#" },
-                { label: t.privacy, href: "#" },
-                { label: t.cookies, href: "#" },
+                { label: t.terms, href: "/terms" },
+                { label: t.privacy, href: "/privacy" },
+                { label: t.cookies, href: "/cookies" },
               ]}
             />
           </div>
