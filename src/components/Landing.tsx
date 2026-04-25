@@ -2301,7 +2301,7 @@ export default function Landing() {
             tagline={t.proTag}
             features={[t.proF1, t.proF2, t.proF3, t.proF4, t.proF5]}
             cta={t.proCta}
-            href="/register"
+            href="/checkout/account?plan=basic"
             featured
             ribbon={t.proRibbon}
           />
@@ -2313,7 +2313,7 @@ export default function Landing() {
             tagline={t.teamTag}
             features={[t.teamF1, t.teamF2, t.teamF3, t.teamF4, t.teamF5]}
             cta={t.teamCta}
-            href="/register"
+            href="/checkout/account?plan=premium"
             featured={false}
           />
         </div>
