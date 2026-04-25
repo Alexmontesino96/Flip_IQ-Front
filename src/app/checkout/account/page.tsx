@@ -1440,8 +1440,7 @@ function AccountGateContent() {
               borderRadius: 20,
               padding: 32,
               position: "relative",
-              boxShadow:
-                "0 0 0 1px rgba(212,255,58,0.04), 0 30px 80px rgba(0,0,0,0.4)",
+              boxShadow: "none",
             }}
           >
             {/* Gradient border glow (::before equivalent) */}
