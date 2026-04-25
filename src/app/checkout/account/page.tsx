@@ -1451,9 +1451,9 @@ function AccountGateContent() {
                 borderRadius: 21,
                 pointerEvents: "none",
                 background:
-                  "linear-gradient(160deg, rgba(212,255,58,0.18), transparent 30%, transparent 70%, rgba(212,255,58,0.08))",
+                  "linear-gradient(160deg, rgba(212,255,58,0.08), transparent 25%, transparent 75%, rgba(212,255,58,0.04))",
                 zIndex: 0,
-                opacity: 0.7,
+                opacity: 0.4,
               }}
             />
 
