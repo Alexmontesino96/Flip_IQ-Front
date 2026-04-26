@@ -1,7 +1,7 @@
 "use client";
 
 import FlipIQCalculator from "@/components/FlipIQCalculator";
-import Head from "next/head";
+import Link from "next/link";
 import Script from "next/script";
 
 const CSS_VARS = {
@@ -245,22 +245,22 @@ export default function FreePage() {
 
       {/* Nav */}
       <nav className="fp-nav">
-        <a className="fp-brand" href="/" aria-label="FlipIQ home">
+        <Link className="fp-brand" href="/" aria-label="FlipIQ home">
           <span className="fp-brand-mark">F</span>
           <span>
             Flip<span style={{ color: "var(--accent)" }}>IQ</span>
           </span>
-        </a>
+        </Link>
         <div className="fp-nav-right">
-          <a className="fp-nav-link hide-sm" href="/">
+          <Link className="fp-nav-link hide-sm" href="/">
             Product
-          </a>
-          <a className="fp-nav-link hide-sm" href="/pricing">
+          </Link>
+          <Link className="fp-nav-link hide-sm" href="/pricing">
             Pricing
-          </a>
-          <a className="fp-nav-link" href="/blog">
+          </Link>
+          <Link className="fp-nav-link" href="/blog">
             Blog
-          </a>
+          </Link>
           <button className="fp-nav-cta" type="button">
             Get the app &rarr;
           </button>
@@ -363,9 +363,7 @@ export default function FreePage() {
           </li>
           <li>
             <span className="k">Max buy</span>
-            <span className="v">
-              Highest you can pay &amp; still profit
-            </span>
+            <span className="v">Highest you can pay &amp; still profit</span>
           </li>
           <li>
             <span className="k">Profit / ROI</span>
@@ -491,8 +489,8 @@ export default function FreePage() {
             <summary>What does it return?</summary>
             <p>
               Buy/no-buy verdict, max buy price, expected profit and ROI per
-              marketplace, suggested list prices (Quick / Market / Stretch), days
-              to sell, and execution confidence.
+              marketplace, suggested list prices (Quick / Market / Stretch),
+              days to sell, and execution confidence.
             </p>
           </details>
           <details className="fp-faq">
@@ -515,8 +513,8 @@ export default function FreePage() {
             <summary>Why execution confidence?</summary>
             <p>
               Raw ROI assumes you sell at median. Confidence weights it against
-              sell-through, comp count, volatility and competition. A 50% ROI you
-              can&apos;t realize is worse than 25% you can.
+              sell-through, comp count, volatility and competition. A 50% ROI
+              you can&apos;t realize is worse than 25% you can.
             </p>
           </details>
           <details className="fp-faq">
@@ -540,9 +538,9 @@ export default function FreePage() {
               </span>
             </h3>
             <p>
-              Barcode scanning in-store, watchlists, real-time price alerts, Flip
-              &amp; Save rewards, and unlimited analyses. Same engine, faster
-              decisions.
+              Barcode scanning in-store, watchlists, real-time price alerts,
+              Flip &amp; Save rewards, and unlimited analyses. Same engine,
+              faster decisions.
             </p>
           </div>
           <div className="fp-final-actions">
@@ -560,11 +558,11 @@ export default function FreePage() {
       <footer className="fp-footer">
         <div>&copy; 2026 FlipIQ &middot; Free flip profit calculator</div>
         <div className="fp-footer-links">
-          <a href="/">Product</a>
-          <a href="/pricing">Pricing</a>
-          <a href="/blog">Blog</a>
-          <a href="/legal/terms">Terms</a>
-          <a href="/legal/privacy">Privacy</a>
+          <Link href="/">Product</Link>
+          <Link href="/plans">Pricing</Link>
+          <span>Blog</span>
+          <span>Terms</span>
+          <span>Privacy</span>
         </div>
       </footer>
     </div>
