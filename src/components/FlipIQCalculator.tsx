@@ -12,8 +12,19 @@ import {
   MarketplaceDetail,
   ApiError,
 } from "@/lib/analysis";
-import { checkStatus, fetchBilling, submitEmail } from "@/lib/usage";
+import {
+  checkStatus,
+  fetchBilling,
+  submitEmail,
+  deriveUserStatus,
+  getQuotaLabel,
+  incrementAnonScans,
+  clearAnonScans,
+  UserStatus,
+} from "@/lib/usage";
 import EmailGate from "./EmailGate";
+import AiGate from "./AiGate";
+import UpgradeModal from "./UpgradeModal";
 import { trackEvent } from "@/lib/tracking";
 import {
   fetchProductSuggestions,
@@ -509,8 +520,10 @@ export default function FlipIQCalculator() {
   const [emailSent, setEmailSent] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [showEmailGate, setShowEmailGate] = useState(false);
-  const [remaining, setRemaining] = useState<number | null>(null);
-  const [tier, setTier] = useState("anonymous");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [, setRemaining] = useState<number | null>(null);
+  const [, setTier] = useState("anonymous");
+  const [userStatus, setUserStatus] = useState<UserStatus | null>(null);
   const [loadingStep, setLoadingStep] = useState(0);
   const [aiLoading, setAiLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
@@ -545,10 +558,12 @@ export default function FlipIQCalculator() {
     if (b) {
       setRemaining(b.scans_remaining_today);
       setTier(b.plan);
+      setUserStatus(deriveUserStatus(b.plan, b.scans_remaining_today, b));
     } else {
       const s = await checkStatus();
       setRemaining(s.remaining);
       setTier(s.tier);
+      setUserStatus(deriveUserStatus(s.tier, s.remaining));
     }
   }, []);
 
@@ -695,6 +710,10 @@ export default function FlipIQCalculator() {
         progress: 3,
       });
       trackEvent("analysis_started", { query: q, cost });
+      // Track anon scans locally
+      if (userStatus?.tier === "anonymous") {
+        incrementAnonScans();
+      }
 
       try {
         await runAnalysisStream(
@@ -817,6 +836,8 @@ export default function FlipIQCalculator() {
       // best-effort — email saved to localStorage regardless
     }
     setShowEmailGate(false);
+    // Clear anonymous scan count — now on daily resets
+    clearAnonScans();
     // Refresh status — now verified with increased limit
     await refreshUsage();
     // Retry the analysis (isRetry=true prevents re-showing gate)
@@ -1343,17 +1364,19 @@ export default function FlipIQCalculator() {
               "Analyze product"
             )}
           </button>
-          {remaining !== null && (
+          {userStatus && (
             <div
               style={{
                 textAlign: "center",
                 marginTop: 8,
                 fontSize: 12,
-                color: "rgba(245,245,242,0.3)",
+                color:
+                  userStatus.scansRemaining <= 1
+                    ? "#FF6464"
+                    : "rgba(245,245,242,0.3)",
               }}
             >
-              {remaining} analyses remaining
-              {tier !== "anonymous" ? "" : " (free)"}
+              {getQuotaLabel(userStatus)}
             </div>
           )}
         </div>
@@ -1363,6 +1386,14 @@ export default function FlipIQCalculator() {
           <EmailGate
             onSubmit={handleEmailSubmit}
             onClose={() => setShowEmailGate(false)}
+          />
+        )}
+
+        {/* ── UPGRADE MODAL ── */}
+        {showUpgradeModal && (
+          <UpgradeModal
+            onClose={() => setShowUpgradeModal(false)}
+            trigger="ai_gate"
           />
         )}
 
@@ -2285,8 +2316,13 @@ export default function FlipIQCalculator() {
               </div>
             )}
 
+            {/* AI Explanation — gated for free users */}
+            {userStatus && !userStatus.isAiUnlocked && result && (
+              <AiGate onUpgrade={() => setShowUpgradeModal(true)} />
+            )}
+
             {/* AI Explanation — skeleton while loading, real text when ready */}
-            {aiLoading && (
+            {userStatus?.isAiUnlocked && aiLoading && (
               <div
                 style={{
                   padding: "14px 16px 16px",
@@ -2361,7 +2397,7 @@ export default function FlipIQCalculator() {
                 </div>
               </div>
             )}
-            {!aiLoading && result.aiExplanation && (
+            {userStatus?.isAiUnlocked && !aiLoading && result.aiExplanation && (
               <div
                 style={{
                   padding: "14px 16px",
