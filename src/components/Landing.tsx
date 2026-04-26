@@ -710,7 +710,7 @@ export default function Landing() {
           </Link>
 
           <Link
-            href="/register"
+            href="/free"
             style={{
               display: "inline-flex",
               alignItems: "center",
