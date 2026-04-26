@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import FlipIQCalculator from "@/components/FlipIQCalculator";
 import Link from "next/link";
 import Script from "next/script";
@@ -92,6 +93,197 @@ const jsonLdFaq = {
       },
     },
   ],
+};
+
+const T = {
+  es: {
+    navProduct: "Producto",
+    navPricing: "Precios",
+    navBlog: "Blog",
+    navCta: "Descargar app \u2192",
+    heroEyebrow: "Data en vivo \u00b7 4 marketplaces",
+    heroH1Pre: "Calculadora de profit gratis ",
+    heroH1Em: "para eBay y Amazon",
+    heroSub:
+      "Escribi un producto, pone tu costo. Sacamos comps vendidos en vivo de cuatro marketplaces y te decimos el precio maximo de compra, profit esperado, y si realmente vas a vender \u2014 antes de gastar un peso.",
+    bullet1Rest: " calculado con fees reales, no un 15% generico.",
+    bullet1Bold: "Precio maximo de compra",
+    bullet2Rest: " en eBay, Amazon, FBMP y MercadoLibre.",
+    bullet2Bold: "Profit por canal",
+    bullet3Rest:
+      " para que un 50% ROI que no podes realizar no le gane a un 25% que si.",
+    bullet3Bold: "Confianza de ejecucion",
+    metaChip1: "Sin registro \u00b7 5 analisis",
+    metaChip2: "Sin tarjeta",
+    metaChip3: "Comps vendidos en vivo",
+    trustLabel1: "analisis hoy",
+    trustLabel2: "marketplaces",
+    trustLabel3: "tiempo medio",
+    trustLabel4: "para usar",
+    outputEyebrow: "\u25b6 Lo que recibes",
+    outputTitle: "Seis numeros. ",
+    outputTitleEm: "Un veredicto.",
+    outputSub:
+      "Cada analisis devuelve el mismo set, en cada producto. Leelo una vez, confia siempre.",
+    outputK1: "Veredicto",
+    outputV1: "BUY \u00b7 WATCH \u00b7 PASS",
+    outputK2: "Max compra",
+    outputV2: "Lo maximo que podes pagar y ganar",
+    outputK3: "Profit / ROI",
+    outputV3: "Por canal, despues de fees reales",
+    outputK4: "Dias para vender",
+    outputV4: "Estimado de 90d de sell-through",
+    outputK5: "Confianza",
+    outputV5: "0\u2013100 \u2014 profundidad, volatilidad, competencia",
+    outputK6: "Precio de lista",
+    outputV6: "Rapido \u00b7 Mercado \u00b7 Stretch",
+    formulaEyebrow: "\u25b6 Como se calcula el max buy",
+    formulaTitle: "Sin 15% generico. El stack real de fees, ",
+    formulaTitleEm: "por canal.",
+    formulaSub:
+      "La mayoria de calculadoras usan una fee plana. Nosotros sacamos los numeros reales \u2014 fees de valor final, procesamiento de pago, envio, FBA cuando aplica, y tu margen objetivo.",
+    formulaBoxTitle:
+      "Max buy = cuanto podes pagar y todavia cumplir tu margen.",
+    formulaFoot1Title: "Mediana de comps",
+    formulaFoot1Desc:
+      "La mitad de los ultimos 30 dias de ventas reales \u2014 no precios de publicacion.",
+    formulaFoot2Title: "Fees + envio",
+    formulaFoot2Desc:
+      "Por canal: eBay FVF + pago, Amazon referral + FBA, FBMP $0, MercadoLibre escalonado.",
+    formulaFoot3Title: "Margen objetivo",
+    formulaFoot3Desc:
+      "Default 25% para nuevo, 35% para usado. Ajustable en settings.",
+    faqEyebrow: "\u25b6 Preguntas frecuentes",
+    faqTitle: "Todo lo que preguntan antes de confiar en el numero.",
+    faqSub:
+      "Si tu pregunta no esta aca, la respuesta esta en el analisis \u2014 cada card explica su matematica.",
+    faqQ1: "Que es FlipIQ?",
+    faqA1:
+      "Una calculadora gratis de profit para resellers. Pones un producto y tu costo; sacamos data en vivo de eBay, Amazon, FBMP y MercadoLibre y te decimos si el flip vale la pena antes de comprar.",
+    faqQ2: "Para quien es?",
+    faqA2:
+      "Flippers de arbitraje online y retail, resellers de thrift y garage sales, vendedores de eBay y Amazon FBA, y side-hustlers que quieren una respuesta rapida de buy/no-buy sin hacer cuentas de fees a mano.",
+    faqQ3: "Que marketplaces?",
+    faqA3:
+      "eBay, Amazon, Facebook Marketplace y MercadoLibre. El profit se calcula por canal para que elijas el mas rentable.",
+    faqQ4: "Que devuelve?",
+    faqA4:
+      "Veredicto buy/no-buy, precio maximo de compra, profit esperado y ROI por marketplace, precios de lista sugeridos (Rapido / Mercado / Stretch), dias para vender, y confianza de ejecucion.",
+    faqQ5: "Es gratis?",
+    faqA5:
+      "Si. 5 analisis sin registro. Con email gratis desbloqueas 100/dia. Sin tarjeta. Los planes pagos agregan escaneo, watchlists, alertas y Flip & Save rewards.",
+    faqQ6: "Como se calcula el max buy?",
+    faqA6:
+      "Mediana de comps vendidos \u2212 fees del marketplace (FVF, pago, FBA cuando aplica) \u2212 envio \u2212 margen objetivo = lo maximo que podes pagar y ganar en el canal elegido.",
+    faqQ7: "Por que confianza de ejecucion?",
+    faqA7:
+      "El ROI crudo asume que vendes a la mediana. La confianza lo pondera contra sell-through, cantidad de comps, volatilidad y competencia. Un 50% ROI que no podes realizar es peor que 25% que si.",
+    faqQ8: "Cuando verificar a mano?",
+    faqA8:
+      "Confia cuando los comps son 20+, confianza 60+, y tendencia estable. Verifica cuando los comps son menos de 10, cuando la condicion importa, o cuando el item es estacional.",
+    finalEyebrow: "\u25b6 El siguiente paso",
+    finalTitle: "La calculadora web es el piso. ",
+    finalTitleAccent: "La app es el techo.",
+    finalSub:
+      "Escaneo de barcode en tienda, watchlists, alertas de precio en tiempo real, Flip & Save rewards, y analisis ilimitados. Mismo motor, decisiones mas rapidas.",
+    finalBtnPrimary: "Descargar app \u2192",
+    finalBtnGhost: "Ver precios",
+    footerCopy: "\u00a9 2026 FlipIQ \u00b7 Calculadora de profit gratis",
+  },
+  en: {
+    navProduct: "Product",
+    navPricing: "Pricing",
+    navBlog: "Blog",
+    navCta: "Get the app \u2192",
+    heroEyebrow: "Live data \u00b7 4 marketplaces",
+    heroH1Pre: "Free flip profit calculator ",
+    heroH1Em: "for eBay & Amazon",
+    heroSub:
+      "Type a product, drop your cost. We pull live sold comps from four marketplaces and tell you the max buy price, expected profit, and whether you\u2019ll actually sell \u2014 before you spend a dollar.",
+    bullet1Rest: " backed out from real fees, not a flat 15% guess.",
+    bullet1Bold: "Max buy price",
+    bullet2Rest: " across eBay, Amazon, FBMP and MercadoLibre.",
+    bullet2Bold: "Profit per channel",
+    bullet3Rest:
+      " so a 50% ROI you can\u2019t realize doesn\u2019t beat 25% ROI you can.",
+    bullet3Bold: "Execution confidence",
+    metaChip1: "No signup \u00b7 5 analyses",
+    metaChip2: "No credit card",
+    metaChip3: "Live sold comps",
+    trustLabel1: "analyses today",
+    trustLabel2: "marketplaces",
+    trustLabel3: "median time",
+    trustLabel4: "to use",
+    outputEyebrow: "\u25b6 What you get back",
+    outputTitle: "Six numbers. ",
+    outputTitleEm: "One verdict.",
+    outputSub:
+      "Every analysis returns the same set, on every product. Read it once, trust it forever.",
+    outputK1: "Verdict",
+    outputV1: "BUY \u00b7 WATCH \u00b7 PASS",
+    outputK2: "Max buy",
+    outputV2: "Highest you can pay & still profit",
+    outputK3: "Profit / ROI",
+    outputV3: "Per channel, after real fees",
+    outputK4: "Days to sell",
+    outputV4: "Estimated from 90d sell-through",
+    outputK5: "Confidence",
+    outputV5: "0\u2013100 \u2014 depth, volatility, competition",
+    outputK6: "List price",
+    outputV6: "Quick \u00b7 Market \u00b7 Stretch",
+    formulaEyebrow: "\u25b6 How max buy is calculated",
+    formulaTitle: "No flat 15%. The actual fee stack, ",
+    formulaTitleEm: "per channel.",
+    formulaSub:
+      "Most calculators use a flat fee assumption. We back out the real numbers \u2014 final-value fees, payment processing, shipping, FBA when applicable, and your target margin.",
+    formulaBoxTitle:
+      "Max buy = how much you can pay and still hit your margin.",
+    formulaFoot1Title: "Median sold comp",
+    formulaFoot1Desc:
+      "The middle of the last 30 days of actual sold listings \u2014 not asking prices.",
+    formulaFoot2Title: "Fees + shipping",
+    formulaFoot2Desc:
+      "Per-channel: eBay FVF + payment, Amazon referral + FBA, FBMP $0, MercadoLibre tiered.",
+    formulaFoot3Title: "Target margin",
+    formulaFoot3Desc:
+      "Default 25% for new, 35% for used. Adjustable in settings.",
+    faqEyebrow: "\u25b6 FAQ",
+    faqTitle: "Everything people ask before they trust the number.",
+    faqSub:
+      "If your question isn\u2019t here, the answer is in the analysis \u2014 every output card explains its math.",
+    faqQ1: "What is FlipIQ?",
+    faqA1:
+      "A free flip profit calculator for resellers. Enter a product and your cost; we pull live data from eBay, Amazon, FBMP and MercadoLibre and tell you whether the flip is worth it before you buy.",
+    faqQ2: "Who is it for?",
+    faqA2:
+      "Online and retail arbitrage flippers, thrift and garage-sale resellers, eBay and Amazon FBA sellers, and side-hustlers who want a fast buy/no-buy answer instead of doing fee math by hand.",
+    faqQ3: "Which marketplaces?",
+    faqA3:
+      "eBay, Amazon, Facebook Marketplace and MercadoLibre. Profit is calculated per channel so you can pick the most profitable one to list on.",
+    faqQ4: "What does it return?",
+    faqA4:
+      "Buy/no-buy verdict, max buy price, expected profit and ROI per marketplace, suggested list prices (Quick / Market / Stretch), days to sell, and execution confidence.",
+    faqQ5: "Is it free?",
+    faqA5:
+      "Yes. 5 analyses with no signup. Free email signup unlocks 100/day. No credit card. Paid plans add scanning, watchlists, alerts and Flip & Save rewards.",
+    faqQ6: "How is max buy calculated?",
+    faqA6:
+      "Median sold comp \u2212 marketplace fees (FVF, payment, FBA when applicable) \u2212 shipping \u2212 target margin = the highest price you can pay and still profit on the chosen channel.",
+    faqQ7: "Why execution confidence?",
+    faqA7:
+      "Raw ROI assumes you sell at median. Confidence weights it against sell-through, comp count, volatility and competition. A 50% ROI you can\u2019t realize is worse than 25% you can.",
+    faqQ8: "When to verify by hand?",
+    faqA8:
+      "Trust it when comps are 20+, confidence is 60+, and trend is stable. Verify when comps are under 10, when condition splits matter, or when the item is seasonal.",
+    finalEyebrow: "\u25b6 The next step",
+    finalTitle: "The web calculator is the floor. ",
+    finalTitleAccent: "The app is the ceiling.",
+    finalSub:
+      "Barcode scanning in-store, watchlists, real-time price alerts, Flip & Save rewards, and unlimited analyses. Same engine, faster decisions.",
+    finalBtnPrimary: "Get the app \u2192",
+    finalBtnGhost: "See pricing",
+    footerCopy: "\u00a9 2026 FlipIQ \u00b7 Free flip profit calculator",
+  },
 };
 
 const PAGE_CSS = `
@@ -229,6 +421,23 @@ const PAGE_CSS = `
 `;
 
 export default function FreePage() {
+  const [lang, setLang] = useState<"es" | "en">(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("fliqLang");
+      if (stored === "en" || stored === "es") return stored;
+    }
+    return "es";
+  });
+
+  const switchLang = (l: "es" | "en") => {
+    setLang(l);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("fliqLang", l);
+    }
+  };
+
+  const t = T[lang];
+
   return (
     <div className="free-page" style={CSS_VARS as React.CSSProperties}>
       <style dangerouslySetInnerHTML={{ __html: PAGE_CSS }} />
@@ -253,16 +462,62 @@ export default function FreePage() {
         </Link>
         <div className="fp-nav-right">
           <Link className="fp-nav-link hide-sm" href="/">
-            Product
+            {t.navProduct}
           </Link>
           <Link className="fp-nav-link hide-sm" href="/pricing">
-            Pricing
+            {t.navPricing}
           </Link>
           <Link className="fp-nav-link" href="/blog">
-            Blog
+            {t.navBlog}
           </Link>
+          <div
+            style={{
+              display: "flex",
+              gap: 1,
+              padding: 2,
+              border: "1px solid var(--line)",
+              borderRadius: 8,
+              background: "rgba(245,245,242,0.02)",
+              fontFamily: "var(--mono)",
+              fontSize: 9,
+              letterSpacing: 1,
+            }}
+          >
+            <button
+              onClick={() => switchLang("es")}
+              style={{
+                padding: "5px 8px",
+                borderRadius: 6,
+                border: "none",
+                cursor: "pointer",
+                background: lang === "es" ? "var(--ink)" : "transparent",
+                color: lang === "es" ? "var(--bg)" : "var(--dimmer)",
+                fontFamily: "var(--mono)",
+                fontSize: 9,
+                letterSpacing: 1,
+              }}
+            >
+              ES
+            </button>
+            <button
+              onClick={() => switchLang("en")}
+              style={{
+                padding: "5px 8px",
+                borderRadius: 6,
+                border: "none",
+                cursor: "pointer",
+                background: lang === "en" ? "var(--ink)" : "transparent",
+                color: lang === "en" ? "var(--bg)" : "var(--dimmer)",
+                fontFamily: "var(--mono)",
+                fontSize: 9,
+                letterSpacing: 1,
+              }}
+            >
+              EN
+            </button>
+          </div>
           <button className="fp-nav-cta" type="button">
-            Get the app &rarr;
+            {t.navCta}
           </button>
         </div>
       </nav>
@@ -272,40 +527,37 @@ export default function FreePage() {
         <div className="fp-hero-copy">
           <div className="fp-eyebrow">
             <span className="fp-dot" />
-            Live data &middot; 4 marketplaces
+            {t.heroEyebrow}
           </div>
           <h1 className="fp-hero-h1">
-            Free flip profit calculator <em>for eBay &amp; Amazon</em>
+            {t.heroH1Pre}
+            <em>{t.heroH1Em}</em>
           </h1>
-          <p className="fp-hero-sub">
-            Type a product, drop your cost. We pull live sold comps from four
-            marketplaces and tell you the max buy price, expected profit, and
-            whether you&apos;ll actually sell &mdash; before you spend a dollar.
-          </p>
+          <p className="fp-hero-sub">{t.heroSub}</p>
           <ul className="fp-hero-bullets">
             <li>
               <span>
-                <b>Max buy price</b> backed out from real fees, not a flat 15%
-                guess.
+                <b>{t.bullet1Bold}</b>
+                {t.bullet1Rest}
               </span>
             </li>
             <li>
               <span>
-                <b>Profit per channel</b> across eBay, Amazon, FBMP and
-                MercadoLibre.
+                <b>{t.bullet2Bold}</b>
+                {t.bullet2Rest}
               </span>
             </li>
             <li>
               <span>
-                <b>Execution confidence</b> so a 50% ROI you can&apos;t realize
-                doesn&apos;t beat 25% ROI you can.
+                <b>{t.bullet3Bold}</b>
+                {t.bullet3Rest}
               </span>
             </li>
           </ul>
           <div className="fp-hero-meta">
-            <span className="fp-pip">No signup &middot; 5 analyses</span>
-            <span className="fp-pip">No credit card</span>
-            <span className="fp-pip">Live sold comps</span>
+            <span className="fp-pip">{t.metaChip1}</span>
+            <span className="fp-pip">{t.metaChip2}</span>
+            <span className="fp-pip">{t.metaChip3}</span>
           </div>
         </div>
 
@@ -320,22 +572,22 @@ export default function FreePage() {
         <div className="fp-trustbar-inner">
           <div className="fp-trust-stat">
             <span className="fp-trust-num lime">12,847</span>
-            <span className="fp-trust-label">analyses today</span>
+            <span className="fp-trust-label">{t.trustLabel1}</span>
           </div>
           <span className="fp-trust-divider" />
           <div className="fp-trust-stat">
             <span className="fp-trust-num">4</span>
-            <span className="fp-trust-label">marketplaces</span>
+            <span className="fp-trust-label">{t.trustLabel2}</span>
           </div>
           <span className="fp-trust-divider" />
           <div className="fp-trust-stat">
             <span className="fp-trust-num">&lt; 6s</span>
-            <span className="fp-trust-label">median time</span>
+            <span className="fp-trust-label">{t.trustLabel3}</span>
           </div>
           <span className="fp-trust-divider" />
           <div className="fp-trust-stat">
             <span className="fp-trust-num">$0</span>
-            <span className="fp-trust-label">to use</span>
+            <span className="fp-trust-label">{t.trustLabel4}</span>
           </div>
         </div>
       </section>
@@ -344,44 +596,40 @@ export default function FreePage() {
       <section className="fp-strip">
         <div className="fp-strip-head">
           <div>
-            <div className="fp-strip-eyebrow">&#9654; What you get back</div>
+            <div className="fp-strip-eyebrow">{t.outputEyebrow}</div>
             <div className="fp-strip-title">
-              Six numbers. <em>One verdict.</em>
+              {t.outputTitle}
+              <em>{t.outputTitleEm}</em>
             </div>
           </div>
-          <p className="fp-strip-sub">
-            Every analysis returns the same set, on every product. Read it once,
-            trust it forever.
-          </p>
+          <p className="fp-strip-sub">{t.outputSub}</p>
         </div>
         <ul className="fp-output-list">
           <li>
-            <span className="k">Verdict</span>
+            <span className="k">{t.outputK1}</span>
             <span className="v">
               <b>BUY</b> &middot; WATCH &middot; PASS
             </span>
           </li>
           <li>
-            <span className="k">Max buy</span>
-            <span className="v">Highest you can pay &amp; still profit</span>
+            <span className="k">{t.outputK2}</span>
+            <span className="v">{t.outputV2}</span>
           </li>
           <li>
-            <span className="k">Profit / ROI</span>
-            <span className="v">Per channel, after real fees</span>
+            <span className="k">{t.outputK3}</span>
+            <span className="v">{t.outputV3}</span>
           </li>
           <li>
-            <span className="k">Days to sell</span>
-            <span className="v">Estimated from 90d sell-through</span>
+            <span className="k">{t.outputK4}</span>
+            <span className="v">{t.outputV4}</span>
           </li>
           <li>
-            <span className="k">Confidence</span>
-            <span className="v">
-              0&ndash;100 &mdash; depth, volatility, competition
-            </span>
+            <span className="k">{t.outputK5}</span>
+            <span className="v">{t.outputV5}</span>
           </li>
           <li>
-            <span className="k">List price</span>
-            <span className="v">Quick &middot; Market &middot; Stretch</span>
+            <span className="k">{t.outputK6}</span>
+            <span className="v">{t.outputV6}</span>
           </li>
         </ul>
       </section>
@@ -390,24 +638,17 @@ export default function FreePage() {
       <section className="fp-strip">
         <div className="fp-strip-head">
           <div>
-            <div className="fp-strip-eyebrow">
-              &#9654; How max buy is calculated
-            </div>
+            <div className="fp-strip-eyebrow">{t.formulaEyebrow}</div>
             <div className="fp-strip-title">
-              No flat 15%. The actual fee stack, <em>per channel.</em>
+              {t.formulaTitle}
+              <em>{t.formulaTitleEm}</em>
             </div>
           </div>
-          <p className="fp-strip-sub">
-            Most calculators use a flat fee assumption. We back out the real
-            numbers &mdash; final-value fees, payment processing, shipping, FBA
-            when applicable, and your target margin.
-          </p>
+          <p className="fp-strip-sub">{t.formulaSub}</p>
         </div>
         <div className="fp-formula">
           <div className="fp-formula-h">Formula</div>
-          <div className="fp-formula-title">
-            Max buy = how much you can pay and still hit your margin.
-          </div>
+          <div className="fp-formula-title">{t.formulaBoxTitle}</div>
           <div className="fp-formula-line">
             <span className="term">Median sold comp</span>
             <span className="op">&minus;</span>
@@ -421,24 +662,16 @@ export default function FreePage() {
           </div>
           <div className="fp-formula-foot">
             <div>
-              <b>Median sold comp</b>
-              <span>
-                The middle of the last 30 days of actual sold listings &mdash;
-                not asking prices.
-              </span>
+              <b>{t.formulaFoot1Title}</b>
+              <span>{t.formulaFoot1Desc}</span>
             </div>
             <div>
-              <b>Fees + shipping</b>
-              <span>
-                Per-channel: eBay FVF + payment, Amazon referral + FBA, FBMP $0,
-                MercadoLibre tiered.
-              </span>
+              <b>{t.formulaFoot2Title}</b>
+              <span>{t.formulaFoot2Desc}</span>
             </div>
             <div>
-              <b>Target margin</b>
-              <span>
-                Default 25% for new, 35% for used. Adjustable in settings.
-              </span>
+              <b>{t.formulaFoot3Title}</b>
+              <span>{t.formulaFoot3Desc}</span>
             </div>
           </div>
         </div>
@@ -448,107 +681,65 @@ export default function FreePage() {
       <section className="fp-strip">
         <div className="fp-strip-head">
           <div>
-            <div className="fp-strip-eyebrow">&#9654; FAQ</div>
-            <div className="fp-strip-title">
-              Everything people ask before they trust the number.
-            </div>
+            <div className="fp-strip-eyebrow">{t.faqEyebrow}</div>
+            <div className="fp-strip-title">{t.faqTitle}</div>
           </div>
-          <p className="fp-strip-sub">
-            If your question isn&apos;t here, the answer is in the analysis
-            &mdash; every output card explains its math.
-          </p>
+          <p className="fp-strip-sub">{t.faqSub}</p>
         </div>
 
         <div className="fp-faq-wrap">
           <details className="fp-faq" open>
-            <summary>What is FlipIQ?</summary>
-            <p>
-              A free flip profit calculator for resellers. Enter a product and
-              your cost; we pull live data from eBay, Amazon, FBMP and
-              MercadoLibre and tell you whether the flip is worth it before you
-              buy.
-            </p>
+            <summary>{t.faqQ1}</summary>
+            <p>{t.faqA1}</p>
           </details>
           <details className="fp-faq">
-            <summary>Who is it for?</summary>
-            <p>
-              Online and retail arbitrage flippers, thrift and garage-sale
-              resellers, eBay and Amazon FBA sellers, and side-hustlers who want
-              a fast buy/no-buy answer instead of doing fee math by hand.
-            </p>
+            <summary>{t.faqQ2}</summary>
+            <p>{t.faqA2}</p>
           </details>
           <details className="fp-faq">
-            <summary>Which marketplaces?</summary>
-            <p>
-              eBay, Amazon, Facebook Marketplace and MercadoLibre. Profit is
-              calculated per channel so you can pick the most profitable one to
-              list on.
-            </p>
+            <summary>{t.faqQ3}</summary>
+            <p>{t.faqA3}</p>
           </details>
           <details className="fp-faq">
-            <summary>What does it return?</summary>
-            <p>
-              Buy/no-buy verdict, max buy price, expected profit and ROI per
-              marketplace, suggested list prices (Quick / Market / Stretch),
-              days to sell, and execution confidence.
-            </p>
+            <summary>{t.faqQ4}</summary>
+            <p>{t.faqA4}</p>
           </details>
           <details className="fp-faq">
-            <summary>Is it free?</summary>
-            <p>
-              Yes. 5 analyses with no signup. Free email signup unlocks 100/day.
-              No credit card. Paid plans add scanning, watchlists, alerts and
-              Flip &amp; Save rewards.
-            </p>
+            <summary>{t.faqQ5}</summary>
+            <p>{t.faqA5}</p>
           </details>
           <details className="fp-faq">
-            <summary>How is max buy calculated?</summary>
-            <p>
-              Median sold comp &minus; marketplace fees (FVF, payment, FBA when
-              applicable) &minus; shipping &minus; target margin = the highest
-              price you can pay and still profit on the chosen channel.
-            </p>
+            <summary>{t.faqQ6}</summary>
+            <p>{t.faqA6}</p>
           </details>
           <details className="fp-faq">
-            <summary>Why execution confidence?</summary>
-            <p>
-              Raw ROI assumes you sell at median. Confidence weights it against
-              sell-through, comp count, volatility and competition. A 50% ROI
-              you can&apos;t realize is worse than 25% you can.
-            </p>
+            <summary>{t.faqQ7}</summary>
+            <p>{t.faqA7}</p>
           </details>
           <details className="fp-faq">
-            <summary>When to verify by hand?</summary>
-            <p>
-              Trust it when comps are 20+, confidence is 60+, and trend is
-              stable. Verify when comps are under 10, when condition splits
-              matter, or when the item is seasonal.
-            </p>
+            <summary>{t.faqQ8}</summary>
+            <p>{t.faqA8}</p>
           </details>
         </div>
 
         {/* Final upsell */}
         <div className="fp-final">
           <div>
-            <div className="fp-final-eyebrow">&#9654; The next step</div>
+            <div className="fp-final-eyebrow">{t.finalEyebrow}</div>
             <h3>
-              The web calculator is the floor.{" "}
+              {t.finalTitle}{" "}
               <span style={{ color: "var(--accent)" }}>
-                The app is the ceiling.
+                {t.finalTitleAccent}
               </span>
             </h3>
-            <p>
-              Barcode scanning in-store, watchlists, real-time price alerts,
-              Flip &amp; Save rewards, and unlimited analyses. Same engine,
-              faster decisions.
-            </p>
+            <p>{t.finalSub}</p>
           </div>
           <div className="fp-final-actions">
             <button className="fp-btn-primary" type="button">
-              Get the app &rarr;
+              {t.finalBtnPrimary}
             </button>
             <button className="fp-btn-ghost" type="button">
-              See pricing
+              {t.finalBtnGhost}
             </button>
           </div>
         </div>
@@ -556,11 +747,11 @@ export default function FreePage() {
 
       {/* Footer */}
       <footer className="fp-footer">
-        <div>&copy; 2026 FlipIQ &middot; Free flip profit calculator</div>
+        <div>{t.footerCopy}</div>
         <div className="fp-footer-links">
-          <Link href="/">Product</Link>
-          <Link href="/plans">Pricing</Link>
-          <span>Blog</span>
+          <Link href="/">{t.navProduct}</Link>
+          <Link href="/plans">{t.navPricing}</Link>
+          <span>{t.navBlog}</span>
           <span>Terms</span>
           <span>Privacy</span>
         </div>
