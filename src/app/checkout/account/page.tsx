@@ -698,7 +698,10 @@ function AccountGateContent() {
     const { error: authError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: `${firstName} ${lastName}`.trim() } },
+      options: {
+        data: { full_name: `${firstName} ${lastName}`.trim() },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
     setLoading(false);
     if (authError) {
