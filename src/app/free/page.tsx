@@ -332,7 +332,8 @@ const PAGE_CSS = `
 .fp-pip::before { content:"\\2713"; color:var(--accent); font-weight:800; }
 
 /* calc wrapper */
-.fp-calc-wrapper { position:sticky; top:20px; }
+.fp-calc-wrapper { position:sticky; top:20px; max-height:calc(100vh - 40px); overflow-y:auto; scrollbar-width:none; }
+.fp-calc-wrapper::-webkit-scrollbar { display:none; }
 
 /* trust bar */
 .fp-trustbar { max-width:1160px; margin:0 auto; padding:10px 22px 0; }
