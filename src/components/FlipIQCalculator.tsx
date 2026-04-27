@@ -3324,58 +3324,7 @@ export default function FlipIQCalculator() {
           </div>
         )}
 
-        {/* ── FOOTER ── */}
-        {!result && !error && (
-          <div
-            style={{
-              textAlign: "center",
-              marginTop: 32,
-              padding: "20px 0",
-              borderTop: "1px solid rgba(245,245,242,0.06)",
-            }}
-          >
-            <p
-              style={{
-                fontSize: 12,
-                color: "rgba(245,245,242,0.3)",
-                lineHeight: 1.6,
-                marginBottom: 12,
-              }}
-            >
-              FlipIQ analyzes real-time sales data from eBay, Amazon, FB
-              Marketplace and MercadoLibre to tell you if a product is worth
-              flipping.
-            </p>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-              }}
-            >
-              <div
-                style={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: 6,
-                  background: ACCENT,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 10,
-                  fontWeight: 800,
-                  color: "#0A0A0A",
-                }}
-              >
-                F
-              </div>
-              <span style={{ fontSize: 12, color: "rgba(245,245,242,0.3)" }}>
-                FlipIQ · Built for resellers, by resellers
-              </span>
-            </div>
-          </div>
-        )}
+        {/* Footer removed — the /free page provides its own contextual copy */}
       </div>
     </div>
   );
