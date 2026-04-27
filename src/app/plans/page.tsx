@@ -22,6 +22,7 @@ interface Plan {
   id: PlanId;
   name: string;
   price: number;
+  originalPrice?: number; // precio original (tachado)
   stripePriceId: string;
   tag?: string;
   limit: string;
@@ -30,7 +31,7 @@ interface Plan {
 
 const PLAN_META: Record<
   string,
-  { price: number; tag?: string; feats: string[] }
+  { price: number; originalPrice?: number; tag?: string; feats: string[] }
 > = {
   free: {
     price: 0,
@@ -43,7 +44,8 @@ const PLAN_META: Record<
   },
   starter: {
     price: 9.99,
-    tag: "Most picked",
+    originalPrice: 14.99,
+    tag: "Launch price",
     feats: [
       "Everything in Free",
       "AI analysis unlocked",
@@ -55,7 +57,8 @@ const PLAN_META: Record<
   },
   pro: {
     price: 19.99,
-    tag: "Power sellers",
+    originalPrice: 29.99,
+    tag: "Launch price",
     feats: [
       "Everything in Starter",
       "Market Intelligence AI",
@@ -86,6 +89,7 @@ function buildPlans(apiPlans: BillingPlan[]): Plan[] {
       id: ap.id as PlanId,
       name: ap.name,
       price: meta.price,
+      originalPrice: meta.originalPrice,
       stripePriceId: ap.stripe_price_id,
       tag: meta.tag,
       limit: `${ap.daily_limit} scans/day`,
@@ -272,10 +276,10 @@ export default function PlansPage() {
     plans.length > 0
       ? plans
       : buildPlans([
-          { id: "basic", name: "Basic", stripe_price_id: "", daily_limit: 25 },
+          { id: "starter", name: "Starter", stripe_price_id: "", daily_limit: 30 },
           {
-            id: "premium",
-            name: "Premium",
+            id: "pro",
+            name: "Pro",
             stripe_price_id: "",
             daily_limit: 100,
           },
@@ -405,8 +409,23 @@ export default function PlansPage() {
                     color: textColor(plan.id),
                     letterSpacing: -0.3,
                     flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
                   }}
                 >
+                  {plan.originalPrice && (
+                    <span
+                      style={{
+                        textDecoration: "line-through",
+                        opacity: 0.45,
+                        fontSize: 13,
+                        fontWeight: 400,
+                      }}
+                    >
+                      ${plan.originalPrice.toFixed(2)}
+                    </span>
+                  )}
                   {plan.price === 0
                     ? "Free"
                     : `$${plan.price % 1 === 0 ? plan.price : plan.price.toFixed(2)}/mo`}
@@ -421,11 +440,26 @@ export default function PlansPage() {
                   letterSpacing: 1.5,
                   textTransform: "uppercase",
                   color: mutedColor(plan.id),
-                  marginBottom: 10,
+                  marginBottom: plan.originalPrice ? 4 : 10,
                 }}
               >
                 {plan.limit}
               </div>
+
+              {/* Launch price badge */}
+              {plan.originalPrice && (
+                <div
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 9,
+                    letterSpacing: 0.5,
+                    color: isSelected && plan.id === "starter" ? "#0A0A0A" : ACCENT,
+                    marginBottom: 10,
+                  }}
+                >
+                  Launch price — 1st month
+                </div>
+              )}
 
               {/* Features */}
               <ul
