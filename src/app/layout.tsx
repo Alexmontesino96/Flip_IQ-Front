@@ -79,6 +79,17 @@ export default function RootLayout({
       lang="en"
       className={`${interTight.variable} ${jetbrainsMono.variable}`}
     >
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0A0A0A" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
+        <meta name="apple-mobile-web-app-title" content="FlipIQ" />
+        <link rel="apple-touch-icon" href="/icon-192.svg" />
+      </head>
       <body>
         {children}
         <Analytics />
