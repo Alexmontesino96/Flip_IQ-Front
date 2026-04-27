@@ -74,6 +74,8 @@ function InputField({
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -81,7 +83,7 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false);
 
   const handleRegister = async () => {
-    if (!email || !password) return;
+    if (!firstName || !email || !password) return;
     if (password.length < 6) {
       setError("Password must be at least 6 characters");
       return;
@@ -96,6 +98,11 @@ export default function RegisterPage() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: {
+          full_name: `${firstName} ${lastName}`.trim(),
+          first_name: firstName,
+          last_name: lastName,
+        },
       },
     });
 
@@ -205,6 +212,26 @@ export default function RegisterPage() {
             role="group"
             aria-label="Registration"
           >
+            <div style={{ display: "flex", gap: 16 }}>
+              <div style={{ flex: 1 }}>
+                <InputField
+                  label="First name"
+                  type="text"
+                  value={firstName}
+                  onChange={setFirstName}
+                  autoComplete="given-name"
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <InputField
+                  label="Last name"
+                  type="text"
+                  value={lastName}
+                  onChange={setLastName}
+                  autoComplete="family-name"
+                />
+              </div>
+            </div>
             <InputField
               label="Email"
               type="email"
