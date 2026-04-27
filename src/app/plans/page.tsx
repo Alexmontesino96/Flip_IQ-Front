@@ -16,7 +16,7 @@ import {
   SubscriptionStatus,
 } from "@/lib/billing";
 
-type PlanId = "free" | "basic" | "premium";
+type PlanId = "free" | "starter" | "pro";
 
 interface Plan {
   id: PlanId;
@@ -36,27 +36,28 @@ const PLAN_META: Record<
     price: 0,
     feats: [
       "eBay comps only",
-      "Keyword search only",
+      "Keyword search",
       "Basic flip score",
       "1 watchlist",
     ],
   },
-  basic: {
-    price: 9.99,
+  starter: {
+    price: 14.99,
     tag: "Most picked",
     feats: [
+      "Everything in Free",
+      "AI analysis unlocked",
       "eBay + Amazon comps",
       "Barcode scanning",
-      "Full flip score",
       "Push alerts",
       "5 watchlists",
     ],
   },
-  premium: {
-    price: 24.99,
+  pro: {
+    price: 29.99,
     tag: "Power sellers",
     feats: [
-      "Everything in Basic",
+      "Everything in Starter",
       "Market Intelligence AI",
       "CSV export",
       "Push + email alerts",
@@ -73,7 +74,7 @@ function buildPlans(apiPlans: BillingPlan[]): Plan[] {
       id: "free",
       name: "Free",
       stripePriceId: "",
-      limit: "5 scans/day",
+      limit: "5 scans/day (registered)",
       price: freeMeta.price,
       feats: freeMeta.feats,
     },
@@ -99,7 +100,7 @@ function planCardStyle(
   isSelected: boolean,
   planId: PlanId
 ): React.CSSProperties {
-  if (isSelected && planId === "basic") {
+  if (isSelected && planId === "starter") {
     return {
       background: ACCENT,
       color: "#0A0A0A",
@@ -137,7 +138,7 @@ function planCardStyle(
 
 export default function PlansPage() {
   const router = useRouter();
-  const [selected, setSelected] = useState<PlanId>("basic");
+  const [selected, setSelected] = useState<PlanId>("starter");
   const [plans, setPlans] = useState<Plan[]>([]);
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(
     null
@@ -163,13 +164,13 @@ export default function PlansPage() {
   const selectedPlan = plans.find((p) => p.id === selected);
 
   const textColor = (planId: PlanId) =>
-    planId === selected && planId === "basic" ? "#0A0A0A" : "#F5F5F2";
+    planId === selected && planId === "starter" ? "#0A0A0A" : "#F5F5F2";
   const mutedColor = (planId: PlanId) =>
-    planId === selected && planId === "basic"
+    planId === selected && planId === "starter"
       ? "rgba(0,0,0,0.5)"
       : "rgba(245,245,242,0.5)";
   const checkColor = (planId: PlanId) =>
-    planId === selected && planId === "basic" ? "#0A0A0A" : ACCENT;
+    planId === selected && planId === "starter" ? "#0A0A0A" : ACCENT;
 
   const handleCTA = async () => {
     if (loading) return;
@@ -369,10 +370,10 @@ export default function PlansPage() {
                 {isCurrent && (
                   <TinyBadge
                     color={
-                      isSelected && plan.id === "basic" ? "#0A0A0A" : ACCENT
+                      isSelected && plan.id === "starter" ? "#0A0A0A" : ACCENT
                     }
                     bg={
-                      isSelected && plan.id === "basic"
+                      isSelected && plan.id === "starter"
                         ? "rgba(0,0,0,0.15)"
                         : "rgba(212,255,61,0.12)"
                     }
@@ -384,10 +385,10 @@ export default function PlansPage() {
                 {plan.tag && !isCurrent && (
                   <TinyBadge
                     color={
-                      isSelected && plan.id === "basic" ? "#0A0A0A" : ACCENT
+                      isSelected && plan.id === "starter" ? "#0A0A0A" : ACCENT
                     }
                     bg={
-                      isSelected && plan.id === "basic"
+                      isSelected && plan.id === "starter"
                         ? "rgba(0,0,0,0.15)"
                         : "rgba(212,255,61,0.12)"
                     }
