@@ -16,88 +16,32 @@ import {
   SubscriptionStatus,
 } from "@/lib/billing";
 
-type PlanId = "free" | "starter" | "pro";
+type PlanId = string;
 
 interface Plan {
   id: PlanId;
   name: string;
   price: number;
-  originalPrice?: number; // precio original (tachado)
+  originalPrice?: number;
   stripePriceId: string;
   tag?: string;
   limit: string;
   feats: string[];
+  aiUnlocked: boolean;
 }
 
-const PLAN_META: Record<
-  string,
-  { price: number; originalPrice?: number; tag?: string; feats: string[] }
-> = {
-  free: {
-    price: 0,
-    feats: [
-      "eBay comps only",
-      "Keyword search",
-      "Basic flip score",
-      "1 watchlist",
-    ],
-  },
-  starter: {
-    price: 9.99,
-    originalPrice: 14.99,
-    tag: "Launch price",
-    feats: [
-      "Everything in Free",
-      "AI analysis unlocked",
-      "eBay + Amazon comps",
-      "Barcode scanning",
-      "Push alerts",
-      "5 watchlists",
-    ],
-  },
-  pro: {
-    price: 19.99,
-    originalPrice: 29.99,
-    tag: "Launch price",
-    feats: [
-      "Everything in Starter",
-      "Market Intelligence AI",
-      "CSV export",
-      "Push + email alerts",
-      "Unlimited watchlists",
-      "Priority support",
-    ],
-  },
-};
-
 function buildPlans(apiPlans: BillingPlan[]): Plan[] {
-  const freeMeta = PLAN_META.free;
-  const plans: Plan[] = [
-    {
-      id: "free",
-      name: "Free",
-      stripePriceId: "",
-      limit: "5 scans/day (registered)",
-      price: freeMeta.price,
-      feats: freeMeta.feats,
-    },
-  ];
-
-  for (const ap of apiPlans) {
-    const meta = PLAN_META[ap.id] || { price: 0, feats: [] };
-    plans.push({
-      id: ap.id as PlanId,
-      name: ap.name,
-      price: meta.price,
-      originalPrice: meta.originalPrice,
-      stripePriceId: ap.stripe_price_id,
-      tag: meta.tag,
-      limit: `${ap.daily_limit} scans/day`,
-      feats: meta.feats,
-    });
-  }
-
-  return plans;
+  return apiPlans.map((ap) => ({
+    id: ap.id,
+    name: ap.name,
+    price: ap.price,
+    originalPrice: ap.original_price ?? undefined,
+    stripePriceId: ap.stripe_price_id ?? "",
+    tag: ap.tag ?? undefined,
+    limit: `${ap.daily_limit} scans/day`,
+    feats: ap.features,
+    aiUnlocked: ap.ai_unlocked,
+  }));
 }
 
 function planCardStyle(
@@ -276,12 +220,57 @@ export default function PlansPage() {
     plans.length > 0
       ? plans
       : buildPlans([
-          { id: "starter", name: "Starter", stripe_price_id: "", daily_limit: 30 },
+          {
+            id: "free",
+            name: "Free",
+            price: 0,
+            original_price: null,
+            daily_limit: 5,
+            stripe_price_id: null,
+            tag: null,
+            ai_unlocked: false,
+            features: [
+              "eBay comps only",
+              "Keyword search",
+              "Basic flip score",
+              "1 watchlist",
+            ],
+          },
+          {
+            id: "starter",
+            name: "Starter",
+            price: 9.99,
+            original_price: 14.99,
+            daily_limit: 30,
+            stripe_price_id: "",
+            tag: "Launch price",
+            ai_unlocked: true,
+            features: [
+              "Everything in Free",
+              "AI analysis unlocked",
+              "eBay + Amazon comps",
+              "Barcode scanning",
+              "Push alerts",
+              "5 watchlists",
+            ],
+          },
           {
             id: "pro",
             name: "Pro",
-            stripe_price_id: "",
+            price: 19.99,
+            original_price: 29.99,
             daily_limit: 100,
+            stripe_price_id: "",
+            tag: "Launch price",
+            ai_unlocked: true,
+            features: [
+              "Everything in Starter",
+              "Market Intelligence AI",
+              "CSV export",
+              "Push + email alerts",
+              "Unlimited watchlists",
+              "Priority support",
+            ],
           },
         ]);
 
@@ -453,7 +442,8 @@ export default function PlansPage() {
                     fontFamily: MONO,
                     fontSize: 9,
                     letterSpacing: 0.5,
-                    color: isSelected && plan.id === "starter" ? "#0A0A0A" : ACCENT,
+                    color:
+                      isSelected && plan.id === "starter" ? "#0A0A0A" : ACCENT,
                     marginBottom: 10,
                   }}
                 >

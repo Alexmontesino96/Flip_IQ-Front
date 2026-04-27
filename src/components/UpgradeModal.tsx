@@ -1,54 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
-import { createCheckout } from "@/lib/billing";
+import { createCheckout, fetchPlans, BillingPlan } from "@/lib/billing";
 
 interface UpgradeModalProps {
   onClose: () => void;
   trigger: "ai_gate" | "scan_limit";
 }
 
-const PLANS = [
-  {
-    id: "starter",
-    name: "Starter",
-    price: "$14.99",
-    perMonth: "/month",
-    scans: "30 analyses per day",
-    features: [
-      "Full AI explanation on every result",
-      "Decision Brief with action plan",
-      "eBay + Amazon data",
-    ],
-    stripePriceId: "price_1TPOhhF4IFBF6Qp6jW0IVJoG",
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: "$29.99",
-    perMonth: "/month",
-    scans: "100 analyses per day",
-    features: [
-      "Everything in Starter",
-      "Watchlist & price alerts",
-      "Analysis history (30 days)",
-    ],
-    stripePriceId: "price_1TPOhiF4IFBF6Qp6aAoh43Oj",
-  },
-];
-
 export default function UpgradeModal({ onClose, trigger }: UpgradeModalProps) {
   const [loading, setLoading] = useState<string | null>(null);
+  const [plans, setPlans] = useState<BillingPlan[]>([]);
 
-  const handleSelect = async (plan: (typeof PLANS)[number]) => {
+  useEffect(() => {
+    fetchPlans().then((p) => setPlans(p.filter((pl) => pl.price > 0)));
+  }, []);
+
+  const handleSelect = async (plan: BillingPlan) => {
+    if (!plan.stripe_price_id) return;
     setLoading(plan.id);
     try {
       const origin = globalThis.location?.origin || "";
       const successUrl = `${origin}/plans/success?plan=${plan.id}`;
       const cancelUrl = `${origin}/free`;
       const checkoutUrl = await createCheckout(
-        plan.stripePriceId,
+        plan.stripe_price_id,
         successUrl,
         cancelUrl
       );
@@ -149,18 +126,18 @@ export default function UpgradeModal({ onClose, trigger }: UpgradeModalProps) {
             marginBottom: 24,
           }}
         >
-          {PLANS.map((plan) => (
+          {plans.map((plan, idx) => (
             <div
               key={plan.id}
               style={{
                 padding: "20px",
                 borderRadius: 16,
                 border:
-                  plan.id === "starter"
+                  idx === 0
                     ? `1px solid rgba(139,92,246,0.4)`
                     : `1px solid rgba(245,245,242,0.08)`,
                 background:
-                  plan.id === "starter"
+                  idx === 0
                     ? "rgba(139,92,246,0.06)"
                     : "rgba(245,245,242,0.03)",
               }}
@@ -182,6 +159,18 @@ export default function UpgradeModal({ onClose, trigger }: UpgradeModalProps) {
                   }}
                 >
                   {plan.name}
+                  {plan.tag && (
+                    <span
+                      style={{
+                        fontSize: 10,
+                        color: ACCENT,
+                        fontWeight: 600,
+                        marginLeft: 8,
+                      }}
+                    >
+                      {plan.tag}
+                    </span>
+                  )}
                 </span>
                 <span
                   style={{
@@ -191,7 +180,19 @@ export default function UpgradeModal({ onClose, trigger }: UpgradeModalProps) {
                     color: "#F5F5F2",
                   }}
                 >
-                  {plan.price}
+                  {plan.original_price && (
+                    <span
+                      style={{
+                        textDecoration: "line-through",
+                        opacity: 0.4,
+                        fontSize: 12,
+                        marginRight: 4,
+                      }}
+                    >
+                      ${plan.original_price}
+                    </span>
+                  )}
+                  ${plan.price}
                   <span
                     style={{
                       fontSize: 12,
@@ -199,7 +200,7 @@ export default function UpgradeModal({ onClose, trigger }: UpgradeModalProps) {
                       fontWeight: 400,
                     }}
                   >
-                    {plan.perMonth}
+                    /mo
                   </span>
                 </span>
               </div>
@@ -214,7 +215,7 @@ export default function UpgradeModal({ onClose, trigger }: UpgradeModalProps) {
                   marginBottom: 12,
                 }}
               >
-                {plan.scans}
+                {plan.daily_limit} analyses per day
               </div>
 
               <ul
@@ -254,10 +255,10 @@ export default function UpgradeModal({ onClose, trigger }: UpgradeModalProps) {
                   borderRadius: 12,
                   border: "none",
                   background:
-                    plan.id === "starter"
+                    idx === 0
                       ? "linear-gradient(135deg, #8b5cf6, #6d28d9)"
                       : ACCENT,
-                  color: plan.id === "starter" ? "#fff" : "#0A0A0A",
+                  color: idx === 0 ? "#fff" : "#0A0A0A",
                   fontFamily: DISPLAY,
                   fontSize: 14,
                   fontWeight: 700,

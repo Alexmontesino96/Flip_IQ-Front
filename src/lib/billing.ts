@@ -3,8 +3,13 @@ import { API_URL, getAuthHeaders } from "./api";
 export interface BillingPlan {
   id: string;
   name: string;
-  stripe_price_id: string;
+  price: number;
+  original_price: number | null;
   daily_limit: number;
+  stripe_price_id: string | null;
+  tag: string | null;
+  ai_unlocked: boolean;
+  features: string[];
 }
 
 export interface SubscriptionStatus {
