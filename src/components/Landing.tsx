@@ -2293,7 +2293,7 @@ export default function Landing() {
             href="/free"
             featured={false}
           />
-          {/* Basic */}
+          {/* Starter */}
           <PlanCard
             tier={t.proTier}
             price="9.99"
@@ -2301,19 +2301,19 @@ export default function Landing() {
             tagline={t.proTag}
             features={[t.proF1, t.proF2, t.proF3, t.proF4, t.proF5]}
             cta={t.proCta}
-            href="/checkout/account?plan=basic"
+            href="/checkout/account?plan=starter"
             featured
             ribbon={t.proRibbon}
           />
-          {/* Premium */}
+          {/* Pro */}
           <PlanCard
             tier={t.teamTier}
-            price="24.99"
+            price="19.99"
             perMonth={t.perMonth}
             tagline={t.teamTag}
             features={[t.teamF1, t.teamF2, t.teamF3, t.teamF4, t.teamF5]}
             cta={t.teamCta}
-            href="/checkout/account?plan=premium"
+            href="/checkout/account?plan=pro"
             featured={false}
           />
         </div>

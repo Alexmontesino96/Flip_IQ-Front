@@ -30,29 +30,21 @@ const PLAN_INFO: Record<
     dailyEs: string;
   }
 > = {
-  basic: {
-    name: "Basic",
-    nameEs: "Basic",
+  starter: {
+    name: "Starter",
+    nameEs: "Starter",
     price: "$9.99",
     priceEs: "$9.99",
-    daily: "25 scans/day",
-    dailyEs: "25 escaneos/dia",
-  },
-  premium: {
-    name: "Premium",
-    nameEs: "Premium",
-    price: "$24.99",
-    priceEs: "$24.99",
-    daily: "100 scans/day",
-    dailyEs: "100 escaneos/dia",
+    daily: "30 scans/day",
+    dailyEs: "30 escaneos/dia",
   },
   pro: {
     name: "Pro",
     nameEs: "Pro",
-    price: "$12",
-    priceEs: "$12",
-    daily: "100/d",
-    dailyEs: "100/d",
+    price: "$19.99",
+    priceEs: "$19.99",
+    daily: "100 scans/day",
+    dailyEs: "100 escaneos/dia",
   },
 };
 
@@ -640,7 +632,7 @@ function AccountGateContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const planKey = searchParams.get("plan") ?? "basic";
-  const plan = PLAN_INFO[planKey] ?? PLAN_INFO.basic;
+  const plan = PLAN_INFO[planKey] ?? PLAN_INFO.starter;
 
   const [lang, setLang] = useState<Lang>(() => {
     if (typeof window === "undefined") return "es";
