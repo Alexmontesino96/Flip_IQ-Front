@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Script from "next/script";
-import { runAnalysisStream, AnalysisResult } from "@/lib/analysis";
+import { runAnalysisStream } from "@/lib/analysis";
 import { addRecentSearch } from "@/lib/history";
 
 const SAMPLES = [
@@ -228,18 +228,14 @@ export default function FreePage() {
     setBusyMsg("Pulling sold comps\u2026");
     addRecentSearch(q.trim());
 
-    let analysisId: number | null = null;
+    let navigated = false;
 
     runAnalysisStream(
       q.trim(),
       parseFloat(cost),
       cond,
-      (result: AnalysisResult) => {
-        analysisId = result.analysisId;
-        // Navigate as soon as we have the ID
-        if (analysisId) {
-          router.push(`/result?id=${analysisId}`);
-        }
+      () => {
+        /* analysis chunk — id is null here, wait for ai_complete */
       },
       () => {
         /* ai complete */
@@ -250,21 +246,11 @@ export default function FreePage() {
       },
       (progress) => {
         setBusyMsg(progress.message);
-        // Fallback: if analysis event didn't fire but progress hit 100
-        if (progress.progress >= 100 && !analysisId) {
-          setTimeout(async () => {
-            try {
-              const { fetchHistory } = await import("@/lib/history");
-              const history = await fetchHistory(1);
-              if (history.length > 0) {
-                router.push(`/result?id=${history[0].id}`);
-              } else {
-                setBusy(false);
-              }
-            } catch {
-              setBusy(false);
-            }
-          }, 500);
+        // The analysis_id appears in progress details when ai stage completes
+        const aid = progress.details?.analysis_id as number | undefined;
+        if (aid && !navigated) {
+          navigated = true;
+          router.push(`/result?id=${aid}`);
         }
       }
     ).catch(() => setBusy(false));
