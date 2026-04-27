@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Script from "next/script";
-import { runAnalysisStream } from "@/lib/analysis";
+import { runAnalysisStream, AnalysisResult } from "@/lib/analysis";
 import { addRecentSearch } from "@/lib/history";
 
 const SAMPLES = [
@@ -228,12 +228,18 @@ export default function FreePage() {
     setBusyMsg("Pulling sold comps\u2026");
     addRecentSearch(q.trim());
 
+    let analysisId: number | null = null;
+
     runAnalysisStream(
       q.trim(),
       parseFloat(cost),
       cond,
-      () => {
-        /* analysis chunk */
+      (result: AnalysisResult) => {
+        analysisId = result.analysisId;
+        // Navigate as soon as we have the ID
+        if (analysisId) {
+          router.push(`/result?id=${analysisId}`);
+        }
       },
       () => {
         /* ai complete */
@@ -244,7 +250,8 @@ export default function FreePage() {
       },
       (progress) => {
         setBusyMsg(progress.message);
-        if (progress.progress >= 100) {
+        // Fallback: if analysis event didn't fire but progress hit 100
+        if (progress.progress >= 100 && !analysisId) {
           setTimeout(async () => {
             try {
               const { fetchHistory } = await import("@/lib/history");

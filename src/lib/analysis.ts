@@ -75,6 +75,7 @@ export interface ExecutionInfo {
 }
 
 export interface AnalysisResult {
+  analysisId: number | null;
   noCompsFound: boolean;
   product: ResultProduct;
   channels: Channel[];
@@ -643,6 +644,7 @@ export function transformResponse(data: any): AnalysisResult {
   );
 
   return {
+    analysisId: typeof data.id === "number" ? data.id : null,
     noCompsFound: Boolean(data.no_comps_found),
     product,
     channels,
