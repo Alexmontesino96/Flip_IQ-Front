@@ -189,6 +189,74 @@ const CSS = `
 .fp footer a:hover{color:var(--ink)}
 .fp footer .links{display:flex;gap:18px}
 
+/* result panel */
+.fp .result{background:var(--bg-2);border:1px solid var(--line-2);border-radius:18px;padding:0;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.5);overflow:hidden}
+.fp .result::before{content:'';position:absolute;inset:-1px;border-radius:19px;background:linear-gradient(135deg,rgba(212,255,58,.18),transparent 40%,transparent 60%,rgba(212,255,58,.1));z-index:0;opacity:.7;pointer-events:none}
+.fp .result>*{position:relative;z-index:1}
+.fp .res-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line)}
+.fp .res-back{appearance:none;background:transparent;border:1px solid var(--line-2);border-radius:8px;padding:7px 11px;color:var(--dim);font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.fp .res-back:hover{color:var(--accent);border-color:var(--accent-bd)}
+.fp .res-title{font-size:14px;font-weight:700;color:var(--ink);letter-spacing:-.2px;text-align:right;line-height:1.25;flex:1;margin-left:12px}
+.fp .res-title .meta{display:block;font-family:var(--mono);font-size:9px;color:var(--accent);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px}
+.fp .res-body{padding:18px 22px;display:flex;flex-direction:column;gap:14px}
+.fp .res-section-h{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--dimmer);margin:0 0 8px}
+.fp .verdict{padding:22px;border-radius:16px;background:var(--accent);color:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:14px;box-shadow:0 8px 28px rgba(212,255,58,.18)}
+.fp .verdict-label{font-size:34px;font-weight:900;letter-spacing:-1.3px;line-height:.95}
+.fp .verdict-sub{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1.5px;color:rgba(10,10,10,.55);margin-top:8px;text-transform:uppercase}
+.fp .verdict-score{width:64px;height:64px;border-radius:50%;border:2px solid var(--bg);display:grid;place-items:center;font-size:22px;font-weight:800;letter-spacing:-.5px;flex-shrink:0}
+.fp .maxbuy{padding:18px 20px;border-radius:14px;background:var(--bg-3);border:1px solid var(--line)}
+.fp .maxbuy-cap{font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:1.2px;text-transform:uppercase;font-weight:600}
+.fp .maxbuy-num{font-size:42px;font-weight:800;color:var(--accent);letter-spacing:-1.8px;line-height:1;margin-top:4px;font-variant-numeric:tabular-nums}
+.fp .maxbuy-foot{display:flex;gap:18px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.fp .maxbuy-foot div{flex:1}
+.fp .maxbuy-foot .k{font-family:var(--mono);font-size:9px;color:var(--dimmer);letter-spacing:1.2px;text-transform:uppercase;font-weight:700}
+.fp .maxbuy-foot .v{font-size:18px;font-weight:700;color:var(--ink);margin-top:3px;font-variant-numeric:tabular-nums}
+.fp .maxbuy-foot .v.lime{color:var(--accent)}
+.fp .saleplan{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fp .sp{padding:14px 12px;border-radius:12px;background:var(--bg-3);border:1px solid var(--line)}
+.fp .sp.strong{background:var(--accent-bg);border-color:var(--accent-bd)}
+.fp .sp .k{font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)}
+.fp .sp.strong .k{color:var(--accent)}
+.fp .sp .v{font-size:22px;font-weight:800;letter-spacing:-.7px;line-height:1;margin-top:6px;color:var(--ink);font-variant-numeric:tabular-nums}
+.fp .sp .sub{font-family:var(--mono);font-size:9px;color:var(--dimmer);margin-top:5px;letter-spacing:.4px}
+.fp .returns{display:flex;background:var(--line);border-radius:12px;overflow:hidden;gap:1px}
+.fp .returns>div{flex:1;padding:14px;background:var(--bg-3)}
+.fp .returns .k{font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:1.2px;text-transform:uppercase;font-weight:700}
+.fp .returns .v{font-size:20px;font-weight:800;letter-spacing:-.5px;margin-top:4px;font-variant-numeric:tabular-nums}
+.fp .returns .v.pos{color:var(--accent)}
+.fp .scores{padding:16px 18px;border-radius:14px;background:var(--bg-3);border:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.fp .score-row{display:grid;grid-template-columns:90px 1fr auto;gap:14px;align-items:center}
+.fp .score-row .lbl{font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:1.2px;text-transform:uppercase;font-weight:700}
+.fp .score-row .bar{height:5px;border-radius:3px;background:rgba(245,245,242,.06);overflow:hidden}
+.fp .score-row .fill{height:100%;background:var(--accent);border-radius:3px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.fp .score-row .fill.warn{background:var(--watch)}
+.fp .score-row .val{font-size:13px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;min-width:88px;text-align:right}
+.fp .score-row .val .cat{font-family:var(--mono);font-size:9px;color:var(--dim);font-weight:600;letter-spacing:.4px;margin-left:5px}
+.fp .channels{display:flex;flex-direction:column;gap:6px}
+.fp .ch{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:11px;background:var(--bg-3);border:1px solid var(--line)}
+.fp .ch.best{background:var(--accent-bg);border-color:var(--accent-bd)}
+.fp .ch-name{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.fp .ch-name .nm{font-size:14px;font-weight:700;color:var(--ink);letter-spacing:-.2px}
+.fp .ch-name .badge{font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;padding:3px 7px;border-radius:5px;background:rgba(245,245,242,.08);color:var(--dim)}
+.fp .ch.best .ch-name .badge{background:var(--accent);color:var(--bg)}
+.fp .ch-num{text-align:right;flex-shrink:0}
+.fp .ch-num .net{font-size:15px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.fp .ch-num .net.neg{color:var(--pass)}
+.fp .ch-num .roi{font-family:var(--mono);font-size:9px;color:var(--dim);font-weight:600;margin-top:2px}
+.fp .ai{padding:14px 16px;border-radius:13px;background:var(--bg-3);border:1px solid var(--line)}
+.fp .ai-h{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:9px;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+.fp .ai-h .dot{width:6px;height:6px;border-radius:3px;background:var(--accent);box-shadow:0 0 6px var(--accent)}
+.fp .ai-text{font-size:13.5px;color:rgba(245,245,242,.86);line-height:1.55;margin:0}
+.fp .res-cta{display:flex;gap:8px;padding:14px 22px 22px}
+.fp .res-cta .b1,.fp .res-cta .b2{flex:1;padding:13px;border-radius:11px;font-weight:700;font-size:13px;cursor:pointer;letter-spacing:-.1px;text-align:center}
+.fp .res-cta .b1{background:transparent;border:1px solid var(--line-2);color:var(--ink)}
+.fp .res-cta .b1:hover{border-color:var(--accent-bd);color:var(--accent)}
+.fp .res-cta .b2{background:var(--accent);border:0;color:var(--bg)}
+.fp .gated{margin:0 22px 18px;padding:14px 16px;border-radius:13px;background:linear-gradient(135deg,rgba(212,255,58,.10),rgba(212,255,58,.02));border:1px dashed var(--accent-bd);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.fp .gated-txt{font-size:12.5px;color:var(--ink);line-height:1.4}
+.fp .gated-txt b{color:var(--accent);font-weight:700}
+.fp .gated-btn{padding:9px 14px;border-radius:9px;background:var(--accent);color:var(--bg);border:0;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0}
+
 @media(max-width:980px){
   .fp .hero{grid-template-columns:1fr;gap:24px}
   .fp .hero-copy{padding-top:0}
@@ -471,375 +539,262 @@ export default function FreePage() {
         </aside>
       </header>
 
-      {/* ═══ INLINE RESULT ═══ */}
+      {/* ═══ INLINE RESULT (DS5 design) ═══ */}
       {result && (
         <section
           ref={resultRef}
           style={{ maxWidth: 1160, margin: "0 auto", padding: "0 22px 40px" }}
         >
-          <div
-            style={{
-              background: "var(--bg-2)",
-              border: "1px solid var(--line-2)",
-              borderRadius: 18,
-              padding: 24,
-            }}
-          >
-            {/* Header */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 20,
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontFamily: "var(--mono)",
-                    fontSize: 9,
-                    letterSpacing: 2,
-                    textTransform: "uppercase",
-                    color: "var(--accent)",
-                    marginBottom: 4,
-                  }}
-                >
-                  ● Analysis complete
-                </div>
-                <div
-                  style={{
-                    fontSize: 20,
-                    fontWeight: 700,
-                    letterSpacing: -0.5,
-                    color: "var(--ink)",
-                  }}
-                >
-                  {result.product.title}
-                </div>
-              </div>
-              <div
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: 10,
-                  background:
-                    result.recommendation === "BUY" ||
-                    result.recommendation === "BUY SMALL"
-                      ? "var(--accent)"
-                      : result.recommendation === "WATCH"
-                        ? "var(--watch)"
-                        : "rgba(245,245,242,0.1)",
-                  color:
-                    result.recommendation === "BUY" ||
-                    result.recommendation === "BUY SMALL"
-                      ? "var(--bg)"
-                      : "var(--ink)",
-                  fontWeight: 800,
-                  fontSize: 14,
-                  letterSpacing: -0.3,
-                }}
+          <aside className="result">
+            <header className="res-head">
+              <button
+                className="res-back"
+                type="button"
+                onClick={() => setResult(null)}
               >
-                {result.recommendation}
+                ← Another
+              </button>
+              <div className="res-title">
+                <span className="meta">● Analysis complete</span>
+                {result.product.title}
               </div>
-            </div>
+            </header>
 
-            {/* Metrics grid */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gap: 10,
-                marginBottom: 20,
-              }}
-            >
-              {[
-                { k: "Flip Score", v: String(result.flipScore), lime: true },
-                {
-                  k: "Profit",
-                  v: `$${result.mainProfit}`,
-                  lime: parseFloat(result.mainProfit) > 0,
-                },
-                { k: "Max Buy", v: `$${result.maxBuy}`, lime: false },
-                {
-                  k: "ROI",
-                  v: `${result.mainROI}%`,
-                  lime: parseFloat(result.mainROI) > 0,
-                },
-              ].map((m) => (
-                <div
-                  key={m.k}
-                  style={{
-                    padding: "14px 12px",
-                    borderRadius: 12,
-                    background: "var(--bg-3)",
-                    border: "1px solid var(--line)",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: "var(--mono)",
-                      fontSize: 8,
-                      letterSpacing: 1.5,
-                      textTransform: "uppercase",
-                      color: "var(--dim)",
-                      marginBottom: 4,
-                    }}
-                  >
-                    {m.k}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 20,
-                      fontWeight: 800,
-                      letterSpacing: -0.5,
-                      color: m.lime ? "var(--accent)" : "var(--ink)",
-                    }}
-                  >
-                    {m.v}
+            <div className="res-body">
+              {/* Verdict */}
+              <div className="verdict">
+                <div>
+                  <div className="verdict-label">{result.recommendation}</div>
+                  <div className="verdict-sub">
+                    Opportunity {result.flipScore}/100
                   </div>
                 </div>
-              ))}
-            </div>
+                <div className="verdict-score">{result.flipScore}</div>
+              </div>
 
-            {/* Scores */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: 10,
-                marginBottom: 20,
-              }}
-            >
-              {[
-                {
-                  k: "Velocity",
-                  v: result.velocity,
-                  color:
-                    result.velocity >= 70 ? "var(--accent)" : "var(--watch)",
-                },
-                {
-                  k: "Safety",
-                  v: 100 - result.risk,
-                  color:
-                    100 - result.risk >= 70 ? "var(--accent)" : "var(--watch)",
-                },
-                {
-                  k: "Confidence",
-                  v: result.confidence,
-                  color:
-                    result.confidence >= 70 ? "var(--accent)" : "var(--watch)",
-                },
-              ].map((s) => (
-                <div
-                  key={s.k}
-                  style={{
-                    padding: "12px",
-                    borderRadius: 10,
-                    background: "var(--bg-3)",
-                    border: "1px solid var(--line)",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: 6,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontFamily: "var(--mono)",
-                        fontSize: 9,
-                        letterSpacing: 1.2,
-                        textTransform: "uppercase",
-                        color: "var(--dim)",
-                      }}
-                    >
-                      {s.k}
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: "var(--mono)",
-                        fontSize: 13,
-                        fontWeight: 700,
-                        color: s.color,
-                      }}
-                    >
-                      {s.v}
-                    </span>
+              {/* Max buy */}
+              <div>
+                <div className="res-section-h">Max buy price</div>
+                <div className="maxbuy">
+                  <div className="maxbuy-cap">Don&apos;t pay more than</div>
+                  <div className="maxbuy-num">${result.maxBuy}</div>
+                  <div className="maxbuy-foot">
+                    <div>
+                      <div className="k">Your cost</div>
+                      <div className="v">
+                        $
+                        {(
+                          parseFloat(result.maxBuy) -
+                          parseFloat(result.headroom)
+                        ).toFixed(2)}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="k">Headroom</div>
+                      <div className="v lime">+${result.headroom}</div>
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      height: 3,
-                      borderRadius: 2,
-                      background: "var(--line)",
-                    }}
-                  >
+                </div>
+              </div>
+
+              {/* Sale plan */}
+              <div>
+                <div className="res-section-h">Sale plan</div>
+                <div className="saleplan">
+                  <div className="sp">
+                    <div className="k">Quick</div>
+                    <div className="v">${result.quickPrice}</div>
+                    <div className="sub">3–5 days</div>
+                  </div>
+                  <div className="sp strong">
+                    <div className="k">Market</div>
+                    <div className="v">${result.marketPrice}</div>
+                    <div className="sub">recommended</div>
+                  </div>
+                  <div className="sp">
+                    <div className="k">Stretch</div>
+                    <div className="v">${result.stretchPrice}</div>
+                    <div className="sub">with reputation</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Returns */}
+              <div>
+                <div className="res-section-h">Returns</div>
+                <div className="returns">
+                  <div>
+                    <div className="k">Profit</div>
                     <div
-                      style={{
-                        height: "100%",
-                        width: `${s.v}%`,
-                        borderRadius: 2,
-                        background: s.color,
-                      }}
-                    />
+                      className={`v ${parseFloat(result.mainProfit) >= 0 ? "pos" : ""}`}
+                    >
+                      {parseFloat(result.mainProfit) >= 0 ? "+" : ""}$
+                      {result.mainProfit}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="k">ROI</div>
+                    <div className="v">{result.mainROI}%</div>
+                  </div>
+                  <div>
+                    <div className="k">Margin</div>
+                    <div className="v">
+                      {(parseFloat(result.mainROI) > 0
+                        ? (parseFloat(result.mainProfit) /
+                            (parseFloat(result.mainProfit) +
+                              parseFloat(result.maxBuy) -
+                              parseFloat(result.headroom))) *
+                          100
+                        : 0
+                      ).toFixed(1)}
+                      %
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
 
-            {/* Channels */}
-            {result.channels.length > 0 && (
-              <div style={{ marginBottom: 20 }}>
-                <div
-                  style={{
-                    fontFamily: "var(--mono)",
-                    fontSize: 9,
-                    letterSpacing: 1.5,
-                    textTransform: "uppercase",
-                    color: "var(--dim)",
-                    marginBottom: 10,
-                  }}
-                >
-                  Channels
+              {/* Channels */}
+              {result.channels.length > 0 && (
+                <div>
+                  <div className="res-section-h">Channels</div>
+                  <div className="channels">
+                    {result.channels.map((ch) => (
+                      <div
+                        key={ch.id}
+                        className={`ch ${ch.channelRole === "recommended" ? "best" : ""}`}
+                      >
+                        <div className="ch-name">
+                          <div>
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 8,
+                              }}
+                            >
+                              <span className="nm">{ch.label}</span>
+                              {ch.channelRole === "recommended" && (
+                                <span className="badge">Best</span>
+                              )}
+                              {ch.channelRole === "best_profit" && (
+                                <span className="badge">+profit</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="ch-num">
+                          <div
+                            className={`net ${parseFloat(ch.profit) < 0 ? "neg" : ""}`}
+                          >
+                            {parseFloat(ch.profit) >= 0 ? "+" : ""}${ch.profit}
+                          </div>
+                          <div className="roi">{ch.roi}% ROI</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div
-                  style={{ display: "flex", flexDirection: "column", gap: 6 }}
-                >
-                  {result.channels.map((ch) => (
-                    <div
-                      key={ch.id}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        padding: "10px 14px",
-                        borderRadius: 10,
-                        background:
-                          ch.channelRole === "recommended"
-                            ? "var(--accent-bg)"
-                            : "var(--bg-3)",
-                        border: `1px solid ${ch.channelRole === "recommended" ? "var(--accent-bd)" : "var(--line)"}`,
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color:
-                            ch.channelRole === "recommended"
-                              ? "var(--accent)"
-                              : "var(--ink)",
-                        }}
-                      >
-                        {ch.label}
-                      </span>
-                      <span
-                        style={{
-                          fontFamily: "var(--mono)",
-                          fontSize: 12,
-                          fontWeight: 700,
-                          color:
-                            parseFloat(ch.profit) >= 0
-                              ? "var(--accent)"
-                              : "var(--pass)",
-                        }}
-                      >
-                        {parseFloat(ch.profit) >= 0 ? "+" : ""}${ch.profit}
+              )}
+
+              {/* Scores */}
+              <div>
+                <div className="res-section-h">Scores</div>
+                <div className="scores">
+                  {[
+                    {
+                      lbl: "Risk",
+                      v: 100 - result.risk,
+                      cat:
+                        result.risk <= 30
+                          ? "LOW"
+                          : result.risk <= 60
+                            ? "MED"
+                            : "HIGH",
+                      warn: result.risk > 60,
+                    },
+                    {
+                      lbl: "Confidence",
+                      v: result.confidence,
+                      cat:
+                        result.confidence >= 70
+                          ? "HIGH"
+                          : result.confidence >= 40
+                            ? "MED"
+                            : "LOW",
+                      warn: result.confidence < 50,
+                    },
+                    {
+                      lbl: "Velocity",
+                      v: result.velocity,
+                      cat:
+                        result.velocity >= 70
+                          ? "FAST"
+                          : result.velocity >= 40
+                            ? "MOD"
+                            : "SLOW",
+                      warn: result.velocity < 40,
+                    },
+                  ].map((s) => (
+                    <div key={s.lbl} className="score-row">
+                      <span className="lbl">{s.lbl}</span>
+                      <div className="bar">
+                        <div
+                          className={`fill ${s.warn ? "warn" : ""}`}
+                          style={{ width: `${s.v}%` }}
+                        />
+                      </div>
+                      <span className="val">
+                        {s.v}
+                        <span className="cat"> {s.cat}</span>
                       </span>
                     </div>
                   ))}
                 </div>
               </div>
-            )}
 
-            {/* Pricing */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: 10,
-                marginBottom: 20,
-              }}
-            >
-              {[
-                { k: "Quick", v: `$${result.quickPrice}` },
-                { k: "Market", v: `$${result.marketPrice}` },
-                { k: "Stretch", v: `$${result.stretchPrice}` },
-              ].map((p) => (
-                <div
-                  key={p.k}
-                  style={{
-                    padding: "12px",
-                    borderRadius: 10,
-                    background: "var(--bg-3)",
-                    border: "1px solid var(--line)",
-                    textAlign: "center",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: "var(--mono)",
-                      fontSize: 8,
-                      letterSpacing: 1.5,
-                      textTransform: "uppercase",
-                      color: "var(--dim)",
-                      marginBottom: 4,
-                    }}
-                  >
-                    {p.k}
+              {/* AI or gated */}
+              {result.aiExplanation ? (
+                <div className="ai">
+                  <div className="ai-h">
+                    <span className="dot" />
+                    FlipIQ summary
                   </div>
-                  <div
-                    style={{
-                      fontSize: 16,
-                      fontWeight: 700,
-                      color: "var(--ink)",
-                    }}
-                  >
-                    {p.v}
-                  </div>
+                  <p className="ai-text">{result.aiExplanation}</p>
                 </div>
-              ))}
+              ) : (
+                <div className="ai">
+                  <div className="ai-h">
+                    <span className="dot" />
+                    FlipIQ summary
+                  </div>
+                  <p className="ai-text" style={{ color: "var(--dimmer)" }}>
+                    AI analysis available with Starter plan.
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* CTA */}
-            <div
-              style={{
-                textAlign: "center",
-                paddingTop: 12,
-                borderTop: "1px solid var(--line)",
-              }}
-            >
-              <Link
-                href="/register"
-                style={{
-                  display: "inline-block",
-                  padding: "12px 24px",
-                  borderRadius: 10,
-                  background: "var(--accent)",
-                  color: "var(--bg)",
-                  fontSize: 13,
-                  fontWeight: 800,
-                  textDecoration: "none",
-                  letterSpacing: 0.2,
-                }}
-              >
-                Sign up for full analysis →
-              </Link>
-              <div
-                style={{
-                  fontFamily: "var(--mono)",
-                  fontSize: 9,
-                  color: "var(--dimmer)",
-                  marginTop: 8,
-                  letterSpacing: 1,
-                }}
-              >
-                AI explanation · watchlist · history · 100 scans/day
+            <div className="gated">
+              <div className="gated-txt">
+                <b>Save this analysis</b> &amp; track price drops — in the app.
               </div>
+              <Link className="gated-btn" href="/register">
+                Get the app
+              </Link>
             </div>
-          </div>
+            <div className="res-cta">
+              <button
+                className="b1"
+                type="button"
+                onClick={() => setResult(null)}
+              >
+                ← Analyze another
+              </button>
+              <Link className="b2" href="/register">
+                ★ Sign up free
+              </Link>
+            </div>
+          </aside>
         </section>
       )}
 
