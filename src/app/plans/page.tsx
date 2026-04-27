@@ -42,7 +42,7 @@ const PLAN_META: Record<
     ],
   },
   starter: {
-    price: 14.99,
+    price: 9.99,
     tag: "Most picked",
     feats: [
       "Everything in Free",
@@ -54,7 +54,7 @@ const PLAN_META: Record<
     ],
   },
   pro: {
-    price: 29.99,
+    price: 19.99,
     tag: "Power sellers",
     feats: [
       "Everything in Starter",
