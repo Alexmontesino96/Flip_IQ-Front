@@ -272,10 +272,119 @@ const CSS = `
   .fp .output-list li{grid-template-columns:110px 1fr}
 }
 @media(max-width:560px){
-  .fp .hero-h1{font-size:32px}
-  .fp .strip-title{font-size:24px}
-  .fp .trustbar-inner{flex-direction:column;align-items:flex-start;gap:10px}
+  /* hero */
+  .fp .hero{grid-template-columns:1fr;gap:14px;padding:8px 0 20px}
+  .fp .hero-copy{padding:8px 18px 18px;position:static}
+  .fp .hero-h1{font-size:34px;letter-spacing:-1.5px;margin-bottom:12px}
+  .fp .hero-sub{font-size:15px;line-height:1.45;margin-bottom:14px}
+  .fp .hero-bullets{display:none}
+  .fp .hero-meta{gap:12px;font-size:9.5px;letter-spacing:1.2px}
+  .fp .eyebrow{font-size:9px;letter-spacing:1.7px;padding:4px 9px;margin-bottom:14px}
+
+  /* nav */
+  .fp .nav{padding:12px 18px 8px}
+  .fp .brand{font-size:17px;gap:8px}
+  .fp .brand-mark{width:26px;height:26px;border-radius:7px;font-size:14px}
+  .fp .nav-right{gap:10px}
+  .fp .nav-link{display:none}
+  .fp .nav-cta{font-size:9.5px;letter-spacing:1.4px;padding:7px 11px;background:transparent;color:var(--ink);border:1px solid var(--line-2)}
+
+  /* calculator */
+  .fp .calc{margin:14px 14px 0;padding:18px 16px 16px;border-radius:18px}
+  .fp .calc-head{margin-bottom:14px}
+  .fp .calc-title{font-size:9.5px;letter-spacing:1.8px}
+  .fp .calc-livechip{font-size:8.5px;letter-spacing:1.3px;padding:3px 7px;border-radius:5px}
+  .fp .field{margin-bottom:12px}
+  .fp .field-label{font-size:9px;letter-spacing:1.4px;margin-bottom:6px}
+  .fp .input-field{padding:14px;min-height:48px;border-radius:11px;font-size:15px}
+  .fp .scan-btn{width:38px;height:38px;border-radius:9px}
+  .fp .chip{padding:8px 11px;border-radius:8px;font-size:10px}
+  .fp .cond{padding:11px 4px;border-radius:9px;font-size:10.5px;letter-spacing:.9px;min-height:44px}
+  .fp .cta{padding:15px;min-height:52px;border-radius:12px;font-size:15px}
+  .fp .quota{font-size:8.5px;letter-spacing:1.4px;margin-top:9px}
+
+  /* result */
+  .fp .result{margin:14px 14px 0;border-radius:18px}
+  .fp .res-head{padding:14px 16px}
+  .fp .res-back{padding:7px 10px;min-height:36px;font-size:9px;letter-spacing:1.3px}
+  .fp .res-title{font-size:12.5px}
+  .fp .res-title .meta{font-size:8.5px;letter-spacing:1.4px}
+  .fp .res-body{padding:14px 16px;gap:12px}
+  .fp .res-section-h{font-size:9px;letter-spacing:1.6px;margin-bottom:7px}
+  .fp .verdict{padding:18px;border-radius:14px}
+  .fp .verdict-label{font-size:30px;letter-spacing:-1.1px}
+  .fp .verdict-sub{font-size:9px;letter-spacing:1.4px;margin-top:6px}
+  .fp .verdict-score{width:54px;height:54px;font-size:18px}
+  .fp .maxbuy{padding:16px;border-radius:13px}
+  .fp .maxbuy-num{font-size:38px;letter-spacing:-1.5px}
+  .fp .maxbuy-foot{gap:14px;margin-top:13px;padding-top:13px}
+  .fp .maxbuy-foot .k{font-size:8.5px;letter-spacing:1.1px}
+  .fp .maxbuy-foot .v{font-size:16px}
+  .fp .saleplan{gap:6px}
+  .fp .sp{padding:11px 9px;border-radius:11px}
+  .fp .sp .k{font-size:8px;letter-spacing:1.3px}
+  .fp .sp .v{font-size:18px;letter-spacing:-.5px;margin-top:5px}
+  .fp .sp .sub{font-size:8.5px;margin-top:4px}
+  .fp .returns{border-radius:11px}
+  .fp .returns>div{padding:12px 10px}
+  .fp .returns .k{font-size:8.5px;letter-spacing:1.1px}
+  .fp .returns .v{font-size:17px;letter-spacing:-.4px;margin-top:3px}
+  .fp .scores{padding:14px;border-radius:13px;gap:11px}
+  .fp .score-row{grid-template-columns:74px 1fr auto;gap:11px}
+  .fp .score-row .lbl{font-size:8.5px;letter-spacing:1.1px}
+  .fp .score-row .val{font-size:12px;min-width:78px}
+  .fp .score-row .val .cat{font-size:8.5px;margin-left:4px}
+  .fp .channels{gap:6px}
+  .fp .ch{gap:10px;padding:11px 12px;border-radius:11px}
+  .fp .ch-name .nm{font-size:13px}
+  .fp .ch-name .badge{font-size:7.5px;letter-spacing:1.2px;padding:3px 6px}
+  .fp .ch-num .net{font-size:13.5px}
+  .fp .ch-num .roi{font-size:8.5px}
+  .fp .comps{padding:14px;border-radius:13px}
+  .fp .comps-stats .v{font-size:18px;letter-spacing:-.4px}
+  .fp .comps-stats .k{font-size:8.5px;letter-spacing:1.1px}
+  .fp .histo{height:36px;margin-bottom:7px}
+  .fp .histo-axis{font-size:8.5px}
+  .fp .ai{padding:13px;border-radius:12px}
+  .fp .ai-h{font-size:8.5px;letter-spacing:1.4px;gap:7px;margin-bottom:7px}
+  .fp .ai-text{font-size:12.5px;line-height:1.5}
+  .fp .gated{margin:0 16px 14px;padding:13px;border-radius:12px;gap:10px}
+  .fp .gated-txt{font-size:12px}
+  .fp .gated-btn{padding:9px 13px;border-radius:8px;font-size:11.5px}
+  .fp .res-cta{padding:10px 16px 16px;gap:8px}
+  .fp .res-cta .b1,.fp .res-cta .b2{padding:13px;border-radius:11px;font-size:13px;min-height:48px}
+
+  /* trust bar */
+  .fp .trustbar{padding:18px 14px 0}
+  .fp .trustbar-inner{flex-direction:row;flex-wrap:wrap;gap:14px;padding:14px;border-radius:12px}
+  .fp .trust-stat{flex-direction:column;gap:2px;flex:1;min-width:96px}
+  .fp .trust-num{font-size:16px}
+  .fp .trust-label{font-size:8.5px;letter-spacing:1.3px}
   .fp .trust-divider{display:none}
+
+  /* sections */
+  .fp .strip{padding:24px 18px 0}
+  .fp .strip-title{font-size:22px;letter-spacing:-.7px}
+  .fp .strip-sub{font-size:13px}
+  .fp .strip-eyebrow{font-size:9px;letter-spacing:2px;padding:4px 8px}
+  .fp .output-list{grid-template-columns:1fr;gap:8px;padding:8px}
+  .fp .output-list li{grid-template-columns:1fr;gap:4px;padding:12px 13px}
+  .fp .output-list .k{font-size:9px}
+  .fp .output-list .v{font-size:13px}
+  .fp .formula{padding:20px;border-radius:13px}
+  .fp .formula-title{font-size:20px}
+  .fp .formula-line{font-size:11px;padding:12px 14px}
+  .fp .formula-foot{grid-template-columns:1fr;gap:14px;margin-top:16px}
+  .fp .faq-wrap{grid-template-columns:1fr;gap:8px}
+  .fp .faq{padding:14px 16px;border-radius:10px}
+  .fp .faq summary{font-size:13.5px}
+  .fp .faq p{font-size:12.5px}
+  .fp .final{padding:24px 20px;border-radius:14px;flex-direction:column;align-items:flex-start;gap:18px}
+  .fp .final h3{font-size:20px}
+  .fp .final p{font-size:12.5px}
+  .fp .final-actions{width:100%;flex-direction:column;gap:8px}
+  .fp .btn-primary,.fp .btn-ghost{width:100%;text-align:center;padding:13px;border-radius:10px;font-size:12.5px}
+  .fp footer{margin-top:24px;padding:18px 18px 28px;flex-direction:column;gap:8px;font-size:9.5px}
 }
 `;
 
