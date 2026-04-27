@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import Script from "next/script";
-import { runAnalysisStream } from "@/lib/analysis";
+import { runAnalysisStream, AnalysisResult } from "@/lib/analysis";
 import { addRecentSearch } from "@/lib/history";
 
 const SAMPLES = [
@@ -213,29 +212,38 @@ const CSS = `
 `;
 
 export default function FreePage() {
-  const router = useRouter();
+  const resultRef = useRef<HTMLDivElement>(null);
   const [q, setQ] = useState("");
   const [cost, setCost] = useState("");
   const [cond, setCond] = useState("new");
   const [busy, setBusy] = useState(false);
   const [busyMsg, setBusyMsg] = useState("Pulling sold comps\u2026");
+  const [result, setResult] = useState<AnalysisResult | null>(null);
 
   const valid = q.trim() && parseFloat(cost) > 0;
 
   const onSubmit = useCallback(() => {
     if (!valid || busy) return;
     setBusy(true);
+    setResult(null);
     setBusyMsg("Pulling sold comps\u2026");
     addRecentSearch(q.trim());
-
-    let navigated = false;
 
     runAnalysisStream(
       q.trim(),
       parseFloat(cost),
       cond,
-      () => {
-        /* analysis chunk — id is null here, wait for ai_complete */
+      (r: AnalysisResult) => {
+        setResult(r);
+        setBusy(false);
+        setTimeout(
+          () =>
+            resultRef.current?.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            }),
+          100
+        );
       },
       () => {
         /* ai complete */
@@ -246,15 +254,9 @@ export default function FreePage() {
       },
       (progress) => {
         setBusyMsg(progress.message);
-        // The analysis_id appears in progress details when ai stage completes
-        const aid = progress.details?.analysis_id as number | undefined;
-        if (aid && !navigated) {
-          navigated = true;
-          router.push(`/result?id=${aid}`);
-        }
       }
     ).catch(() => setBusy(false));
-  }, [valid, busy, q, cost, cond, router]);
+  }, [valid, busy, q, cost, cond]);
 
   return (
     <div className="fp">
@@ -468,6 +470,378 @@ export default function FreePage() {
           </div>
         </aside>
       </header>
+
+      {/* ═══ INLINE RESULT ═══ */}
+      {result && (
+        <section
+          ref={resultRef}
+          style={{ maxWidth: 1160, margin: "0 auto", padding: "0 22px 40px" }}
+        >
+          <div
+            style={{
+              background: "var(--bg-2)",
+              border: "1px solid var(--line-2)",
+              borderRadius: 18,
+              padding: 24,
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 20,
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontFamily: "var(--mono)",
+                    fontSize: 9,
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    color: "var(--accent)",
+                    marginBottom: 4,
+                  }}
+                >
+                  ● Analysis complete
+                </div>
+                <div
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 700,
+                    letterSpacing: -0.5,
+                    color: "var(--ink)",
+                  }}
+                >
+                  {result.product.title}
+                </div>
+              </div>
+              <div
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: 10,
+                  background:
+                    result.recommendation === "BUY" ||
+                    result.recommendation === "BUY SMALL"
+                      ? "var(--accent)"
+                      : result.recommendation === "WATCH"
+                        ? "var(--watch)"
+                        : "rgba(245,245,242,0.1)",
+                  color:
+                    result.recommendation === "BUY" ||
+                    result.recommendation === "BUY SMALL"
+                      ? "var(--bg)"
+                      : "var(--ink)",
+                  fontWeight: 800,
+                  fontSize: 14,
+                  letterSpacing: -0.3,
+                }}
+              >
+                {result.recommendation}
+              </div>
+            </div>
+
+            {/* Metrics grid */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, 1fr)",
+                gap: 10,
+                marginBottom: 20,
+              }}
+            >
+              {[
+                { k: "Flip Score", v: String(result.flipScore), lime: true },
+                {
+                  k: "Profit",
+                  v: `$${result.mainProfit}`,
+                  lime: parseFloat(result.mainProfit) > 0,
+                },
+                { k: "Max Buy", v: `$${result.maxBuy}`, lime: false },
+                {
+                  k: "ROI",
+                  v: `${result.mainROI}%`,
+                  lime: parseFloat(result.mainROI) > 0,
+                },
+              ].map((m) => (
+                <div
+                  key={m.k}
+                  style={{
+                    padding: "14px 12px",
+                    borderRadius: 12,
+                    background: "var(--bg-3)",
+                    border: "1px solid var(--line)",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: "var(--mono)",
+                      fontSize: 8,
+                      letterSpacing: 1.5,
+                      textTransform: "uppercase",
+                      color: "var(--dim)",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {m.k}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 20,
+                      fontWeight: 800,
+                      letterSpacing: -0.5,
+                      color: m.lime ? "var(--accent)" : "var(--ink)",
+                    }}
+                  >
+                    {m.v}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Scores */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 10,
+                marginBottom: 20,
+              }}
+            >
+              {[
+                {
+                  k: "Velocity",
+                  v: result.velocity,
+                  color:
+                    result.velocity >= 70 ? "var(--accent)" : "var(--watch)",
+                },
+                {
+                  k: "Safety",
+                  v: 100 - result.risk,
+                  color:
+                    100 - result.risk >= 70 ? "var(--accent)" : "var(--watch)",
+                },
+                {
+                  k: "Confidence",
+                  v: result.confidence,
+                  color:
+                    result.confidence >= 70 ? "var(--accent)" : "var(--watch)",
+                },
+              ].map((s) => (
+                <div
+                  key={s.k}
+                  style={{
+                    padding: "12px",
+                    borderRadius: 10,
+                    background: "var(--bg-3)",
+                    border: "1px solid var(--line)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 6,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "var(--mono)",
+                        fontSize: 9,
+                        letterSpacing: 1.2,
+                        textTransform: "uppercase",
+                        color: "var(--dim)",
+                      }}
+                    >
+                      {s.k}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: "var(--mono)",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: s.color,
+                      }}
+                    >
+                      {s.v}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      height: 3,
+                      borderRadius: 2,
+                      background: "var(--line)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: "100%",
+                        width: `${s.v}%`,
+                        borderRadius: 2,
+                        background: s.color,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Channels */}
+            {result.channels.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <div
+                  style={{
+                    fontFamily: "var(--mono)",
+                    fontSize: 9,
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase",
+                    color: "var(--dim)",
+                    marginBottom: 10,
+                  }}
+                >
+                  Channels
+                </div>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 6 }}
+                >
+                  {result.channels.map((ch) => (
+                    <div
+                      key={ch.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "10px 14px",
+                        borderRadius: 10,
+                        background:
+                          ch.channelRole === "recommended"
+                            ? "var(--accent-bg)"
+                            : "var(--bg-3)",
+                        border: `1px solid ${ch.channelRole === "recommended" ? "var(--accent-bd)" : "var(--line)"}`,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color:
+                            ch.channelRole === "recommended"
+                              ? "var(--accent)"
+                              : "var(--ink)",
+                        }}
+                      >
+                        {ch.label}
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: "var(--mono)",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color:
+                            parseFloat(ch.profit) >= 0
+                              ? "var(--accent)"
+                              : "var(--pass)",
+                        }}
+                      >
+                        {parseFloat(ch.profit) >= 0 ? "+" : ""}${ch.profit}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Pricing */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 10,
+                marginBottom: 20,
+              }}
+            >
+              {[
+                { k: "Quick", v: `$${result.quickPrice}` },
+                { k: "Market", v: `$${result.marketPrice}` },
+                { k: "Stretch", v: `$${result.stretchPrice}` },
+              ].map((p) => (
+                <div
+                  key={p.k}
+                  style={{
+                    padding: "12px",
+                    borderRadius: 10,
+                    background: "var(--bg-3)",
+                    border: "1px solid var(--line)",
+                    textAlign: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: "var(--mono)",
+                      fontSize: 8,
+                      letterSpacing: 1.5,
+                      textTransform: "uppercase",
+                      color: "var(--dim)",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {p.k}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: "var(--ink)",
+                    }}
+                  >
+                    {p.v}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA */}
+            <div
+              style={{
+                textAlign: "center",
+                paddingTop: 12,
+                borderTop: "1px solid var(--line)",
+              }}
+            >
+              <Link
+                href="/register"
+                style={{
+                  display: "inline-block",
+                  padding: "12px 24px",
+                  borderRadius: 10,
+                  background: "var(--accent)",
+                  color: "var(--bg)",
+                  fontSize: 13,
+                  fontWeight: 800,
+                  textDecoration: "none",
+                  letterSpacing: 0.2,
+                }}
+              >
+                Sign up for full analysis →
+              </Link>
+              <div
+                style={{
+                  fontFamily: "var(--mono)",
+                  fontSize: 9,
+                  color: "var(--dimmer)",
+                  marginTop: 8,
+                  letterSpacing: 1,
+                }}
+              >
+                AI explanation · watchlist · history · 100 scans/day
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ═══ TRUST BAR ═══ */}
       <section className="trustbar">
