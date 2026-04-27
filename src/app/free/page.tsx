@@ -91,7 +91,7 @@ const CSS = `
 .fp .nav-cta:hover{background:var(--accent-2)}
 
 .fp .hero{max-width:1160px;margin:0 auto;padding:8px 22px 40px;display:grid;grid-template-columns:minmax(0,1fr) 520px;gap:64px;align-items:start}
-.fp .hero-copy{padding-top:24px}
+.fp .hero-copy{padding-top:24px;position:sticky;top:20px;align-self:start}
 .fp .eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);padding:5px 10px;border-radius:6px;background:var(--accent-bg);border:1px solid var(--accent-bd);margin-bottom:18px;font-weight:700}
 .fp .eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);animation:fp-pulse 2s infinite}
 .fp .hero-h1{font-size:60px;font-weight:900;line-height:1;letter-spacing:-2.5px;margin:0 0 18px;text-wrap:balance}
@@ -259,7 +259,7 @@ const CSS = `
 
 @media(max-width:980px){
   .fp .hero{grid-template-columns:1fr;gap:24px}
-  .fp .hero-copy{padding-top:0}
+  .fp .hero-copy{padding-top:0;position:static}
   .fp .hero-h1{font-size:42px;letter-spacing:-1.5px}
   .fp .calc{position:static}
   .fp .faq-wrap{grid-template-columns:1fr}
@@ -406,146 +406,144 @@ export default function FreePage() {
           </div>
         </div>
 
-        {/* ═══ CALCULATOR ═══ */}
-        <aside className="calc" aria-label="Flip profit calculator">
-          <div className="calc-head">
-            <div className="calc-title">▸ Flip Calculator</div>
-            <div className="calc-livechip">
-              <span className="dot" />
-              Live
+        {/* ═══ CALCULATOR / RESULT (same column) ═══ */}
+        {!result ? (
+          <aside className="calc" aria-label="Flip profit calculator">
+            <div className="calc-head">
+              <div className="calc-title">▸ Flip Calculator</div>
+              <div className="calc-livechip">
+                <span className="dot" />
+                Live
+              </div>
             </div>
-          </div>
 
-          <div className="field">
-            <label className="field-label" htmlFor="q">
-              Product / UPC / Barcode
-            </label>
-            <div className="input-wrap">
-              <input
-                className="input-field"
-                id="q"
-                placeholder="Type product name or scan barcode…"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                autoComplete="off"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") onSubmit();
-                }}
-              />
-              <button
-                className="scan-btn"
-                type="button"
-                aria-label="Scan barcode"
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="var(--accent)"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div className="field">
-            <div className="chip-label">Quick start — tap to try</div>
-            <div className="chips">
-              {SAMPLES.map((s) => (
-                <button
-                  key={s.q}
-                  className="chip"
-                  type="button"
-                  onClick={() => {
-                    setQ(s.q);
-                    setCost(s.cost);
+            <div className="field">
+              <label className="field-label" htmlFor="q">
+                Product / UPC / Barcode
+              </label>
+              <div className="input-wrap">
+                <input
+                  className="input-field"
+                  id="q"
+                  placeholder="Type product name or scan barcode…"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  autoComplete="off"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") onSubmit();
                   }}
+                />
+                <button
+                  className="scan-btn"
+                  type="button"
+                  aria-label="Scan barcode"
                 >
-                  {s.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="row">
-            <div className="field">
-              <label className="field-label">Your cost ($)</label>
-              <input
-                className="input-field mono"
-                inputMode="decimal"
-                placeholder="0.00"
-                value={cost}
-                onChange={(e) => setCost(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") onSubmit();
-                }}
-              />
-            </div>
-            <div className="field">
-              <label className="field-label">Condition</label>
-              <div className="cond-grp">
-                {(["new", "used"] as const).map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    className={`cond ${cond === c ? "active" : ""}`}
-                    onClick={() => setCond(c)}
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--accent)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   >
-                    {c}
+                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="field">
+              <div className="chip-label">Quick start — tap to try</div>
+              <div className="chips">
+                {SAMPLES.map((s) => (
+                  <button
+                    key={s.q}
+                    className="chip"
+                    type="button"
+                    onClick={() => {
+                      setQ(s.q);
+                      setCost(s.cost);
+                    }}
+                  >
+                    {s.name}
                   </button>
                 ))}
               </div>
             </div>
-          </div>
 
-          <button className="cta" disabled={!valid || busy} onClick={onSubmit}>
-            {busy ? (
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  justifyContent: "center",
-                }}
-              >
-                <span
-                  style={{
-                    width: 13,
-                    height: 13,
-                    border: "2px solid rgba(10,10,10,.3)",
-                    borderTopColor: "var(--bg)",
-                    borderRadius: "50%",
-                    animation: "fp-spin .6s linear infinite",
-                    display: "inline-block",
+            <div className="row">
+              <div className="field">
+                <label className="field-label">Your cost ($)</label>
+                <input
+                  className="input-field mono"
+                  inputMode="decimal"
+                  placeholder="0.00"
+                  value={cost}
+                  onChange={(e) => setCost(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") onSubmit();
                   }}
                 />
-                {busyMsg}
-              </span>
-            ) : (
-              <>
-                Analyze product <span className="arr">→</span>
-              </>
-            )}
-          </button>
-          <div className="quota">
-            <b>5 / 5</b> free · Sign up for 100/day
-          </div>
-        </aside>
-      </header>
+              </div>
+              <div className="field">
+                <label className="field-label">Condition</label>
+                <div className="cond-grp">
+                  {(["new", "used"] as const).map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`cond ${cond === c ? "active" : ""}`}
+                      onClick={() => setCond(c)}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-      {/* ═══ INLINE RESULT (DS5 design) ═══ */}
-      {result && (
-        <section
-          ref={resultRef}
-          style={{ maxWidth: 1160, margin: "0 auto", padding: "0 22px 40px" }}
-        >
-          <aside className="result">
+            <button
+              className="cta"
+              disabled={!valid || busy}
+              onClick={onSubmit}
+            >
+              {busy ? (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    justifyContent: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 13,
+                      height: 13,
+                      border: "2px solid rgba(10,10,10,.3)",
+                      borderTopColor: "var(--bg)",
+                      borderRadius: "50%",
+                      animation: "fp-spin .6s linear infinite",
+                      display: "inline-block",
+                    }}
+                  />
+                  {busyMsg}
+                </span>
+              ) : (
+                <>
+                  Analyze product <span className="arr">→</span>
+                </>
+              )}
+            </button>
+            <div className="quota">
+              <b>5 / 5</b> free · Sign up for 100/day
+            </div>
+          </aside>
+        ) : (
+          <aside className="result" ref={resultRef}>
             <header className="res-head">
               <button
                 className="res-back"
@@ -795,8 +793,8 @@ export default function FreePage() {
               </Link>
             </div>
           </aside>
-        </section>
-      )}
+        )}
+      </header>
 
       {/* ═══ TRUST BAR ═══ */}
       <section className="trustbar">
