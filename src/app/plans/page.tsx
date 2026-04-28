@@ -94,15 +94,19 @@ export default function PlansPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+
   useEffect(() => {
     fetchPlans().then((apiPlans) => setPlans(buildPlans(apiPlans)));
     getSubscriptionStatus().then((sub) => {
       if (sub) {
+        setIsLoggedIn(true);
         setSubscription(sub);
-        // Pre-select current plan
         if (sub.plan && sub.plan !== "free") {
           setSelected(sub.plan as PlanId);
         }
+      } else {
+        setIsLoggedIn(false);
       }
     });
   }, []);
@@ -123,6 +127,16 @@ export default function PlansPage() {
   const handleCTA = async () => {
     if (loading) return;
     setError(null);
+
+    // Not logged in — send to account gate for registration + checkout
+    if (!isLoggedIn && selected !== "free") {
+      router.push(`/checkout/account?plan=${selected}`);
+      return;
+    }
+    if (!isLoggedIn && selected === "free") {
+      router.push("/register");
+      return;
+    }
 
     // Current plan — open Stripe portal to manage
     if (isCurrentPlan && subscription?.has_subscription) {

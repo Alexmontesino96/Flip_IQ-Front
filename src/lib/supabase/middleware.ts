@@ -8,6 +8,19 @@ const PUBLIC_ROUTES = [
   "/shared",
   "/checkout",
   "/free",
+  "/plans",
+  "/about",
+  "/blog",
+  "/contact",
+  "/changelog",
+  "/privacy",
+  "/terms",
+  "/cookies",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/opengraph-image",
+  "/twitter-image",
+  "/manifest.json",
 ];
 
 export async function updateSession(request: NextRequest) {
