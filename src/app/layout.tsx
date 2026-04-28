@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/react";
+import AuthBridge from "@/components/AuthBridge";
 import {
   DEFAULT_OG_IMAGE_PATH,
   DEFAULT_TWITTER_IMAGE_PATH,
@@ -28,7 +30,7 @@ export const metadata: Metadata = {
     template: "%s | FlipIQ",
   },
   description:
-    "Know if you’ll actually sell before you buy. FlipIQ analyzes resale profit, execution risk, and best selling channel across eBay, Amazon, and more.",
+    "Know if you’ll actually sell before you buy. FlipIQ analyzes resale profit, execution risk, and best selling channel across eBay and Amazon.",
   alternates: {
     canonical: "/",
   },
@@ -46,7 +48,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "FlipIQ | Know if you’ll actually sell before you buy",
     description:
-      "FlipIQ analyzes resale profit, execution risk, max buy price, and best selling channel across eBay, Amazon, and more.",
+      "FlipIQ analyzes resale profit, execution risk, max buy price, and best selling channel across eBay and Amazon.",
     siteName: "FlipIQ",
     type: "website",
     locale: "en_US",
@@ -64,7 +66,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "FlipIQ | Know if you’ll actually sell before you buy",
     description:
-      "Analyze resale profit and execution risk across eBay, Amazon, and more with FlipIQ.",
+      "Analyze resale profit and execution risk across eBay and Amazon with FlipIQ.",
     images: [DEFAULT_TWITTER_IMAGE_PATH],
   },
 };
@@ -91,6 +93,9 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192.svg" />
       </head>
       <body>
+        <Suspense>
+          <AuthBridge />
+        </Suspense>
         {children}
         <Analytics />
       </body>
