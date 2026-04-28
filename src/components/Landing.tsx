@@ -32,7 +32,7 @@ const T = {
     h1b: "Empieza a flipear con data.",
     sub1: "Escaneas un producto,",
     sub2: "13 motores analizan",
-    sub3: "eBay, Amazon y mas en segundos, y FlipIQ te dice",
+    sub3: "eBay y Amazon en segundos, y FlipIQ te dice",
     sub4: "cuanto pagar maximo, donde venderlo y cuanto vas a ganar",
     scanFree: "Escanear gratis",
     seeDemo: "Ver demo",
@@ -127,7 +127,7 @@ const T = {
     h1b: "Start flipping with data.",
     sub1: "Scan a product,",
     sub2: "13 engines analyze",
-    sub3: "eBay, Amazon, and more in seconds, and FlipIQ tells you",
+    sub3: "eBay and Amazon in seconds, and FlipIQ tells you",
     sub4: "max buy price, where to sell, and how much you'll make",
     scanFree: "Scan free",
     seeDemo: "See demo",
@@ -477,9 +477,15 @@ export default function Landing() {
     return HERO_STAGES[0];
   }, []);
 
+  // Defer orb animation 1s after mount to reduce main thread blocking during load
   useEffect(() => {
-    startTimeRef.current = performance.now();
     let raf: number;
+    let started = false;
+    const timeout = setTimeout(() => {
+      started = true;
+      startTimeRef.current = performance.now();
+      raf = requestAnimationFrame(loop);
+    }, 1000);
 
     function loop(now: number) {
       const elapsed = ((now - startTimeRef.current) / 1000) % CYCLE;
@@ -546,8 +552,11 @@ export default function Landing() {
 
       raf = requestAnimationFrame(loop);
     }
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
+
+    return () => {
+      clearTimeout(timeout);
+      if (started) cancelAnimationFrame(raf);
+    };
   }, [sampleHero]);
 
   const switchLang = (l: Lang) => {
