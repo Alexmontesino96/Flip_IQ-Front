@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 const DEFAULT_LOCAL_URL = "http://localhost:3000";
-const FALLBACK_PRODUCTION_URL = "https://flipiq.vercel.app";
+const FALLBACK_PRODUCTION_URL = "https://flipiq.app";
 
 type NoIndexOptions = {
   title: string;

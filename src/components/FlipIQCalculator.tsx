@@ -960,8 +960,7 @@ export default function FlipIQCalculator() {
               lineHeight: 1.6,
             }}
           >
-            Compare profit across eBay, Amazon, FBMP &amp; MercadoLibre in one
-            search.
+            Compare profit across eBay and Amazon in one search.
           </p>
         </div>
 
