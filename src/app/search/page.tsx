@@ -330,7 +330,27 @@ export default function SearchPage() {
                 if (picked) setPicked(null);
               }}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && picked && canAnalyze) handleAnalyze();
+                if (e.key === "Enter") {
+                  if (picked && canAnalyze) {
+                    handleAnalyze();
+                  } else if (!picked && query.trim()) {
+                    // Direct search — create a pseudo-picked from the query text
+                    const trimmed = query.trim();
+                    setPicked({
+                      id: null,
+                      title: trimmed,
+                      brand: null,
+                      category: null,
+                      image_url: null,
+                      barcode: null,
+                      price_hint: null,
+                      search_count: 0,
+                    });
+                    setSuggestions([]);
+                    addRecentSearch(trimmed);
+                    setRecentPills(getRecentSearches());
+                  }
+                }
               }}
               placeholder="Search products..."
               aria-label="Search products"
@@ -400,6 +420,100 @@ export default function SearchPage() {
 
             {showSuggestions && (
               <div style={{ padding: "0 20px" }}>
+                {/* Direct search option — like iOS "Analyze [query]" */}
+                <button
+                  onClick={() => {
+                    const trimmed = query.trim();
+                    setPicked({
+                      id: null,
+                      title: trimmed,
+                      brand: null,
+                      category: null,
+                      image_url: null,
+                      barcode: null,
+                      price_hint: null,
+                      search_count: 0,
+                    });
+                    setSuggestions([]);
+                    addRecentSearch(trimmed);
+                    setRecentPills(getRecentSearches());
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "14px 0",
+                    background: "none",
+                    border: "none",
+                    borderBottom: `1px solid ${ACCENT}22`,
+                    cursor: "pointer",
+                    width: "100%",
+                    textAlign: "left",
+                    marginBottom: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      background: `${ACCENT}1A`,
+                      flexShrink: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke={ACCENT}
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M5 12h14M13 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontFamily: DISPLAY,
+                        fontSize: 15,
+                        fontWeight: 600,
+                        color: "#F5F5F2",
+                      }}
+                    >
+                      Analyze &quot;{query.trim()}&quot;
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 10,
+                        color: "rgba(245,245,242,0.35)",
+                        marginTop: 2,
+                      }}
+                    >
+                      Direct keyword search
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 9,
+                      fontWeight: 700,
+                      color: ACCENT,
+                      letterSpacing: 1,
+                      textTransform: "uppercase",
+                      flexShrink: 0,
+                    }}
+                  >
+                    GO →
+                  </span>
+                </button>
+
                 <div
                   style={{
                     fontFamily: MONO,
@@ -407,7 +521,7 @@ export default function SearchPage() {
                     letterSpacing: 2,
                     textTransform: "uppercase",
                     color: "rgba(245,245,242,0.4)",
-                    margin: "18px 0 8px",
+                    margin: "10px 0 8px",
                   }}
                 >
                   Suggestions
