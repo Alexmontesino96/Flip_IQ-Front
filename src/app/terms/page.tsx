@@ -3,38 +3,156 @@ import StaticContentPage from "@/components/StaticContentPage";
 import { buildPublicMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPublicMetadata({
-  title: "Terms of Use",
+  title: "Terms of Service",
   description:
-    "Basic terms for using FlipIQ, including product use, responsibility for buying decisions, and subscription behavior.",
+    "Terms of Service for FlipIQ — resale profit analysis platform. Covers account usage, subscriptions, data, liability, and user responsibilities.",
   path: "/terms",
 });
 
 export default function TermsPage() {
   return (
     <StaticContentPage
-      eyebrow="Terms"
-      title="Basic terms for using FlipIQ responsibly."
-      intro="FlipIQ is a decision-support product for resellers. It is designed to help you estimate profit, risk, and execution quality, but the final buying decision remains yours."
+      eyebrow="Legal"
+      title="Terms of Service"
+      intro="Last updated: April 29, 2026. By accessing or using FlipIQ, you agree to these Terms of Service. If you do not agree, do not use the service."
       sections={[
         {
-          title: "What the product provides",
+          title: "1. About FlipIQ",
           paragraphs: [
-            "FlipIQ provides analysis, estimates, and recommendations based on marketplace data, internal scoring, and product logic. Those outputs are tools for judgment, not guarantees of outcome.",
+            'FlipIQ ("we", "us", "our") is a resale profit analysis platform operated at getflipiq.com. The service provides market data analysis, pricing estimates, and buying recommendations for e-commerce resellers across eBay, Amazon, and other marketplaces.',
+            "FlipIQ is a decision-support tool. All analysis outputs — including flip scores, profit estimates, max buy prices, AI explanations, and recommendations — are informational tools, not guarantees of outcome.",
           ],
         },
         {
-          title: "What remains your responsibility",
+          title: "2. Eligibility",
+          paragraphs: [
+            "You must be at least 18 years old (or the age of majority in your jurisdiction) to use FlipIQ. By creating an account, you represent that the information you provide is accurate and that you have the legal capacity to enter into these terms.",
+          ],
+        },
+        {
+          title: "3. Accounts and authentication",
+          paragraphs: [
+            "You may use FlipIQ as an anonymous user (limited to 5 total analyses) or by creating an account with your email address. Account creation is also available via Apple Sign-In.",
+            "You are responsible for maintaining the confidentiality of your account credentials. You agree to notify us immediately of any unauthorized access to your account. We are not liable for losses arising from unauthorized use of your account.",
+          ],
+        },
+        {
+          title: "4. Free and paid plans",
+          paragraphs: [
+            "FlipIQ offers a free tier and paid subscription plans (Starter and Pro). Each plan has specific daily scan limits, feature access, and pricing as described on our Plans page.",
+          ],
           bullets: [
-            "Verifying product condition before buying",
-            "Checking authenticity, completeness, and compliance where relevant",
-            "Confirming actual marketplace fees and shipping realities",
-            "Deciding whether a category carries too much execution risk to buy",
+            "Free: 5 analyses per day (registered users), eBay data only, basic flip score",
+            "Starter ($9.99/month): 30 analyses per day, eBay + Amazon data, AI analysis unlocked, barcode scanning",
+            "Pro ($19.99/month): 100 analyses per day, Market Intelligence AI, CSV export, unlimited watchlists, priority support",
           ],
         },
         {
-          title: "Subscriptions and access",
+          title: "5. Billing and subscriptions",
           paragraphs: [
-            "Some parts of FlipIQ may be gated by plan level, account status, or billing state. Access limits, feature access, and scan limits can change by plan.",
+            "Paid subscriptions are billed monthly through Stripe. FlipIQ never stores, processes, or has access to your credit card or payment details. All payment processing is handled by Stripe (PCI-DSS Level 1 compliant).",
+            "Subscriptions auto-renew each billing cycle unless cancelled. You may cancel at any time from your account settings or the Stripe Customer Portal. Cancellation takes effect at the end of the current billing period — you retain access until then.",
+            "We reserve the right to change pricing with 30 days advance notice. Existing subscribers will be notified by email before any price change takes effect.",
+          ],
+        },
+        {
+          title: "6. Refunds",
+          paragraphs: [
+            "We offer a 30-day money-back guarantee for first-time subscribers. If you are not satisfied within the first 30 days of your initial paid subscription, contact us for a full refund. After 30 days, refunds are issued at our discretion.",
+          ],
+        },
+        {
+          title: "7. What the product provides",
+          paragraphs: [
+            "FlipIQ pulls real-time sold comparable data from eBay and Amazon, applies proprietary scoring algorithms (profit, risk, velocity, confidence, execution), and generates actionable recommendations for resellers.",
+            "Our AI analysis feature (available on Starter and Pro plans) provides natural-language explanations of market conditions, risk factors, and recommended actions. These are generated by large language models based on the data and should be treated as analytical guidance, not financial advice.",
+          ],
+        },
+        {
+          title: "8. What remains your responsibility",
+          paragraphs: [
+            "FlipIQ is not a substitute for your own judgment. The final decision to buy, sell, or hold any product is entirely yours.",
+          ],
+          bullets: [
+            "Verifying product condition, authenticity, and completeness before purchasing",
+            "Confirming actual marketplace fees, shipping costs, and return policies",
+            "Complying with all applicable laws, marketplace policies, and tax obligations",
+            "Understanding that market conditions change and past sales data does not guarantee future results",
+            "Deciding whether a product category carries too much risk for your situation",
+          ],
+        },
+        {
+          title: "9. Limitation of liability",
+          paragraphs: [
+            "TO THE MAXIMUM EXTENT PERMITTED BY LAW, FLIPIQ AND ITS OFFICERS, DIRECTORS, EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, DATA, USE, OR GOODWILL, ARISING FROM YOUR USE OF THE SERVICE.",
+            "Our total aggregate liability for any claims arising from your use of FlipIQ shall not exceed the amount you paid to us in the 12 months preceding the claim, or $100, whichever is greater.",
+            "FlipIQ does not guarantee the accuracy, completeness, or timeliness of marketplace data, pricing estimates, or recommendations. Market conditions can change rapidly and without warning.",
+          ],
+        },
+        {
+          title: "10. Disclaimer of warranties",
+          paragraphs: [
+            'THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.',
+            "We do not warrant that the service will be uninterrupted, error-free, or that defects will be corrected. We do not warrant that our analysis will result in profitable transactions.",
+          ],
+        },
+        {
+          title: "11. Acceptable use",
+          paragraphs: ["You agree not to:"],
+          bullets: [
+            "Use the service for any unlawful purpose or in violation of any applicable laws",
+            "Attempt to reverse-engineer, decompile, or extract the source code of our algorithms",
+            "Scrape, crawl, or use automated tools to access the service beyond normal API usage",
+            "Share your account credentials or allow others to access your account",
+            "Circumvent scan limits, rate limits, or access controls",
+            "Resell or redistribute FlipIQ data or analysis results as a competing service",
+            "Use the service to manipulate marketplace listings or engage in anti-competitive behavior",
+          ],
+        },
+        {
+          title: "12. Intellectual property",
+          paragraphs: [
+            "FlipIQ, its logo, scoring algorithms, analysis engine, and all associated content are the intellectual property of FlipIQ. You are granted a limited, non-exclusive, non-transferable license to use the service for your personal or business reselling activities.",
+            "You retain ownership of any data you input into FlipIQ (product queries, cost prices, etc.). By using the service, you grant us a license to process this data to provide the service and improve our algorithms.",
+          ],
+        },
+        {
+          title: "13. Data and privacy",
+          paragraphs: [
+            "Your use of FlipIQ is also governed by our Privacy Policy, which describes what data we collect, how we use it, and your rights regarding your personal information. Please review the Privacy Policy at getflipiq.com/privacy.",
+          ],
+        },
+        {
+          title: "14. Third-party services",
+          paragraphs: [
+            "FlipIQ integrates with third-party services including Supabase (authentication), Stripe (payment processing), and Vercel (hosting and analytics). Your use of these services is subject to their respective terms and privacy policies.",
+            "We are not responsible for the availability, accuracy, or conduct of third-party marketplaces (eBay, Amazon, etc.) from which we source comparable sales data.",
+          ],
+        },
+        {
+          title: "15. Account termination",
+          paragraphs: [
+            "We may suspend or terminate your account if you violate these terms, engage in abusive behavior, or if required by law. You may delete your account at any time by contacting us.",
+            "Upon termination, your right to use the service ceases immediately. We may retain anonymized and aggregated data for analytical purposes.",
+          ],
+        },
+        {
+          title: "16. Changes to these terms",
+          paragraphs: [
+            "We may update these Terms of Service from time to time. Material changes will be communicated via email or a prominent notice on the service at least 14 days before they take effect. Continued use of FlipIQ after changes take effect constitutes your acceptance of the updated terms.",
+          ],
+        },
+        {
+          title: "17. Governing law and disputes",
+          paragraphs: [
+            "These terms shall be governed by and construed in accordance with the laws of the State of Florida, United States, without regard to conflict of law principles.",
+            "Any disputes arising from these terms or your use of FlipIQ shall first be attempted to be resolved through good-faith negotiation. If unresolved within 30 days, disputes shall be settled through binding arbitration under the rules of the American Arbitration Association.",
+          ],
+        },
+        {
+          title: "18. Contact",
+          paragraphs: [
+            "For questions about these Terms of Service, contact us at: legal@getflipiq.com",
           ],
         },
       ]}
