@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { pushEvent } from "@/lib/tracking";
 import LogoMark from "@/components/ui/LogoMark";
 import BigBtn from "@/components/ui/BigBtn";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
@@ -114,6 +115,7 @@ export default function RegisterPage() {
     }
 
     setSuccess(true);
+    pushEvent("register_completed", { method: "email" });
   };
 
   return (

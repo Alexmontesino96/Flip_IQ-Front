@@ -15,6 +15,7 @@ import {
   BillingPlan,
   SubscriptionStatus,
 } from "@/lib/billing";
+import { pushEvent } from "@/lib/tracking";
 
 type PlanId = string;
 
@@ -183,6 +184,7 @@ export default function PlansPage() {
     try {
       if (subscription?.has_subscription) {
         // Already subscribed — upgrade/downgrade via change-plan
+        pushEvent("checkout_started", { plan: selected, type: "upgrade" });
         const result = await changePlan(
           selectedPlan.stripePriceId,
           successUrl,
@@ -196,6 +198,10 @@ export default function PlansPage() {
         }
       } else {
         // No subscription — new checkout
+        pushEvent("checkout_started", {
+          plan: selected,
+          price_id: selectedPlan.stripePriceId,
+        });
         const checkoutUrl = await createCheckout(
           selectedPlan.stripePriceId,
           successUrl,

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
 import Script from "next/script";
 import { runAnalysisStream, AnalysisResult } from "@/lib/analysis";
 import { addRecentSearch } from "@/lib/history";
+import { pushEvent } from "@/lib/tracking";
 
 const SAMPLES = [
   { q: "AirPods Pro", name: "AirPods Pro", cost: "105" },
@@ -396,6 +397,10 @@ export default function FreePage() {
   const [busy, setBusy] = useState(false);
   const [busyMsg, setBusyMsg] = useState("Pulling sold comps\u2026");
   const [result, setResult] = useState<AnalysisResult | null>(null);
+
+  useEffect(() => {
+    pushEvent("free_page_view");
+  }, []);
 
   const valid = q.trim() && parseFloat(cost) > 0;
 

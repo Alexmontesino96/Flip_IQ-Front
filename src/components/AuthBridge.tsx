@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { captureUtmParams } from "@/lib/tracking";
 
 /**
  * AuthBridge — detects auth tokens passed via URL from the iOS app
@@ -22,6 +23,10 @@ import { createClient } from "@/lib/supabase/client";
 export default function AuthBridge() {
   const searchParams = useSearchParams();
   const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    captureUtmParams();
+  }, []);
 
   useEffect(() => {
     const accessToken = searchParams.get("access_token");

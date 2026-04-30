@@ -3,12 +3,28 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
+import { pushEvent } from "@/lib/tracking";
+import { getSubscriptionStatus } from "@/lib/billing";
 
 function SuccessContent() {
   const router = useRouter();
   const params = useSearchParams();
   const plan = params.get("plan") || "basic";
   const [countdown, setCountdown] = useState(5);
+
+  useEffect(() => {
+    getSubscriptionStatus()
+      .then((status) => {
+        const event =
+          status?.status === "trialing"
+            ? "trial_started"
+            : "subscription_started";
+        pushEvent(event, { plan });
+      })
+      .catch(() => {
+        pushEvent("subscription_started", { plan });
+      });
+  }, [plan]);
 
   useEffect(() => {
     const timer = setInterval(() => {

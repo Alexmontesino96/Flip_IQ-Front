@@ -4,6 +4,7 @@ import { useState, Suspense, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { MONO, DISPLAY } from "@/components/ui/theme";
+import { pushEvent } from "@/lib/tracking";
 import Link from "next/link";
 
 /* ── Design tokens (match HTML exactly) ── */
@@ -700,6 +701,7 @@ function AccountGateContent() {
       setError(authError.message);
       return;
     }
+    pushEvent("register_completed", { method: "email", flow: "checkout" });
     sessionStorage.setItem("selectedPlan", planKey);
     router.push(`/plans?plan=${planKey}`);
     router.refresh();

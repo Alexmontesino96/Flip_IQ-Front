@@ -3,6 +3,7 @@ import { Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import AuthBridge from "@/components/AuthBridge";
+import GoogleTagManager from "@/components/GoogleTagManager";
 import {
   DEFAULT_OG_IMAGE_PATH,
   DEFAULT_TWITTER_IMAGE_PATH,
@@ -94,6 +95,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192.svg" />
       </head>
       <body>
+        <GoogleTagManager />
         <Suspense>
           <AuthBridge />
         </Suspense>
