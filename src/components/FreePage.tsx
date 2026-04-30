@@ -869,6 +869,93 @@ export default function FreePage() {
                 </div>
               </div>
 
+              {/* Speed to sell */}
+              {result.salesPerDay != null && (
+                <div
+                  style={{
+                    padding: "12px 14px",
+                    borderRadius: 11,
+                    background: "var(--bg-3)",
+                    border: "1px solid var(--line)",
+                    fontFamily: "var(--mono)",
+                    fontSize: 11,
+                    color: "var(--dim)",
+                    letterSpacing: 0.4,
+                    display: "flex",
+                    gap: 8,
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span style={{ color: "var(--ink)", fontWeight: 700 }}>
+                    {result.estDaysToSell}
+                  </span>{" "}
+                  to sell
+                  <span style={{ color: "var(--line-2)" }}>·</span>
+                  <span style={{ color: "var(--ink)", fontWeight: 700 }}>
+                    {result.salesPerDay.toFixed(1)}
+                  </span>
+                  /day
+                  {result.velocityCategory && (
+                    <>
+                      <span style={{ color: "var(--line-2)" }}>·</span>
+                      <span
+                        style={{
+                          color: "var(--accent)",
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          fontSize: 9,
+                          letterSpacing: 1.2,
+                        }}
+                      >
+                        {result.velocityCategory.replace("_", " ")}
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Warnings */}
+              {result.warnings.length > 0 && (
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 6 }}
+                >
+                  <div className="res-section-h">Warnings</div>
+                  {result.warnings.slice(0, 2).map((w, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        padding: "10px 12px",
+                        borderRadius: 9,
+                        background: "rgba(255,184,77,0.06)",
+                        border: "1px solid rgba(255,184,77,0.15)",
+                        fontSize: 11,
+                        color: "rgba(245,245,242,0.7)",
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      ⚠ {w}
+                    </div>
+                  ))}
+                  {result.warnings.length > 2 && (
+                    <div
+                      style={{
+                        fontFamily: "var(--mono)",
+                        fontSize: 9,
+                        color: "var(--dimmer)",
+                        letterSpacing: 1,
+                        textTransform: "uppercase",
+                        textAlign: "center",
+                        marginTop: 2,
+                      }}
+                    >
+                      +{result.warnings.length - 2} more — sign up for full
+                      details
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* AI or gated */}
               {result.aiExplanation ? (
                 <div className="ai">

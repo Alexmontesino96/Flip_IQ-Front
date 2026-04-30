@@ -1235,6 +1235,163 @@ function ResultPageInner() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════════
+          5b. SPEED TO SELL
+      ════════════════════════════════════════════════════════════════════ */}
+      {r.salesPerDay != null && (
+        <section
+          style={{ padding: "0 20px", marginBottom: 20 }}
+          aria-label="Speed to sell"
+        >
+          <SectionLabel>Speed to sell</SectionLabel>
+          <Card>
+            <div style={{ display: "flex" }}>
+              {[
+                { label: "est. days", value: r.estDaysToSell },
+                {
+                  label: "sales/day",
+                  value: r.salesPerDay?.toFixed(1) ?? "—",
+                },
+                {
+                  label: "velocity",
+                  value: r.velocityCategory?.toUpperCase() ?? "—",
+                },
+              ].map((s, i, arr) => (
+                <div
+                  key={s.label}
+                  style={{
+                    flex: 1,
+                    borderRight:
+                      i < arr.length - 1
+                        ? "1px solid rgba(245,245,242,0.08)"
+                        : "none",
+                    paddingRight: i < arr.length - 1 ? 16 : 0,
+                    paddingLeft: i > 0 ? 16 : 0,
+                    textAlign: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: DISPLAY,
+                      fontSize: 20,
+                      fontWeight: 700,
+                      color: "#F5F5F2",
+                      letterSpacing: -0.5,
+                      marginBottom: 4,
+                    }}
+                  >
+                    {s.value}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 9,
+                      letterSpacing: 1.5,
+                      textTransform: "uppercase",
+                      color: "rgba(245,245,242,0.45)",
+                    }}
+                  >
+                    {s.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          5c. MARKET INTELLIGENCE
+      ════════════════════════════════════════════════════════════════════ */}
+      {(r.competition || r.trend) && (
+        <section
+          style={{ padding: "0 20px", marginBottom: 20 }}
+          aria-label="Market intelligence"
+        >
+          <SectionLabel>Market intelligence</SectionLabel>
+          <Card>
+            {r.competition && (
+              <div style={{ marginBottom: r.trend ? 16 : 0 }}>
+                <div
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 9,
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase",
+                    color: "rgba(245,245,242,0.55)",
+                    marginBottom: 6,
+                  }}
+                >
+                  Competition
+                </div>
+                <div
+                  style={{
+                    fontFamily: DISPLAY,
+                    fontSize: 14,
+                    color: "rgba(245,245,242,0.85)",
+                  }}
+                >
+                  {r.competition.uniqueSellers} sellers &middot;{" "}
+                  {(r.competition.dominantSellerShare * 100).toFixed(1)}%
+                  dominant &middot;{" "}
+                  <span
+                    style={{
+                      color: ACCENT,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {r.competition.category.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            )}
+            {r.competition && r.trend && (
+              <div
+                style={{
+                  borderTop: "1px solid rgba(245,245,242,0.08)",
+                  marginBottom: 16,
+                }}
+              />
+            )}
+            {r.trend && (
+              <div>
+                <div
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 9,
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase",
+                    color: "rgba(245,245,242,0.55)",
+                    marginBottom: 6,
+                  }}
+                >
+                  Trend
+                </div>
+                <div
+                  style={{
+                    fontFamily: DISPLAY,
+                    fontSize: 14,
+                    color: "rgba(245,245,242,0.85)",
+                  }}
+                >
+                  {r.trend.demandTrend > 60
+                    ? "↑ Demand rising"
+                    : r.trend.demandTrend >= 40
+                      ? "→ Demand stable"
+                      : "↓ Demand declining"}{" "}
+                  &middot;{" "}
+                  {r.trend.priceTrend > 2
+                    ? "↑ Price rising"
+                    : r.trend.priceTrend >= -2
+                      ? "→ Price stable"
+                      : "↓ Price declining"}
+                </div>
+              </div>
+            )}
+          </Card>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════
           6. CHANNELS
       ════════════════════════════════════════════════════════════════════ */}
       {channels.length > 0 && (
@@ -1346,6 +1503,188 @@ function ResultPageInner() {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════
+          6b. FEE BREAKDOWN
+      ════════════════════════════════════════════════════════════════════ */}
+      {r.feeBreakdown && (
+        <section
+          style={{ padding: "0 20px", marginBottom: 20 }}
+          aria-label="Fee breakdown"
+        >
+          <SectionLabel>Fee breakdown</SectionLabel>
+          <Card>
+            {[
+              {
+                label: "Sale price",
+                value: `$${fmt(r.feeBreakdown.salePrice)}`,
+                color: "#F5F5F2",
+              },
+              {
+                label: "Marketplace fees",
+                value: `-$${fmt(r.feeBreakdown.marketplaceFees)}`,
+                suffix: ` (${(r.feeBreakdown.feeRate * 100).toFixed(2)}%)`,
+                color: "rgba(245,245,242,0.7)",
+              },
+              {
+                label: "Shipping",
+                value: `-$${fmt(r.feeBreakdown.shippingCost)}`,
+                color: "rgba(245,245,242,0.7)",
+              },
+              {
+                label: "Return reserve",
+                value: `-$${fmt(r.feeBreakdown.returnReserve)}`,
+                color: "rgba(245,245,242,0.7)",
+              },
+            ].map((row) => (
+              <div
+                key={row.label}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: 8,
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 11,
+                    color: "rgba(245,245,242,0.55)",
+                  }}
+                >
+                  {row.label}
+                </span>
+                <span
+                  style={{
+                    fontFamily: DISPLAY,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: row.color,
+                  }}
+                >
+                  {row.value}
+                  {row.suffix && (
+                    <span
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 9,
+                        color: "rgba(245,245,242,0.45)",
+                        marginLeft: 4,
+                      }}
+                    >
+                      {row.suffix}
+                    </span>
+                  )}
+                </span>
+              </div>
+            ))}
+
+            <div
+              style={{
+                borderTop: "1px solid rgba(245,245,242,0.12)",
+                margin: "8px 0",
+              }}
+            />
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 8,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 11,
+                  color: "rgba(245,245,242,0.55)",
+                }}
+              >
+                Net proceeds
+              </span>
+              <span
+                style={{
+                  fontFamily: DISPLAY,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#F5F5F2",
+                }}
+              >
+                ${fmt(r.feeBreakdown.grossProceeds)}
+              </span>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 8,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 11,
+                  color: "rgba(245,245,242,0.55)",
+                }}
+              >
+                Your cost
+              </span>
+              <span
+                style={{
+                  fontFamily: DISPLAY,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "rgba(245,245,242,0.7)",
+                }}
+              >
+                -${fmt(costPrice)}
+              </span>
+            </div>
+
+            <div
+              style={{
+                borderTop: "2px solid rgba(245,245,242,0.2)",
+                margin: "8px 0",
+              }}
+            />
+
+            {(() => {
+              const feeProfit = r.feeBreakdown!.grossProceeds - costPrice;
+              const isPositive = feeProfit >= 0;
+              return (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: isPositive ? ACCENT : "#FF6464",
+                    }}
+                  >
+                    Profit
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: DISPLAY,
+                      fontSize: 15,
+                      fontWeight: 700,
+                      color: isPositive ? ACCENT : "#FF6464",
+                    }}
+                  >
+                    {isPositive ? "+" : ""}${fmt(feeProfit)}
+                  </span>
+                </div>
+              );
+            })()}
+          </Card>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════
           7. AI VERDICT
       ════════════════════════════════════════════════════════════════════ */}
       {r.aiExplanation && (
@@ -1445,46 +1784,210 @@ function ResultPageInner() {
             ))}
           </div>
 
-          {/* Mini bar chart — approximate distribution from min/median/max */}
-          <MiniBarChart
-            bars={[
-              Math.max(1, Math.round(r.product.comps * 0.15)),
-              Math.max(1, Math.round(r.product.comps * 0.25)),
-              Math.max(1, Math.round(r.product.comps * 0.3)),
-              Math.max(1, Math.round(r.product.comps * 0.2)),
-              Math.max(1, Math.round(r.product.comps * 0.07)),
-              Math.max(1, Math.round(r.product.comps * 0.03)),
-            ]}
-          />
-
-          {/* Price range labels */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginTop: 8,
-            }}
-          >
-            {[
-              `$${Math.round(r.product.min_price)}`,
-              `$${Math.round(r.product.median_price)}`,
-              `$${Math.round(r.product.max_price)}`,
-            ].map((label) => (
-              <span
-                key={label}
+          {/* Mini bar chart — real distribution or fallback */}
+          {r.priceDistribution && r.priceDistribution.length > 0 ? (
+            <>
+              <MiniBarChart bars={r.priceDistribution.map((b) => b.count)} />
+              <div
                 style={{
-                  fontFamily: MONO,
-                  fontSize: 9,
-                  letterSpacing: 1,
-                  color: "rgba(245,245,242,0.45)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: 8,
                 }}
               >
-                {label}
-              </span>
-            ))}
-          </div>
+                <span
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 9,
+                    letterSpacing: 1,
+                    color: "rgba(245,245,242,0.45)",
+                  }}
+                >
+                  ${Math.round(r.priceDistribution[0].rangeMin)}
+                  {r.p25 != null && ` · P25 $${Math.round(r.p25)}`}
+                </span>
+                <span
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 9,
+                    letterSpacing: 1,
+                    color: "rgba(245,245,242,0.45)",
+                  }}
+                >
+                  {r.p75 != null && `P75 $${Math.round(r.p75)} · `}$
+                  {Math.round(
+                    r.priceDistribution[r.priceDistribution.length - 1].rangeMax
+                  )}
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <MiniBarChart
+                bars={[
+                  Math.max(1, Math.round(r.product.comps * 0.15)),
+                  Math.max(1, Math.round(r.product.comps * 0.25)),
+                  Math.max(1, Math.round(r.product.comps * 0.3)),
+                  Math.max(1, Math.round(r.product.comps * 0.2)),
+                  Math.max(1, Math.round(r.product.comps * 0.07)),
+                  Math.max(1, Math.round(r.product.comps * 0.03)),
+                ]}
+              />
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: 8,
+                }}
+              >
+                {[
+                  `$${Math.round(r.product.min_price)}`,
+                  `$${Math.round(r.product.median_price)}`,
+                  `$${Math.round(r.product.max_price)}`,
+                ].map((label) => (
+                  <span
+                    key={label}
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 9,
+                      letterSpacing: 1,
+                      color: "rgba(245,245,242,0.45)",
+                    }}
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
         </Card>
       </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          9. WARNINGS & FLAGS
+      ════════════════════════════════════════════════════════════════════ */}
+      {(r.warnings.length > 0 || r.titleRisk) && (
+        <section
+          style={{ padding: "0 20px", marginBottom: 20 }}
+          aria-label="Warnings"
+        >
+          <SectionLabel>Warnings</SectionLabel>
+          <Card>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+              }}
+            >
+              {r.warnings.map((w, i) => (
+                <div
+                  key={i}
+                  style={{
+                    background: "rgba(255,184,77,0.1)",
+                    border: "1px solid rgba(255,184,77,0.2)",
+                    borderRadius: 10,
+                    padding: "10px 14px",
+                    fontFamily: DISPLAY,
+                    fontSize: 13,
+                    color: "#FFB84D",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  &#9888; {w}
+                </div>
+              ))}
+              {r.titleRisk && (
+                <div
+                  style={{
+                    background: "rgba(147,130,255,0.1)",
+                    border: "1px solid rgba(147,130,255,0.2)",
+                    borderRadius: 10,
+                    padding: "10px 14px",
+                    fontFamily: DISPLAY,
+                    fontSize: 13,
+                    color: "#9382FF",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  &#128269; {r.titleRisk.flaggedListings} flagged listings (
+                  {(r.titleRisk.flaggedPct * 100).toFixed(0)}%)
+                  {r.titleRisk.topFlags.length > 0 && (
+                    <span
+                      style={{
+                        display: "block",
+                        marginTop: 4,
+                        fontFamily: MONO,
+                        fontSize: 10,
+                        color: "rgba(147,130,255,0.7)",
+                      }}
+                    >
+                      Flags: {r.titleRisk.topFlags.join(", ")}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </Card>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          10. LISTING STRATEGY
+      ════════════════════════════════════════════════════════════════════ */}
+      {r.listingStrategy && (
+        <section
+          style={{ padding: "0 20px", marginBottom: 20 }}
+          aria-label="Listing strategy"
+        >
+          <SectionLabel>Listing strategy</SectionLabel>
+          <Card>
+            <details
+              style={{
+                fontFamily: DISPLAY,
+                fontSize: 14,
+                color: "rgba(245,245,242,0.85)",
+              }}
+            >
+              <summary
+                style={{
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  color: "#F5F5F2",
+                  listStyle: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 10,
+                    color: "rgba(245,245,242,0.45)",
+                    transition: "transform 0.2s",
+                  }}
+                >
+                  &#9656;
+                </span>
+                {r.listingStrategy.recommendedFormat
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, (c) => c.toUpperCase())}{" "}
+                recommended
+              </summary>
+              <p
+                style={{
+                  margin: "12px 0 0 18px",
+                  fontSize: 13,
+                  lineHeight: 1.55,
+                  color: "rgba(245,245,242,0.7)",
+                }}
+              >
+                {r.listingStrategy.reasoning}
+              </p>
+            </details>
+          </Card>
+        </section>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════
           BOTTOM BUTTONS

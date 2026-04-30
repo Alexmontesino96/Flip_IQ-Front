@@ -74,6 +74,46 @@ export interface ExecutionInfo {
   bestProfitMarketplace?: string;
 }
 
+export interface PriceDistBucket {
+  rangeMin: number;
+  rangeMax: number;
+  count: number;
+  pct: number;
+}
+
+export interface CompetitionInfo {
+  uniqueSellers: number;
+  dominantSellerShare: number;
+  hhi: number;
+  category: string;
+}
+
+export interface TrendInfo {
+  demandTrend: number;
+  priceTrend: number;
+  category: string;
+}
+
+export interface FeeBreakdown {
+  salePrice: number;
+  feeRate: number;
+  marketplaceFees: number;
+  shippingCost: number;
+  returnReserve: number;
+  grossProceeds: number;
+}
+
+export interface ListingStrategy {
+  recommendedFormat: string;
+  reasoning: string;
+}
+
+export interface TitleRiskInfo {
+  flaggedListings: number;
+  flaggedPct: number;
+  topFlags: string[];
+}
+
 export interface AnalysisResult {
   analysisId: number | null;
   noCompsFound: boolean;
@@ -101,6 +141,21 @@ export interface AnalysisResult {
   marketplaceDetails?: MarketplaceDetail[];
   conditionInfo?: ConditionInfo;
   executionInfo?: ExecutionInfo;
+  // New enriched fields
+  velocityCategory?: string;
+  salesPerDay?: number;
+  competition?: CompetitionInfo;
+  trend?: TrendInfo;
+  priceDistribution?: PriceDistBucket[];
+  p25?: number;
+  p75?: number;
+  feeBreakdown?: FeeBreakdown;
+  listingStrategy?: ListingStrategy;
+  titleRisk?: TitleRiskInfo;
+  quantityGuidance?: string;
+  winProbability?: number;
+  aiLocked?: boolean;
+  detectedCategory?: string;
 }
 
 export interface MarketplaceDetail {
@@ -677,6 +732,64 @@ export function transformResponse(data: any): AnalysisResult {
     marketplaceDetails: buildMarketplaceDetails(data),
     conditionInfo: extractConditionInfo(primaryAnalysis),
     executionInfo: extractExecutionInfo(data),
+    // Enriched fields from primaryAnalysis
+    velocityCategory: primaryAnalysis?.velocity?.category || undefined,
+    salesPerDay: primaryAnalysis?.comps?.sales_per_day ?? undefined,
+    competition: primaryAnalysis?.competition
+      ? {
+          uniqueSellers: primaryAnalysis.competition.unique_sellers ?? 0,
+          dominantSellerShare:
+            primaryAnalysis.competition.dominant_seller_share ?? 0,
+          hhi: primaryAnalysis.competition.hhi ?? 0,
+          category: primaryAnalysis.competition.category || "unknown",
+        }
+      : undefined,
+    trend: primaryAnalysis?.trend
+      ? {
+          demandTrend: primaryAnalysis.trend.demand_trend ?? 50,
+          priceTrend: primaryAnalysis.trend.price_trend ?? 0,
+          category: primaryAnalysis.trend.category || "stable",
+        }
+      : undefined,
+    priceDistribution:
+      primaryAnalysis?.comps?.price_distribution?.map((b: any) => ({
+        rangeMin: b.range_min,
+        rangeMax: b.range_max,
+        count: b.count,
+        pct: b.pct_of_total,
+      })) || undefined,
+    p25: primaryAnalysis?.comps?.p25 ?? undefined,
+    p75: primaryAnalysis?.comps?.p75 ?? undefined,
+    feeBreakdown: primaryAnalysis?.profit_detail
+      ? {
+          salePrice: primaryAnalysis.profit_detail.sale_price ?? 0,
+          feeRate: primaryAnalysis.profit_detail.fee_rate ?? 0,
+          marketplaceFees: primaryAnalysis.profit_detail.marketplace_fees ?? 0,
+          shippingCost: primaryAnalysis.profit_detail.shipping_cost ?? 0,
+          returnReserve: primaryAnalysis.profit_detail.return_reserve ?? 0,
+          grossProceeds: primaryAnalysis.profit_detail.gross_proceeds ?? 0,
+        }
+      : undefined,
+    listingStrategy: primaryAnalysis?.listing_strategy
+      ? {
+          recommendedFormat:
+            primaryAnalysis.listing_strategy.recommended_format ||
+            "fixed_price",
+          reasoning: primaryAnalysis.listing_strategy.reasoning || "",
+        }
+      : undefined,
+    titleRisk:
+      primaryAnalysis?.title_risk?.flagged_listings > 0
+        ? {
+            flaggedListings: primaryAnalysis.title_risk.flagged_listings,
+            flaggedPct: primaryAnalysis.title_risk.flagged_pct,
+            topFlags: primaryAnalysis.title_risk.top_flags || [],
+          }
+        : undefined,
+    quantityGuidance: data.execution_analysis?.quantity_guidance || undefined,
+    winProbability: data.execution_analysis?.win_probability ?? undefined,
+    aiLocked: data.ai_locked ?? undefined,
+    detectedCategory: data.detected_category || undefined,
   };
 }
 
