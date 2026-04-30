@@ -760,16 +760,18 @@ export function transformResponse(data: any): AnalysisResult {
       })) || undefined,
     p25: primaryAnalysis?.comps?.p25 ?? undefined,
     p75: primaryAnalysis?.comps?.p75 ?? undefined,
-    feeBreakdown: primaryAnalysis?.profit_detail
-      ? {
-          salePrice: primaryAnalysis.profit_detail.sale_price ?? 0,
-          feeRate: primaryAnalysis.profit_detail.fee_rate ?? 0,
-          marketplaceFees: primaryAnalysis.profit_detail.marketplace_fees ?? 0,
-          shippingCost: primaryAnalysis.profit_detail.shipping_cost ?? 0,
-          returnReserve: primaryAnalysis.profit_detail.return_reserve ?? 0,
-          grossProceeds: primaryAnalysis.profit_detail.gross_proceeds ?? 0,
-        }
-      : undefined,
+    feeBreakdown:
+      primaryAnalysis?.profit_detail?.sale_price > 0
+        ? {
+            salePrice: primaryAnalysis.profit_detail.sale_price,
+            feeRate: primaryAnalysis.profit_detail.fee_rate ?? 0,
+            marketplaceFees:
+              primaryAnalysis.profit_detail.marketplace_fees ?? 0,
+            shippingCost: primaryAnalysis.profit_detail.shipping_cost ?? 0,
+            returnReserve: primaryAnalysis.profit_detail.return_reserve ?? 0,
+            grossProceeds: primaryAnalysis.profit_detail.gross_proceeds ?? 0,
+          }
+        : undefined,
     listingStrategy: primaryAnalysis?.listing_strategy
       ? {
           recommendedFormat:
