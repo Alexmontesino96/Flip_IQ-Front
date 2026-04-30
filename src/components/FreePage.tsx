@@ -411,6 +411,8 @@ export default function FreePage() {
     setBusyMsg("Pulling sold comps\u2026");
     addRecentSearch(q.trim());
 
+    pushEvent("analysis_started", { query: q.trim(), cost: parseFloat(cost) });
+
     runAnalysisStream(
       q.trim(),
       parseFloat(cost),
@@ -418,6 +420,10 @@ export default function FreePage() {
       (r: AnalysisResult) => {
         setResult(r);
         setBusy(false);
+        pushEvent("analysis_completed", {
+          query: q.trim(),
+          recommendation: r.recommendation || "",
+        });
         setTimeout(
           () =>
             resultRef.current?.scrollIntoView({
