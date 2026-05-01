@@ -195,76 +195,174 @@ export default function SearchPage() {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 20,
             padding: 40,
           }}
         >
-          {/* Progress circle */}
+          {/* Orb sphere */}
           <div
             style={{
-              width: 120,
-              height: 120,
+              width: 180,
+              height: 180,
               borderRadius: "50%",
-              border: `2px solid rgba(245,245,242,0.08)`,
+              border: `1px solid ${ACCENT}26`,
+              background: `radial-gradient(circle at 50% 40%, #0D1206 0%, #060606 80%)`,
+              boxShadow: `inset 0 0 40px ${ACCENT}14, 0 0 60px ${ACCENT}0A`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               position: "relative",
+              overflow: "hidden",
+              marginBottom: 24,
             }}
           >
-            <svg
-              width="120"
-              height="120"
-              style={{ position: "absolute", transform: "rotate(-90deg)" }}
-            >
-              <circle
-                cx="60"
-                cy="60"
-                r="58"
-                fill="none"
-                stroke={ACCENT}
-                strokeWidth="2"
-                strokeDasharray={`${2 * Math.PI * 58}`}
-                strokeDashoffset={`${2 * Math.PI * 58 * (1 - analysisProgress / 100)}`}
-                strokeLinecap="round"
-                style={{ transition: "stroke-dashoffset 0.5s ease" }}
-              />
-            </svg>
-            <span
+            {/* Animated glow */}
+            <div
               style={{
-                fontFamily: DISPLAY,
-                fontSize: 32,
-                fontWeight: 700,
-                color: "#F5F5F2",
-                letterSpacing: -1,
+                position: "absolute",
+                width: `${20 + analysisProgress * 1.4}%`,
+                height: `${20 + analysisProgress * 1.4}%`,
+                borderRadius: "50%",
+                background: `radial-gradient(circle, ${ACCENT}40 0%, ${ACCENT}10 50%, transparent 70%)`,
+                filter: "blur(8px)",
+                transition: "width 0.8s ease, height 0.8s ease",
+              }}
+            />
+            {/* Center readout */}
+            <div
+              style={{
+                position: "relative",
+                zIndex: 2,
+                textAlign: "center",
+                mixBlendMode: "difference",
               }}
             >
-              {Math.round(analysisProgress)}%
-            </span>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  justifyContent: "center",
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: DISPLAY,
+                    fontSize: 48,
+                    fontWeight: 900,
+                    color: "#F5F5F2",
+                    letterSpacing: -2,
+                    lineHeight: 1,
+                  }}
+                >
+                  {Math.round(analysisProgress)}
+                </span>
+                <span
+                  style={{
+                    fontFamily: DISPLAY,
+                    fontSize: 20,
+                    fontWeight: 900,
+                    color: "#F5F5F2",
+                    letterSpacing: -0.5,
+                    marginLeft: 2,
+                  }}
+                >
+                  %
+                </span>
+              </div>
+              <div
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 8,
+                  letterSpacing: 2.5,
+                  textTransform: "uppercase",
+                  color: "#F5F5F2",
+                  opacity: 0.85,
+                  marginTop: 6,
+                }}
+              >
+                {analysisProgress >= 100 ? "complete" : "analyzing"}
+              </div>
+            </div>
           </div>
 
-          <div style={{ textAlign: "center" }}>
+          {/* Product name */}
+          {picked && (
             <div
               style={{
                 fontFamily: DISPLAY,
                 fontSize: 16,
                 fontWeight: 600,
                 color: "#F5F5F2",
-                marginBottom: 6,
+                letterSpacing: -0.3,
+                marginBottom: 4,
+                textAlign: "center",
               }}
             >
-              Analyzing...
+              {picked.title}
             </div>
-            <div
-              style={{
-                fontFamily: MONO,
-                fontSize: 10,
-                color: "rgba(245,245,242,0.4)",
-                letterSpacing: 0.5,
-              }}
-            >
-              {analysisStage}
-            </div>
+          )}
+
+          {/* Stage message */}
+          <div
+            style={{
+              fontFamily: MONO,
+              fontSize: 9,
+              letterSpacing: 1.5,
+              textTransform: "uppercase",
+              color: "rgba(245,245,242,0.4)",
+              marginBottom: 16,
+              textAlign: "center",
+              maxWidth: 280,
+            }}
+          >
+            {analysisStage}
+          </div>
+
+          {/* Stage chips */}
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              flexWrap: "wrap",
+              justifyContent: "center",
+            }}
+          >
+            {["fetch", "matching", "scoring", "ai"].map((stage) => {
+              const stageMap: Record<string, number> = {
+                fetch: 25,
+                matching: 52,
+                scoring: 72,
+                ai: 92,
+              };
+              const isActive =
+                analysisProgress >= stageMap[stage] &&
+                analysisProgress < stageMap[stage] + 20;
+              const isDone = analysisProgress >= stageMap[stage] + 20;
+              return (
+                <span
+                  key={stage}
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 8,
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase",
+                    padding: "4px 8px",
+                    borderRadius: 4,
+                    background: isDone
+                      ? `${ACCENT}1A`
+                      : "rgba(245,245,242,0.03)",
+                    border: `1px solid ${isActive ? ACCENT : isDone ? `${ACCENT}40` : "rgba(245,245,242,0.08)"}`,
+                    color: isActive
+                      ? ACCENT
+                      : isDone
+                        ? `${ACCENT}CC`
+                        : "rgba(245,245,242,0.3)",
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  {stage}
+                </span>
+              );
+            })}
           </div>
         </div>
       )}
