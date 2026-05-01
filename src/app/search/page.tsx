@@ -183,7 +183,7 @@ export default function SearchPage() {
     >
       <TopBar title="Search" accent={ACCENT} onBack={() => router.back()} />
 
-      {/* ── Analyzing overlay ── */}
+      {/* ── Analyzing overlay (matches iOS AnalyzingScreen) ── */}
       {analyzing && (
         <div
           style={{
@@ -195,61 +195,155 @@ export default function SearchPage() {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            padding: 40,
+            padding: "40px 20px",
           }}
         >
-          {/* Orb sphere */}
+          {/* Product info */}
+          {picked && (
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <div
+                style={{
+                  fontFamily: DISPLAY,
+                  fontSize: 20,
+                  fontWeight: 600,
+                  color: "#F5F5F2",
+                  letterSpacing: -0.4,
+                  marginBottom: 4,
+                }}
+              >
+                {picked.title}
+              </div>
+              <div
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                  color: "rgba(245,245,242,0.35)",
+                }}
+              >
+                Live market scan
+              </div>
+            </div>
+          )}
+
+          {/* Metaball sphere */}
           <div
             style={{
-              width: 180,
-              height: 180,
-              borderRadius: "50%",
-              border: `1px solid ${ACCENT}26`,
-              background: `radial-gradient(circle at 50% 40%, #0D1206 0%, #060606 80%)`,
-              boxShadow: `inset 0 0 40px ${ACCENT}14, 0 0 60px ${ACCENT}0A`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
               position: "relative",
-              overflow: "hidden",
-              marginBottom: 24,
+              width: 260,
+              height: 260,
+              marginBottom: 16,
             }}
           >
-            {/* Animated glow */}
+            {/* Sphere container */}
             <div
               style={{
                 position: "absolute",
-                width: `${20 + analysisProgress * 1.4}%`,
-                height: `${20 + analysisProgress * 1.4}%`,
+                inset: 0,
                 borderRadius: "50%",
-                background: `radial-gradient(circle, ${ACCENT}40 0%, ${ACCENT}10 50%, transparent 70%)`,
-                filter: "blur(8px)",
-                transition: "width 0.8s ease, height 0.8s ease",
-              }}
-            />
-            {/* Center readout */}
-            <div
-              style={{
-                position: "relative",
-                zIndex: 2,
-                textAlign: "center",
-                mixBlendMode: "difference",
+                overflow: "hidden",
+                border: `1px solid ${ACCENT}1F`,
+                background:
+                  "radial-gradient(circle at 50% 40%, #0B1005 0%, #060606 80%)",
+                boxShadow: `inset 0 0 60px ${ACCENT}14, 0 0 80px ${ACCENT}0A`,
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "baseline",
-                  justifyContent: "center",
-                }}
+              {/* SVG metaballs */}
+              <svg
+                viewBox="0 0 260 260"
+                style={{ width: "100%", height: "100%", display: "block" }}
               >
+                <defs>
+                  <filter id="analyze-goo">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="6" />
+                    <feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -8" />
+                  </filter>
+                  <radialGradient id="analyze-grad" cx="50%" cy="40%" r="70%">
+                    <stop offset="0%" stopColor="#E8FF7A" />
+                    <stop offset="55%" stopColor="#D4FF3A" />
+                    <stop offset="100%" stopColor="#7AA018" />
+                  </radialGradient>
+                </defs>
+                <g filter="url(#analyze-goo)">
+                  <g fill="url(#analyze-grad)">
+                    {/* Central blob — grows with progress */}
+                    <circle
+                      cx="130"
+                      cy="130"
+                      r={12 + (analysisProgress / 100) * 80}
+                      style={{ transition: "r 0.8s ease" }}
+                    >
+                      <animate
+                        attributeName="cx"
+                        values="128;132;128"
+                        dur="4s"
+                        repeatCount="indefinite"
+                      />
+                      <animate
+                        attributeName="cy"
+                        values="132;128;132"
+                        dur="5s"
+                        repeatCount="indefinite"
+                      />
+                    </circle>
+                    {/* Orbiting blobs */}
+                    {[0, 1, 2, 3, 4, 5].map((i) => {
+                      const angle = (i / 6) * Math.PI * 2;
+                      const pull = 1 - (analysisProgress / 100) * 0.55;
+                      const bx = 130 + Math.cos(angle) * 60 * pull;
+                      const by = 130 + Math.sin(angle) * 60 * pull;
+                      const r = 14 + (analysisProgress / 100) * 16;
+                      return (
+                        <circle
+                          key={i}
+                          cx={bx}
+                          cy={by}
+                          r={Math.max(4, r)}
+                          style={{ transition: "cx 0.8s, cy 0.8s, r 0.8s" }}
+                        >
+                          <animate
+                            attributeName="cx"
+                            values={`${bx - 4};${bx + 4};${bx - 4}`}
+                            dur={`${3 + i * 0.5}s`}
+                            repeatCount="indefinite"
+                          />
+                          <animate
+                            attributeName="cy"
+                            values={`${by + 3};${by - 3};${by + 3}`}
+                            dur={`${4 + i * 0.3}s`}
+                            repeatCount="indefinite"
+                          />
+                        </circle>
+                      );
+                    })}
+                  </g>
+                </g>
+              </svg>
+            </div>
+
+            {/* Center readout — mix-blend-mode difference */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                mixBlendMode: "difference",
+                pointerEvents: "none",
+                zIndex: 3,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start" }}>
                 <span
                   style={{
                     fontFamily: DISPLAY,
-                    fontSize: 48,
                     fontWeight: 900,
+                    fontSize: 72,
+                    letterSpacing: -4,
                     color: "#F5F5F2",
-                    letterSpacing: -2,
                     lineHeight: 1,
                   }}
                 >
@@ -258,10 +352,11 @@ export default function SearchPage() {
                 <span
                   style={{
                     fontFamily: DISPLAY,
-                    fontSize: 20,
                     fontWeight: 900,
+                    fontSize: 28,
+                    letterSpacing: -1,
                     color: "#F5F5F2",
-                    letterSpacing: -0.5,
+                    marginTop: 6,
                     marginLeft: 2,
                   }}
                 >
@@ -271,12 +366,12 @@ export default function SearchPage() {
               <div
                 style={{
                   fontFamily: MONO,
-                  fontSize: 8,
-                  letterSpacing: 2.5,
+                  fontSize: 9,
+                  letterSpacing: 3,
                   textTransform: "uppercase",
                   color: "#F5F5F2",
                   opacity: 0.85,
-                  marginTop: 6,
+                  marginTop: 10,
                 }}
               >
                 {analysisProgress >= 100 ? "complete" : "analyzing"}
@@ -284,62 +379,67 @@ export default function SearchPage() {
             </div>
           </div>
 
-          {/* Product name */}
-          {picked && (
+          {/* Message + engine count */}
+          <div style={{ textAlign: "center", marginBottom: 12 }}>
             <div
               style={{
                 fontFamily: DISPLAY,
-                fontSize: 16,
-                fontWeight: 600,
+                fontSize: 15,
+                fontWeight: 500,
                 color: "#F5F5F2",
-                letterSpacing: -0.3,
-                marginBottom: 4,
-                textAlign: "center",
+                letterSpacing: -0.2,
+                marginBottom: 6,
+                maxWidth: 300,
               }}
             >
-              {picked.title}
+              {analysisStage}
             </div>
-          )}
-
-          {/* Stage message */}
-          <div
-            style={{
-              fontFamily: MONO,
-              fontSize: 9,
-              letterSpacing: 1.5,
-              textTransform: "uppercase",
-              color: "rgba(245,245,242,0.4)",
-              marginBottom: 16,
-              textAlign: "center",
-              maxWidth: 280,
-            }}
-          >
-            {analysisStage}
+            <div
+              style={{
+                fontFamily: MONO,
+                fontSize: 9,
+                letterSpacing: 2,
+                color: "rgba(245,245,242,0.35)",
+                textTransform: "uppercase",
+              }}
+            >
+              {analysisProgress < 25
+                ? "02"
+                : analysisProgress < 52
+                  ? "05"
+                  : analysisProgress < 72
+                    ? "09"
+                    : analysisProgress < 92
+                      ? "11"
+                      : "13"}
+              /13 engines
+            </div>
           </div>
 
           {/* Stage chips */}
-          <div
-            style={{
-              display: "flex",
-              gap: 6,
-              flexWrap: "wrap",
-              justifyContent: "center",
-            }}
-          >
-            {["fetch", "matching", "scoring", "ai"].map((stage) => {
-              const stageMap: Record<string, number> = {
+          <div style={{ display: "flex", gap: 6 }}>
+            {["fetch", "matching", "scoring", "ai"].map((s) => {
+              const thresholds: Record<string, number> = {
                 fetch: 25,
                 matching: 52,
                 scoring: 72,
                 ai: 92,
               };
-              const isActive =
-                analysisProgress >= stageMap[stage] &&
-                analysisProgress < stageMap[stage] + 20;
-              const isDone = analysisProgress >= stageMap[stage] + 20;
+              const currentStage =
+                analysisProgress < 25
+                  ? "start"
+                  : analysisProgress < 52
+                    ? "fetch"
+                    : analysisProgress < 72
+                      ? "matching"
+                      : analysisProgress < 92
+                        ? "scoring"
+                        : "ai";
+              const isActive = s === currentStage;
+              const isDone = analysisProgress >= thresholds[s] + 20;
               return (
                 <span
-                  key={stage}
+                  key={s}
                   style={{
                     fontFamily: MONO,
                     fontSize: 8,
@@ -347,19 +447,17 @@ export default function SearchPage() {
                     textTransform: "uppercase",
                     padding: "4px 8px",
                     borderRadius: 4,
-                    background: isDone
-                      ? `${ACCENT}1A`
-                      : "rgba(245,245,242,0.03)",
+                    background: "rgba(10,10,10,0.5)",
                     border: `1px solid ${isActive ? ACCENT : isDone ? `${ACCENT}40` : "rgba(245,245,242,0.08)"}`,
                     color: isActive
                       ? ACCENT
                       : isDone
-                        ? `${ACCENT}CC`
+                        ? ACCENT
                         : "rgba(245,245,242,0.3)",
-                    transition: "all 0.3s ease",
+                    transition: "all 0.3s",
                   }}
                 >
-                  {stage}
+                  {s}
                 </span>
               );
             })}
