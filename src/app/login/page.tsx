@@ -115,6 +115,26 @@ export default function LoginPage() {
         width: "100%",
       }}
     >
+      {/* Back to home */}
+      <button
+        onClick={() => router.push("/")}
+        style={{
+          background: "none",
+          border: "none",
+          color: TEXT_DIM,
+          fontFamily: DISPLAY,
+          fontSize: 13,
+          cursor: "pointer",
+          padding: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          marginBottom: 16,
+        }}
+      >
+        ← Back to home
+      </button>
+
       {/* Center section */}
       <section
         style={{

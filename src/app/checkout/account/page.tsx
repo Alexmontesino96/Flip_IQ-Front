@@ -1785,6 +1785,16 @@ function AccountGateContent() {
                     }}
                   >
                     <button
+                      onClick={async () => {
+                        const supabase = createClient();
+                        sessionStorage.setItem("selectedPlan", planKey);
+                        await supabase.auth.signInWithOAuth({
+                          provider: "google",
+                          options: {
+                            redirectTo: `${window.location.origin}/auth/callback?next=/plans`,
+                          },
+                        });
+                      }}
                       style={{
                         padding: 13,
                         background: BG,
@@ -1805,6 +1815,16 @@ function AccountGateContent() {
                       <GoogleLogo /> Google
                     </button>
                     <button
+                      onClick={async () => {
+                        const supabase = createClient();
+                        sessionStorage.setItem("selectedPlan", planKey);
+                        await supabase.auth.signInWithOAuth({
+                          provider: "apple",
+                          options: {
+                            redirectTo: `${window.location.origin}/auth/callback?next=/plans`,
+                          },
+                        });
+                      }}
                       style={{
                         padding: 13,
                         background: BG,
