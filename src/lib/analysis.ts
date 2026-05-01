@@ -638,8 +638,9 @@ export function transformResponse(data: any): AnalysisResult {
         icon: "🏬",
       };
       const ship = ch.shipping_cost ?? DEFAULT_SHIP[ch.marketplace] ?? 0;
-      const totalFees =
-        (ch.estimated_sale_price || 0) - (ch.net_proceeds || 0) - ship;
+      // net_proceeds from backend already deducts fees, shipping, packaging,
+      // promo, and return reserve.  Don't subtract ship again.
+      const totalFees = (ch.estimated_sale_price || 0) - (ch.net_proceeds || 0);
       return {
         id: ch.marketplace,
         label: meta.label,
