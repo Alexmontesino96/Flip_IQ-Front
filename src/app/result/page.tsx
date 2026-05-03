@@ -15,6 +15,150 @@ import {
   createWatchlist,
   addWatchlistItem,
 } from "@/lib/watchlist";
+import { getSubscriptionStatus } from "@/lib/billing";
+
+// ─── CSV Export ──────────────────────────────────────────────────────────────
+function generateCSV(r: AnalysisResult): string {
+  const rows: string[][] = [];
+  const h = (label: string, value: string) => rows.push([label, value]);
+
+  h("Product", r.product.title);
+  h("Brand", r.product.brand || "");
+  h("Category", r.detectedCategory || "");
+  h("Recommendation", r.recommendation);
+  h("Flip Score", String(r.flipScore));
+  h("Max Buy Price", r.maxBuy);
+  h("Headroom", r.headroom);
+  h("Quick Price", r.quickPrice);
+  h("Market Price", r.marketPrice);
+  h("Stretch Price", r.stretchPrice);
+  h("Net Profit", r.mainProfit);
+  h("ROI %", r.mainROI);
+  h("Velocity Score", String(r.velocity));
+  h("Risk Score", String(r.risk));
+  h("Confidence Score", String(r.confidence));
+  h("Est. Days to Sell", r.estDaysToSell);
+  h("Velocity Category", r.velocityCategory || "");
+  h("Sales Per Day", r.salesPerDay != null ? r.salesPerDay.toFixed(2) : "");
+  h("Best Marketplace", r.bestMarketplace || "");
+  h("Quantity Guidance", r.quantityGuidance || "");
+  h(
+    "Win Probability",
+    r.winProbability != null ? (r.winProbability * 100).toFixed(0) + "%" : ""
+  );
+
+  // Competition
+  if (r.competition) {
+    h("Unique Sellers", String(r.competition.uniqueSellers));
+    h(
+      "Dominant Seller Share",
+      (r.competition.dominantSellerShare * 100).toFixed(1) + "%"
+    );
+    h("Competition Category", r.competition.category);
+  }
+
+  // Trend
+  if (r.trend) {
+    h("Demand Trend", String(r.trend.demandTrend));
+    h("Price Trend", String(r.trend.priceTrend));
+    h("Trend Category", r.trend.category);
+  }
+
+  // Fee breakdown
+  if (r.feeBreakdown) {
+    h("Sale Price", r.feeBreakdown.salePrice.toFixed(2));
+    h("Fee Rate", (r.feeBreakdown.feeRate * 100).toFixed(2) + "%");
+    h("Marketplace Fees", r.feeBreakdown.marketplaceFees.toFixed(2));
+    h("Shipping Cost", r.feeBreakdown.shippingCost.toFixed(2));
+    h("Return Reserve", r.feeBreakdown.returnReserve.toFixed(2));
+    h("Gross Proceeds", r.feeBreakdown.grossProceeds.toFixed(2));
+  }
+
+  // Channels
+  rows.push([]);
+  rows.push([
+    "Channel",
+    "Sale Price",
+    "Profit",
+    "ROI %",
+    "Margin %",
+    "Execution Score",
+    "Role",
+  ]);
+  for (const ch of r.channels) {
+    rows.push([
+      ch.label,
+      ch.salePrice,
+      ch.profit,
+      ch.roi,
+      ch.margin,
+      String(ch.executionScore ?? ""),
+      ch.channelRole || "",
+    ]);
+  }
+
+  // Comps
+  rows.push([]);
+  h("Total Comps", String(r.product.comps));
+  h("Median Price", r.product.median_price.toFixed(2));
+  h("Min Price", r.product.min_price.toFixed(2));
+  h("Max Price", r.product.max_price.toFixed(2));
+  if (r.p25 != null) h("P25", r.p25.toFixed(2));
+  if (r.p75 != null) h("P75", r.p75.toFixed(2));
+
+  // Price distribution
+  if (r.priceDistribution && r.priceDistribution.length > 0) {
+    rows.push([]);
+    rows.push(["Price Range Min", "Price Range Max", "Count", "% of Total"]);
+    for (const b of r.priceDistribution) {
+      rows.push([
+        b.rangeMin.toFixed(2),
+        b.rangeMax.toFixed(2),
+        String(b.count),
+        b.pct.toFixed(1) + "%",
+      ]);
+    }
+  }
+
+  // Warnings
+  if (r.warnings.length > 0) {
+    rows.push([]);
+    rows.push(["Warnings"]);
+    for (const w of r.warnings) {
+      rows.push([w]);
+    }
+  }
+
+  // AI
+  if (r.aiExplanation) {
+    rows.push([]);
+    h("AI Explanation", r.aiExplanation);
+  }
+
+  // Listing strategy
+  if (r.listingStrategy) {
+    rows.push([]);
+    h("Listing Format", r.listingStrategy.recommendedFormat);
+    h("Listing Reasoning", r.listingStrategy.reasoning);
+  }
+
+  return rows
+    .map((row) =>
+      row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+    )
+    .join("\n");
+}
+
+function downloadCSV(r: AnalysisResult) {
+  const csv = generateCSV(r);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `flipiq-${r.product.title.replace(/[^a-zA-Z0-9]/g, "-").slice(0, 40)}-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const fmt = (n: number, decimals = 2) =>
@@ -243,6 +387,15 @@ function ResultPageInner() {
   const [shared, setShared] = useState(false);
   const [watchlistAdded, setWatchlistAdded] = useState(false);
   const [watchlistAdding, setWatchlistAdding] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+
+  useEffect(() => {
+    getSubscriptionStatus().then((sub) => {
+      if (sub && (sub.plan === "pro" || sub.plan === "premium")) {
+        setIsPro(true);
+      }
+    });
+  }, []);
 
   const handleShare = async () => {
     if (!id || sharing) return;
@@ -2033,6 +2186,48 @@ function ResultPageInner() {
               ? "Adding..."
               : "Add to watchlist"}
         </button>
+
+        {/* Export CSV (Pro only) */}
+        {isPro && result && (
+          <button
+            aria-label="Export analysis as CSV"
+            onClick={() => downloadCSV(result)}
+            style={{
+              height: 50,
+              paddingLeft: 16,
+              paddingRight: 16,
+              borderRadius: 14,
+              border: "1px solid rgba(245,245,242,0.12)",
+              background: "transparent",
+              color: "#F5F5F2",
+              fontFamily: DISPLAY,
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              flexShrink: 0,
+            }}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            CSV
+          </button>
+        )}
 
         {/* Primary: New analysis */}
         <button
