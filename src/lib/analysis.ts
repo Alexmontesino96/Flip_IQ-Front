@@ -101,6 +101,8 @@ export interface FeeBreakdown {
   shippingCost: number;
   returnReserve: number;
   grossProceeds: number;
+  netProceeds: number;
+  profit: number;
 }
 
 export interface ListingStrategy {
@@ -781,6 +783,8 @@ export function transformResponse(data: any): AnalysisResult {
             shippingCost: primaryAnalysis.profit_detail.shipping_cost ?? 0,
             returnReserve: primaryAnalysis.profit_detail.return_reserve ?? 0,
             grossProceeds: primaryAnalysis.profit_detail.gross_proceeds ?? 0,
+            netProceeds: primaryAnalysis.profit_detail.risk_adjusted_net ?? 0,
+            profit: primaryAnalysis.profit_detail.profit ?? 0,
           }
         : undefined,
     listingStrategy: primaryAnalysis?.listing_strategy

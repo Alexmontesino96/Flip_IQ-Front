@@ -1801,7 +1801,7 @@ function ResultPageInner() {
                   color: "#F5F5F2",
                 }}
               >
-                ${fmt(r.feeBreakdown.grossProceeds)}
+                ${fmt(r.feeBreakdown.netProceeds)}
               </span>
             </div>
 
@@ -1841,7 +1841,7 @@ function ResultPageInner() {
             />
 
             {(() => {
-              const feeProfit = r.feeBreakdown!.grossProceeds - costPrice;
+              const feeProfit = r.feeBreakdown!.profit;
               const isPositive = feeProfit >= 0;
               return (
                 <div
