@@ -122,7 +122,12 @@ export default function SearchPage() {
           setAnalysisError(err.message);
         },
         (progress) => {
-          setAnalysisProgress(progress.progress);
+          // Scale 0-88 from backend to 0-100 for display (we navigate at 88%)
+          const scaled = Math.min(
+            100,
+            Math.round((progress.progress / 88) * 100)
+          );
+          setAnalysisProgress(scaled);
           setAnalysisStage(progress.message);
           // Navigate when we get the analysis_id from progress details
           // This arrives in the "ai complete" stage (progress ~100)
@@ -420,14 +425,14 @@ export default function SearchPage() {
                 textTransform: "uppercase",
               }}
             >
-              {analysisProgress < 25
+              {analysisProgress < 28
                 ? "02"
-                : analysisProgress < 52
+                : analysisProgress < 59
                   ? "05"
-                  : analysisProgress < 72
+                  : analysisProgress < 82
                     ? "09"
-                    : analysisProgress < 92
-                      ? "11"
+                    : analysisProgress < 100
+                      ? "12"
                       : "13"}
               /13 engines
             </div>
@@ -435,25 +440,25 @@ export default function SearchPage() {
 
           {/* Stage chips */}
           <div style={{ display: "flex", gap: 6 }}>
-            {["fetch", "matching", "scoring", "ai"].map((s) => {
+            {["fetch", "matching", "scoring", "done"].map((s) => {
               const thresholds: Record<string, number> = {
-                fetch: 25,
-                matching: 52,
-                scoring: 72,
-                ai: 92,
+                fetch: 28,
+                matching: 59,
+                scoring: 82,
+                done: 100,
               };
               const currentStage =
-                analysisProgress < 25
+                analysisProgress < 28
                   ? "start"
-                  : analysisProgress < 52
+                  : analysisProgress < 59
                     ? "fetch"
-                    : analysisProgress < 72
+                    : analysisProgress < 82
                       ? "matching"
-                      : analysisProgress < 92
+                      : analysisProgress < 100
                         ? "scoring"
-                        : "ai";
+                        : "done";
               const isActive = s === currentStage;
-              const isDone = analysisProgress >= thresholds[s] + 20;
+              const isDone = analysisProgress >= thresholds[s];
               return (
                 <span
                   key={s}
