@@ -111,7 +111,7 @@ export default function SearchPage() {
           }
         },
         () => {
-          // AI complete update — we already navigated
+          // AI complete — navigation happens via progress event below
         },
         (err) => {
           setAnalyzing(false);
@@ -120,9 +120,15 @@ export default function SearchPage() {
         (progress) => {
           setAnalysisProgress(progress.progress);
           setAnalysisStage(progress.message);
-          // When analysis stage is complete, the server saved it — check history for the ID
+          // Navigate when we get the analysis_id from progress details
+          // This arrives in the "ai complete" stage (progress ~100)
+          const aid = progress.details?.analysis_id as number | undefined;
+          if (aid) {
+            router.push(`/result?id=${aid}`);
+            return;
+          }
+          // Fallback: if progress hits 100 without analysis_id
           if (progress.progress >= 100) {
-            // Small delay to let server finish saving
             setTimeout(async () => {
               try {
                 const { fetchHistory } = await import("@/lib/history");
