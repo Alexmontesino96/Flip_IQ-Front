@@ -109,9 +109,13 @@ export default function SearchPage() {
           } catch {
             /* ignore */
           }
+          // Navigate immediately — analysis data ready, AI loads in background
+          if (streamResult.analysisId) {
+            router.push(`/result?id=${streamResult.analysisId}`);
+          }
         },
         () => {
-          // AI complete — navigation happens via progress event below
+          // AI complete — user already on result page, they can reload to see AI
         },
         (err) => {
           setAnalyzing(false);
