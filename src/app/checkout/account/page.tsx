@@ -1775,45 +1775,15 @@ function AccountGateContent() {
                     <span style={{ flex: 1, height: 1, background: LINE }} />
                   </div>
 
-                  {/* OAuth row */}
+                  {/* OAuth row — Apple only */}
                   <div
                     className="ag-oauth-row"
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
+                      gridTemplateColumns: "1fr",
                       gap: 10,
                     }}
                   >
-                    <button
-                      onClick={async () => {
-                        const supabase = createClient();
-                        sessionStorage.setItem("selectedPlan", planKey);
-                        await supabase.auth.signInWithOAuth({
-                          provider: "google",
-                          options: {
-                            redirectTo: `${window.location.origin}/auth/callback?next=/plans`,
-                          },
-                        });
-                      }}
-                      style={{
-                        padding: 13,
-                        background: BG,
-                        border: `1px solid ${LINE2}`,
-                        borderRadius: 12,
-                        color: INK,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 9,
-                        fontFamily: "inherit",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        transition: "border-color 0.15s, background 0.15s",
-                      }}
-                    >
-                      <GoogleLogo /> Google
-                    </button>
                     <button
                       onClick={async () => {
                         const supabase = createClient();
