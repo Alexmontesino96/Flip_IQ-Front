@@ -144,7 +144,7 @@ export default function PlansPage() {
       setLoading(true);
       try {
         const portalUrl = await openPortal(window.location.href);
-        window.location.href = portalUrl;
+        window.location.replace(portalUrl);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to open portal");
         setLoading(false);
@@ -159,7 +159,7 @@ export default function PlansPage() {
         setLoading(true);
         try {
           const portalUrl = await openPortal(window.location.href);
-          window.location.href = portalUrl;
+          window.location.replace(portalUrl);
         } catch (err) {
           setError(
             err instanceof Error ? err.message : "Failed to open portal"
@@ -192,7 +192,7 @@ export default function PlansPage() {
         );
         // If it returns a URL, redirect. Otherwise it changed instantly.
         if (result.startsWith("http")) {
-          window.location.href = result;
+          window.location.replace(result);
         } else {
           router.push(`/plans/success?plan=${selected}`);
         }
@@ -207,7 +207,7 @@ export default function PlansPage() {
           successUrl,
           cancelUrl
         );
-        window.location.href = checkoutUrl;
+        window.location.replace(checkoutUrl);
       }
     } catch (err) {
       setError(

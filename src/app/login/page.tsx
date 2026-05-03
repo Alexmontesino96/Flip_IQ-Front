@@ -117,7 +117,7 @@ export default function LoginPage() {
     >
       {/* Back to home */}
       <button
-        onClick={() => router.push("/")}
+        onClick={() => router.replace("/")}
         style={{
           background: "none",
           border: "none",
