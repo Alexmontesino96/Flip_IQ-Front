@@ -225,11 +225,14 @@ const ScoreBar = ({
   label,
   value,
   sublabel,
+  tooltip,
 }: {
   label: string;
   value: number;
   sublabel: string;
+  tooltip?: string;
 }) => {
+  const [showTip, setShowTip] = useState(false);
   const isWarn = value < 40;
   return (
     <div style={{ marginBottom: 14 }}>
@@ -248,9 +251,42 @@ const ScoreBar = ({
             letterSpacing: 1.5,
             textTransform: "uppercase",
             color: "rgba(245,245,242,0.55)",
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
           }}
         >
           {label}
+          {tooltip && (
+            <button
+              onClick={() => setShowTip(!showTip)}
+              aria-label={`Info about ${label}`}
+              style={{
+                background: "none",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                color: showTip ? ACCENT : "rgba(245,245,242,0.3)",
+                transition: "color 0.15s",
+              }}
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4M12 8h.01" />
+              </svg>
+            </button>
+          )}
         </span>
         <span
           style={{
@@ -300,6 +336,23 @@ const ScoreBar = ({
           }}
         />
       </div>
+      {showTip && tooltip && (
+        <div
+          style={{
+            marginTop: 8,
+            padding: "10px 12px",
+            borderRadius: 10,
+            background: "rgba(245,245,242,0.04)",
+            border: "1px solid rgba(245,245,242,0.08)",
+            fontFamily: DISPLAY,
+            fontSize: 12,
+            color: "rgba(245,245,242,0.6)",
+            lineHeight: 1.5,
+          }}
+        >
+          {tooltip}
+        </div>
+      )}
     </div>
   );
 };
@@ -1413,16 +1466,19 @@ function ResultPageInner() {
             label="Safety"
             value={safety}
             sublabel={riskSublabel(safety)}
+            tooltip="How stable and predictable the price is. High safety means consistent pricing with low volatility — fewer surprises when you list."
           />
           <ScoreBar
             label="Confidence"
             value={r.confidence}
             sublabel={confidenceSublabel(r.confidence)}
+            tooltip="How reliable the data behind this analysis is. Based on sample size, timeline coverage, title accuracy, and comp consistency. Low confidence = verify manually."
           />
           <ScoreBar
             label="Velocity"
             value={r.velocity}
             sublabel={velocitySublabel(r.velocity)}
+            tooltip="How fast this product sells. Based on sales per day from recent comps. High velocity = less time holding inventory, faster capital turnover."
           />
         </Card>
       </section>
