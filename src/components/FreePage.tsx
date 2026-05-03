@@ -956,6 +956,130 @@ export default function FreePage() {
                 </div>
               )}
 
+              {/* Recent sales (sample comps) */}
+              {result.sampleComps && result.sampleComps.length > 0 && (
+                <div>
+                  <div className="res-section-h">
+                    Recent sales — tap to verify
+                  </div>
+                  <div
+                    style={{ display: "flex", flexDirection: "column", gap: 6 }}
+                  >
+                    {result.sampleComps.map((comp, i) => (
+                      <a
+                        key={i}
+                        href={comp.url || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "10px 12px",
+                          borderRadius: 11,
+                          background: "var(--bg-3)",
+                          border: "1px solid var(--line)",
+                          textDecoration: "none",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 8,
+                            background: "rgba(245,245,242,0.06)",
+                            flexShrink: 0,
+                            overflow: "hidden",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {comp.imageUrl ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              src={comp.imageUrl}
+                              alt=""
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          ) : (
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="rgba(245,245,242,0.2)"
+                              strokeWidth="1.5"
+                            >
+                              <rect x="3" y="3" width="18" height="18" rx="2" />
+                            </svg>
+                          )}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontFamily: "var(--display)",
+                              fontSize: 12,
+                              fontWeight: 600,
+                              color: "var(--ink)",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              marginBottom: 2,
+                            }}
+                          >
+                            {comp.title}
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: "var(--mono)",
+                              fontSize: 9,
+                              color: "var(--dim)",
+                              letterSpacing: 0.3,
+                            }}
+                          >
+                            {comp.soldDate &&
+                              new Date(comp.soldDate).toLocaleDateString(
+                                "en-US",
+                                { month: "short", day: "numeric" }
+                              )}
+                            {comp.condition && ` · ${comp.condition}`}
+                            {comp.url && " · eBay →"}
+                          </div>
+                        </div>
+                        <span
+                          style={{
+                            fontFamily: "var(--display)",
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: "var(--accent)",
+                            flexShrink: 0,
+                          }}
+                        >
+                          ${comp.soldPrice.toFixed(2)}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "var(--mono)",
+                      fontSize: 8,
+                      color: "var(--dimmer)",
+                      letterSpacing: 0.5,
+                      marginTop: 6,
+                      textAlign: "center",
+                    }}
+                  >
+                    Prices vary by size and condition
+                  </div>
+                </div>
+              )}
+
               {/* AI or gated */}
               {result.aiExplanation ? (
                 <div className="ai">

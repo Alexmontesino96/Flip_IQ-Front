@@ -1838,6 +1838,144 @@ function ResultPageInner() {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════
+          RECENT SALES (sample comps)
+      ════════════════════════════════════════════════════════════════════ */}
+      {r.sampleComps && r.sampleComps.length > 0 && (
+        <section
+          style={{ padding: "0 20px", marginBottom: 20 }}
+          aria-label="Recent sales"
+        >
+          <SectionLabel>Recent sales — tap to verify</SectionLabel>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            {r.sampleComps.map((comp, i) => (
+              <a
+                key={i}
+                href={comp.url || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "12px 14px",
+                  borderRadius: 14,
+                  background: "rgba(245,245,242,0.03)",
+                  border: "1px solid rgba(245,245,242,0.08)",
+                  textDecoration: "none",
+                  transition: "border-color 0.15s",
+                }}
+              >
+                {/* Thumbnail */}
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 10,
+                    background: "rgba(245,245,242,0.06)",
+                    flexShrink: 0,
+                    overflow: "hidden",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {comp.imageUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={comp.imageUrl}
+                      alt=""
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="rgba(245,245,242,0.2)"
+                      strokeWidth="1.5"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <path d="M3 16l5-5 4 4 4-6 5 7" />
+                    </svg>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontFamily: DISPLAY,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "#F5F5F2",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      marginBottom: 3,
+                    }}
+                  >
+                    {comp.title}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 10,
+                      color: "rgba(245,245,242,0.4)",
+                      letterSpacing: 0.3,
+                    }}
+                  >
+                    {comp.soldDate &&
+                      new Date(comp.soldDate).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    {comp.condition && ` · ${comp.condition}`}
+                    {comp.url && " · eBay →"}
+                  </div>
+                </div>
+
+                {/* Price */}
+                <div
+                  style={{
+                    fontFamily: DISPLAY,
+                    fontSize: 15,
+                    fontWeight: 700,
+                    color: ACCENT,
+                    flexShrink: 0,
+                  }}
+                >
+                  ${comp.soldPrice.toFixed(2)}
+                </div>
+              </a>
+            ))}
+          </div>
+          <div
+            style={{
+              fontFamily: MONO,
+              fontSize: 9,
+              color: "rgba(245,245,242,0.3)",
+              letterSpacing: 0.5,
+              marginTop: 8,
+              textAlign: "center",
+            }}
+          >
+            Prices vary by size and condition
+          </div>
+        </section>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════
           7. AI VERDICT
       ════════════════════════════════════════════════════════════════════ */}
       {r.aiExplanation && (

@@ -114,6 +114,15 @@ export interface TitleRiskInfo {
   topFlags: string[];
 }
 
+export interface SampleComp {
+  title: string;
+  soldPrice: number;
+  soldDate: string | null;
+  condition: string | null;
+  url: string | null;
+  imageUrl: string | null;
+}
+
 export interface AnalysisResult {
   analysisId: number | null;
   noCompsFound: boolean;
@@ -156,6 +165,7 @@ export interface AnalysisResult {
   winProbability?: number;
   aiLocked?: boolean;
   detectedCategory?: string;
+  sampleComps?: SampleComp[];
 }
 
 export interface MarketplaceDetail {
@@ -793,6 +803,17 @@ export function transformResponse(data: any): AnalysisResult {
     winProbability: data.execution_analysis?.win_probability ?? undefined,
     aiLocked: data.ai_locked ?? undefined,
     detectedCategory: data.detected_category || undefined,
+    sampleComps:
+      Array.isArray(data.sample_comps) && data.sample_comps.length > 0
+        ? data.sample_comps.slice(0, 3).map((c: any) => ({
+            title: c.title || "",
+            soldPrice: c.sold_price ?? 0,
+            soldDate: c.sold_date || null,
+            condition: c.condition || null,
+            url: c.url || null,
+            imageUrl: c.image_url || null,
+          }))
+        : undefined,
   };
 }
 
