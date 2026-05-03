@@ -333,9 +333,9 @@ const MiniBarChart = ({ bars }: { bars: number[] }) => {
 
 // ─── Score sublabel helpers ──────────────────────────────────────────────────
 function riskSublabel(safety: number): string {
-  if (safety >= 70) return "Low";
+  if (safety >= 70) return "High";
   if (safety >= 40) return "Medium";
-  return "High";
+  return "Low";
 }
 function confidenceSublabel(v: number): string {
   if (v >= 70) return "High";
@@ -1410,7 +1410,7 @@ function ResultPageInner() {
         <SectionLabel>Scores</SectionLabel>
         <Card style={{ padding: "20px 20px 6px" }}>
           <ScoreBar
-            label="Risk"
+            label="Safety"
             value={safety}
             sublabel={riskSublabel(safety)}
           />

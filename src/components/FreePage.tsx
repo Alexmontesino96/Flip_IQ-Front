@@ -819,15 +819,15 @@ export default function FreePage() {
                 <div className="scores">
                   {[
                     {
-                      lbl: "Risk",
+                      lbl: "Safety",
                       v: 100 - result.risk,
                       cat:
-                        result.risk <= 30
-                          ? "LOW"
-                          : result.risk <= 60
+                        100 - result.risk >= 70
+                          ? "HIGH"
+                          : 100 - result.risk >= 40
                             ? "MED"
-                            : "HIGH",
-                      warn: result.risk > 60,
+                            : "LOW",
+                      warn: 100 - result.risk < 40,
                     },
                     {
                       lbl: "Confidence",
