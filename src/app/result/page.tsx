@@ -371,9 +371,49 @@ function ResultPageInner() {
     if (!idValid) return;
 
     const cancelled = false;
+
+    // Check if we have a cached stream result (has full data: sample_comps, fee breakdown, etc.)
+    let cachedResult: AnalysisResult | null = null;
+    try {
+      const cached = sessionStorage.getItem("flipiq_last_result");
+      if (cached) {
+        cachedResult = JSON.parse(cached);
+        sessionStorage.removeItem("flipiq_last_result");
+      }
+    } catch {
+      /* ignore */
+    }
+
+    // If cached result matches the requested ID, use it directly
+    if (cachedResult && cachedResult.analysisId === id) {
+      setResult(cachedResult);
+      setLoading(false);
+      return;
+    }
+
+    // Otherwise fetch from API (won't have detailed stream-only fields)
     fetchAnalysisById(id)
       .then((data) => {
-        if (!cancelled) setResult(data);
+        if (!cancelled) {
+          // Merge with cached data if available (same analysis)
+          if (cachedResult && cachedResult.analysisId === null) {
+            // Stream result didn't have ID, merge its extra fields
+            setResult({
+              ...data,
+              sampleComps: cachedResult.sampleComps ?? data.sampleComps,
+              feeBreakdown: cachedResult.feeBreakdown ?? data.feeBreakdown,
+              competition: cachedResult.competition ?? data.competition,
+              trend: cachedResult.trend ?? data.trend,
+              priceDistribution:
+                cachedResult.priceDistribution ?? data.priceDistribution,
+              listingStrategy:
+                cachedResult.listingStrategy ?? data.listingStrategy,
+              titleRisk: cachedResult.titleRisk ?? data.titleRisk,
+            });
+          } else {
+            setResult(data);
+          }
+        }
       })
       .catch((err) => {
         if (!cancelled) setError(err.message || "Failed to load analysis.");

@@ -99,9 +99,16 @@ export default function SearchPage() {
         q,
         parseFloat(costStr),
         cond,
-        (_result: AnalysisResult) => {
-          // Analysis data received — navigate to result
-          // The analysis is saved server-side, we get the ID from the response
+        (streamResult: AnalysisResult) => {
+          // Cache the full stream result (has sample_comps, fee breakdown, etc.)
+          try {
+            sessionStorage.setItem(
+              "flipiq_last_result",
+              JSON.stringify(streamResult)
+            );
+          } catch {
+            /* ignore */
+          }
         },
         () => {
           // AI complete update — we already navigated
