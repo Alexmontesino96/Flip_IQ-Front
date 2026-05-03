@@ -34,9 +34,51 @@ export default function SearchPage() {
 
   // Analysis state
   const [analyzing, setAnalyzing] = useState(false);
-  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [displayProgress, setDisplayProgress] = useState(0);
+  const targetProgressRef = useRef(0);
+  const animFrameRef = useRef<number>(0);
   const [analysisStage, setAnalysisStage] = useState("");
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  // Smooth lerp animation for progress
+  useEffect(() => {
+    if (!analyzing) {
+      setDisplayProgress(0);
+      targetProgressRef.current = 0;
+      return;
+    }
+
+    let lastTime = performance.now();
+
+    function tick(now: number) {
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+
+      setDisplayProgress((prev) => {
+        const target = targetProgressRef.current;
+        const gap = target - prev;
+
+        // Lerp toward target
+        let next = prev + gap * 0.08;
+
+        // Creep forward slightly between events (~1.5%/sec)
+        if (gap < 2 && prev < 95) {
+          next = Math.max(next, prev + dt * 1.5);
+          // Don't overtake: cap at target - 0.5
+          next = Math.min(next, target > 0 ? target - 0.5 : prev + dt * 1.5);
+        }
+
+        return Math.min(100, Math.max(prev, next));
+      });
+
+      animFrameRef.current = requestAnimationFrame(tick);
+    }
+
+    // Start creeping immediately
+    targetProgressRef.current = 3;
+    animFrameRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(animFrameRef.current);
+  }, [analyzing]);
 
   const costValue = cost ? parseFloat(cost) : null;
   const canAnalyze = picked !== null && costValue !== null && costValue > 0;
@@ -91,7 +133,8 @@ export default function SearchPage() {
   const executeAnalysis = useCallback(
     (q: string, costStr: string, cond: string) => {
       setAnalyzing(true);
-      setAnalysisProgress(0);
+      targetProgressRef.current = 3;
+      setDisplayProgress(0);
       setAnalysisStage("Starting...");
       setAnalysisError(null);
 
@@ -127,7 +170,7 @@ export default function SearchPage() {
             100,
             Math.round((progress.progress / 88) * 100)
           );
-          setAnalysisProgress(scaled);
+          targetProgressRef.current = scaled; // lerp will smoothly chase this
           setAnalysisStage(progress.message);
           // Navigate when we get the analysis_id from progress details
           // This arrives in the "ai complete" stage (progress ~100)
@@ -293,7 +336,7 @@ export default function SearchPage() {
                     <circle
                       cx="130"
                       cy="130"
-                      r={12 + (analysisProgress / 100) * 80}
+                      r={12 + (displayProgress / 100) * 80}
                       style={{ transition: "r 0.8s ease" }}
                     >
                       <animate
@@ -312,10 +355,10 @@ export default function SearchPage() {
                     {/* Orbiting blobs */}
                     {[0, 1, 2, 3, 4, 5].map((i) => {
                       const angle = (i / 6) * Math.PI * 2;
-                      const pull = 1 - (analysisProgress / 100) * 0.55;
+                      const pull = 1 - (displayProgress / 100) * 0.55;
                       const bx = 130 + Math.cos(angle) * 60 * pull;
                       const by = 130 + Math.sin(angle) * 60 * pull;
-                      const r = 14 + (analysisProgress / 100) * 16;
+                      const r = 14 + (displayProgress / 100) * 16;
                       return (
                         <circle
                           key={i}
@@ -369,7 +412,7 @@ export default function SearchPage() {
                     lineHeight: 1,
                   }}
                 >
-                  {Math.round(analysisProgress)}
+                  {Math.round(displayProgress)}
                 </span>
                 <span
                   style={{
@@ -396,7 +439,7 @@ export default function SearchPage() {
                   marginTop: 10,
                 }}
               >
-                {analysisProgress >= 100 ? "complete" : "analyzing"}
+                {displayProgress >= 100 ? "complete" : "analyzing"}
               </div>
             </div>
           </div>
@@ -425,13 +468,13 @@ export default function SearchPage() {
                 textTransform: "uppercase",
               }}
             >
-              {analysisProgress < 28
+              {displayProgress < 28
                 ? "02"
-                : analysisProgress < 59
+                : displayProgress < 59
                   ? "05"
-                  : analysisProgress < 82
+                  : displayProgress < 82
                     ? "09"
-                    : analysisProgress < 100
+                    : displayProgress < 100
                       ? "12"
                       : "13"}
               /13 engines
@@ -448,17 +491,17 @@ export default function SearchPage() {
                 done: 100,
               };
               const currentStage =
-                analysisProgress < 28
+                displayProgress < 28
                   ? "start"
-                  : analysisProgress < 59
+                  : displayProgress < 59
                     ? "fetch"
-                    : analysisProgress < 82
+                    : displayProgress < 82
                       ? "matching"
-                      : analysisProgress < 100
+                      : displayProgress < 100
                         ? "scoring"
                         : "done";
               const isActive = s === currentStage;
-              const isDone = analysisProgress >= thresholds[s];
+              const isDone = displayProgress >= thresholds[s];
               return (
                 <span
                   key={s}
