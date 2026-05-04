@@ -2133,41 +2133,156 @@ function ResultPageInner() {
               background: "rgba(245,245,242,0.03)",
               border: "1px solid rgba(245,245,242,0.06)",
               borderRadius: 20,
-              padding: "24px 20px",
+              padding: "28px 20px",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: 14,
+              gap: 16,
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            {/* Pulsing brain icon */}
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: "50%",
-                background: `${ACCENT}0F`,
-                border: `1px solid ${ACCENT}26`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                animation: "ai-pulse 2s ease-in-out infinite",
-              }}
-            >
-              <span style={{ fontSize: 20 }}>🧠</span>
+            {/* Cauldron with bubbles */}
+            <div style={{ position: "relative", width: 56, height: 56 }}>
+              <svg
+                width="56"
+                height="56"
+                viewBox="0 0 56 56"
+                fill="none"
+                style={{ position: "relative", zIndex: 1 }}
+              >
+                <path
+                  d="M12 28c0 11 7.2 18 16 18s16-7 16-18H12z"
+                  fill={`${ACCENT}15`}
+                  stroke={`${ACCENT}40`}
+                  strokeWidth="1.5"
+                />
+                <ellipse
+                  cx="28"
+                  cy="28"
+                  rx="18"
+                  ry="4"
+                  fill="none"
+                  stroke={`${ACCENT}60`}
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M10 26c-3 0-4-2-4-4s1-4 4-4"
+                  fill="none"
+                  stroke={`${ACCENT}40`}
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M46 26c3 0 4-2 4-4s-1-4-4-4"
+                  fill="none"
+                  stroke={`${ACCENT}40`}
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div
+                style={{
+                  position: "absolute",
+                  top: 6,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: 30,
+                  height: 22,
+                  overflow: "hidden",
+                }}
+              >
+                <span
+                  style={{
+                    position: "absolute",
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: `${ACCENT}35`,
+                    left: 3,
+                    bottom: 0,
+                    animation: "ai-bubble 1.8s ease-in-out infinite",
+                  }}
+                />
+                <span
+                  style={{
+                    position: "absolute",
+                    width: 4,
+                    height: 4,
+                    borderRadius: "50%",
+                    background: `${ACCENT}28`,
+                    left: 13,
+                    bottom: 0,
+                    animation: "ai-bubble 2.2s ease-in-out 0.4s infinite",
+                  }}
+                />
+                <span
+                  style={{
+                    position: "absolute",
+                    width: 5,
+                    height: 5,
+                    borderRadius: "50%",
+                    background: `${ACCENT}22`,
+                    left: 21,
+                    bottom: 0,
+                    animation: "ai-bubble 2s ease-in-out 0.8s infinite",
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  position: "absolute",
+                  top: -6,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  display: "flex",
+                  gap: 6,
+                }}
+              >
+                <span
+                  style={{
+                    width: 2,
+                    height: 12,
+                    borderRadius: 1,
+                    background: `${ACCENT}22`,
+                    animation: "ai-steam 2s ease-in-out infinite",
+                    transformOrigin: "bottom",
+                  }}
+                />
+                <span
+                  style={{
+                    width: 2,
+                    height: 16,
+                    borderRadius: 1,
+                    background: `${ACCENT}18`,
+                    animation: "ai-steam 2.4s ease-in-out 0.3s infinite",
+                    transformOrigin: "bottom",
+                  }}
+                />
+                <span
+                  style={{
+                    width: 2,
+                    height: 10,
+                    borderRadius: 1,
+                    background: `${ACCENT}1A`,
+                    animation: "ai-steam 1.8s ease-in-out 0.7s infinite",
+                    transformOrigin: "bottom",
+                  }}
+                />
+              </div>
             </div>
 
             <div style={{ textAlign: "center" }}>
               <div
                 style={{
                   fontFamily: DISPLAY,
-                  fontSize: 14,
+                  fontSize: 15,
                   fontWeight: 600,
                   color: "#F5F5F2",
                   marginBottom: 4,
                 }}
               >
-                Writing AI analysis...
+                Cooking your analysis...
               </div>
               <div
                 style={{
@@ -2177,68 +2292,54 @@ function ResultPageInner() {
                   letterSpacing: 0.5,
                 }}
               >
-                Reviewing market data, risk factors, and channels
+                Mixing comps, fees, risk, and strategy
               </div>
             </div>
 
-            {/* Skeleton lines */}
             <div
               style={{
-                width: "100%",
                 display: "flex",
-                flexDirection: "column",
-                gap: 8,
-                marginTop: 4,
+                gap: 6,
+                flexWrap: "wrap",
+                justifyContent: "center",
               }}
             >
-              <div
-                style={{
-                  height: 10,
-                  borderRadius: 5,
-                  background: "rgba(245,245,242,0.04)",
-                  width: "100%",
-                  animation: "ai-shimmer 1.8s ease-in-out infinite",
-                }}
-              />
-              <div
-                style={{
-                  height: 10,
-                  borderRadius: 5,
-                  background: "rgba(245,245,242,0.04)",
-                  width: "85%",
-                  animation: "ai-shimmer 1.8s ease-in-out 0.2s infinite",
-                }}
-              />
-              <div
-                style={{
-                  height: 10,
-                  borderRadius: 5,
-                  background: "rgba(245,245,242,0.04)",
-                  width: "92%",
-                  animation: "ai-shimmer 1.8s ease-in-out 0.4s infinite",
-                }}
-              />
-              <div
-                style={{
-                  height: 10,
-                  borderRadius: 5,
-                  background: "rgba(245,245,242,0.04)",
-                  width: "70%",
-                  animation: "ai-shimmer 1.8s ease-in-out 0.6s infinite",
-                }}
-              />
+              {["comps", "fees", "velocity", "risk"].map((item, i) => (
+                <span
+                  key={item}
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 9,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    background: `${ACCENT}0A`,
+                    border: `1px solid ${ACCENT}20`,
+                    color: `${ACCENT}AA`,
+                    animation: `ai-float 2.5s ease-in-out ${i * 0.3}s infinite`,
+                  }}
+                >
+                  {item}
+                </span>
+              ))}
             </div>
           </div>
         )}
       </section>
       <style>{`
-        @keyframes ai-pulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.08); opacity: 0.7; }
+        @keyframes ai-bubble {
+          0% { transform: translateY(0) scale(1); opacity: 0.8; }
+          50% { transform: translateY(-14px) scale(0.6); opacity: 0.4; }
+          100% { transform: translateY(-22px) scale(0.2); opacity: 0; }
         }
-        @keyframes ai-shimmer {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 0.8; }
+        @keyframes ai-steam {
+          0%, 100% { transform: scaleY(1) translateY(0); opacity: 0.4; }
+          50% { transform: scaleY(1.4) translateY(-4px); opacity: 0.8; }
+        }
+        @keyframes ai-float {
+          0%, 100% { transform: translateY(0); opacity: 0.7; }
+          50% { transform: translateY(-3px); opacity: 1; }
         }
         @keyframes ai-reveal {
           from { opacity: 0; transform: translateY(8px); }
