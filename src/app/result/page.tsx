@@ -1799,7 +1799,10 @@ function ResultPageInner() {
               },
               {
                 label: "Shipping",
-                value: `-$${fmt(r.feeBreakdown.shippingCost)}`,
+                value:
+                  r.feeBreakdown.shippingCost === 0
+                    ? "Free (eBay)"
+                    : `-$${fmt(r.feeBreakdown.shippingCost)}`,
                 color: "rgba(245,245,242,0.7)",
               },
               {
