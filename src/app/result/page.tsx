@@ -441,6 +441,30 @@ function ResultPageInner() {
     if (cachedResult && cachedResult.analysisId === id) {
       setResult(cachedResult);
       setLoading(false);
+
+      // AI explanation may not be ready yet (we navigated before AI finished).
+      // Poll the API after a delay to pick it up.
+      if (!cachedResult.aiExplanation) {
+        const pollForAI = (attempt: number) => {
+          if (attempt > 5) return; // give up after 5 tries (~15s)
+          setTimeout(() => {
+            fetchAnalysisById(id)
+              .then((fresh) => {
+                if (fresh.aiExplanation) {
+                  setResult((prev) =>
+                    prev
+                      ? { ...prev, aiExplanation: fresh.aiExplanation }
+                      : prev
+                  );
+                } else {
+                  pollForAI(attempt + 1); // retry
+                }
+              })
+              .catch(() => {}); // silent fail
+          }, 3000 * attempt); // 3s, 6s, 9s, 12s, 15s
+        };
+        pollForAI(1);
+      }
       return;
     }
 
