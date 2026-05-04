@@ -2096,20 +2096,22 @@ function ResultPageInner() {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════
-          7. AI VERDICT
+          7. AI VERDICT (loading state → reveal animation)
       ════════════════════════════════════════════════════════════════════ */}
-      {r.aiExplanation && (
-        <section
-          style={{ padding: "0 20px", marginBottom: 20 }}
-          aria-label="AI verdict"
-        >
-          <SectionLabel dot>AI Verdict</SectionLabel>
+      <section
+        style={{ padding: "0 20px", marginBottom: 20 }}
+        aria-label="AI verdict"
+      >
+        <SectionLabel dot>AI Verdict</SectionLabel>
+        {r.aiExplanation ? (
+          /* ── AI ready: fade-in reveal ── */
           <div
             style={{
               background: "rgba(245,245,242,0.03)",
               border: "1px solid rgba(245,245,242,0.08)",
               borderRadius: 20,
               padding: "18px 20px",
+              animation: "ai-reveal 0.6s ease both",
             }}
           >
             <p
@@ -2124,8 +2126,125 @@ function ResultPageInner() {
               {r.aiExplanation}
             </p>
           </div>
-        </section>
-      )}
+        ) : (
+          /* ── AI loading: cooking animation ── */
+          <div
+            style={{
+              background: "rgba(245,245,242,0.03)",
+              border: "1px solid rgba(245,245,242,0.06)",
+              borderRadius: 20,
+              padding: "24px 20px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 14,
+            }}
+          >
+            {/* Pulsing brain icon */}
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                background: `${ACCENT}0F`,
+                border: `1px solid ${ACCENT}26`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                animation: "ai-pulse 2s ease-in-out infinite",
+              }}
+            >
+              <span style={{ fontSize: 20 }}>🧠</span>
+            </div>
+
+            <div style={{ textAlign: "center" }}>
+              <div
+                style={{
+                  fontFamily: DISPLAY,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#F5F5F2",
+                  marginBottom: 4,
+                }}
+              >
+                Writing AI analysis...
+              </div>
+              <div
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  color: "rgba(245,245,242,0.35)",
+                  letterSpacing: 0.5,
+                }}
+              >
+                Reviewing market data, risk factors, and channels
+              </div>
+            </div>
+
+            {/* Skeleton lines */}
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                marginTop: 4,
+              }}
+            >
+              <div
+                style={{
+                  height: 10,
+                  borderRadius: 5,
+                  background: "rgba(245,245,242,0.04)",
+                  width: "100%",
+                  animation: "ai-shimmer 1.8s ease-in-out infinite",
+                }}
+              />
+              <div
+                style={{
+                  height: 10,
+                  borderRadius: 5,
+                  background: "rgba(245,245,242,0.04)",
+                  width: "85%",
+                  animation: "ai-shimmer 1.8s ease-in-out 0.2s infinite",
+                }}
+              />
+              <div
+                style={{
+                  height: 10,
+                  borderRadius: 5,
+                  background: "rgba(245,245,242,0.04)",
+                  width: "92%",
+                  animation: "ai-shimmer 1.8s ease-in-out 0.4s infinite",
+                }}
+              />
+              <div
+                style={{
+                  height: 10,
+                  borderRadius: 5,
+                  background: "rgba(245,245,242,0.04)",
+                  width: "70%",
+                  animation: "ai-shimmer 1.8s ease-in-out 0.6s infinite",
+                }}
+              />
+            </div>
+          </div>
+        )}
+      </section>
+      <style>{`
+        @keyframes ai-pulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.08); opacity: 0.7; }
+        }
+        @keyframes ai-shimmer {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.8; }
+        }
+        @keyframes ai-reveal {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
 
       {/* ═══════════════════════════════════════════════════════════════════
           8. COMPS
