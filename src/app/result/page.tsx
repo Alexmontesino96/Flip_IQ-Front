@@ -734,6 +734,16 @@ function ResultPageInner() {
 
   // ── No comps found — special screen ────────────────────────────────────
   if (result.noCompsFound) {
+    // Redirect to dedicated product-not-found page with context
+    const notFoundParams = new URLSearchParams();
+    if (result.product?.title && result.product.title !== "Unknown Product") {
+      notFoundParams.set("upc", result.product.title);
+    }
+    // Try to get cost from URL or derived values
+    const costVal = parseFloat(result.maxBuy) - parseFloat(result.headroom);
+    if (costVal > 0) notFoundParams.set("cost", costVal.toFixed(0));
+    const qs = notFoundParams.toString();
+    router.replace(`/product-not-found${qs ? `?${qs}` : ""}`);
     return (
       <div
         style={{

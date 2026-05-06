@@ -55,8 +55,12 @@ export default function ScanPage() {
       barcode,
       parseFloat(cost),
       condition,
-      (_result: AnalysisResult) => {
-        // data received
+      (streamResult: AnalysisResult) => {
+        // If no comps found, redirect to product-not-found page
+        if (streamResult.noCompsFound) {
+          const params = new URLSearchParams({ upc: barcode, cost, condition });
+          router.replace(`/product-not-found?${params.toString()}`);
+        }
       },
       () => {
         // AI complete
