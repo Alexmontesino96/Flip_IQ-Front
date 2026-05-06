@@ -171,13 +171,11 @@ export default function SearchPage() {
           } catch {
             /* ignore */
           }
-          // Navigate immediately — analysis data ready, AI loads in background
-          if (streamResult.analysisId) {
-            router.push(`/result?id=${streamResult.analysisId}`);
-          }
+          // Don't navigate here — let the progress callback handle it
+          // so the animation has time to play (~1s minimum)
         },
         () => {
-          // AI complete — user already on result page, they can reload to see AI
+          // AI complete — user already on result page
         },
         (err) => {
           setAnalyzing(false);
@@ -192,10 +190,13 @@ export default function SearchPage() {
           targetProgressRef.current = scaled; // lerp will smoothly chase this
           setAnalysisStage(progress.message);
           // Navigate when we get the analysis_id from progress details
-          // This arrives in the "ai complete" stage (progress ~100)
+          // Add a small delay so the user sees the animation reach ~100%
           const aid = progress.details?.analysis_id as number | undefined;
           if (aid) {
-            router.push(`/result?id=${aid}`);
+            targetProgressRef.current = 100;
+            setTimeout(() => {
+              router.push(`/result?id=${aid}`);
+            }, 800); // let animation finish smoothly
             return;
           }
           // Fallback: if progress hits 100 without analysis_id
