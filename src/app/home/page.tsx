@@ -270,7 +270,7 @@ export default function HomePage() {
                   letterSpacing: -1,
                 }}
               >
-                {billing.scans_remaining_today}
+                {billing.scans_used_today}
               </span>
               <span
                 style={{
@@ -279,7 +279,7 @@ export default function HomePage() {
                   color: "rgba(245,245,242,0.4)",
                 }}
               >
-                / {billing.daily_limit} remaining
+                / {billing.daily_limit} used
               </span>
             </div>
             {/* Progress bar */}
