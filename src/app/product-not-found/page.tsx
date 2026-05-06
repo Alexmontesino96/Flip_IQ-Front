@@ -442,7 +442,8 @@ function ProductNotFoundContent() {
 
       {/* Back link */}
       <Link
-        href="/scan"
+        href="/home"
+        replace
         style={{
           fontFamily: DISPLAY,
           fontSize: 13,
@@ -454,7 +455,7 @@ function ProductNotFoundContent() {
           justifyContent: "center",
         }}
       >
-        ← Back to scan
+        ← Back to home
       </Link>
     </div>
   );
