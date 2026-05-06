@@ -633,7 +633,7 @@ function ResultPageInner() {
         <TopBar
           title="Result"
           accent={ACCENT}
-          onBack={() => router.back()}
+          onBack={() => router.push("/home")}
           right={shareButton}
         />
         <div
@@ -689,7 +689,7 @@ function ResultPageInner() {
         <TopBar
           title="Result"
           accent={ACCENT}
-          onBack={() => router.back()}
+          onBack={() => router.push("/home")}
           right={shareButton}
         />
         <div
