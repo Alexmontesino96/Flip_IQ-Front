@@ -17,6 +17,7 @@ const PUBLIC_ROUTES = [
   "/terms",
   "/cookies",
   "/support",
+  "/product-not-found",
   "/robots.txt",
   "/sitemap.xml",
   "/opengraph-image",

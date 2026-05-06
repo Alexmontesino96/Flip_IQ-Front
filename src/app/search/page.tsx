@@ -14,7 +14,18 @@ import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
 
 export default function SearchPage() {
   const router = useRouter();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => {
+    if (typeof window === "undefined") return "";
+    // Check sessionStorage seed (from product-not-found page)
+    const seed = sessionStorage.getItem("flipiq_search_seed");
+    if (seed) {
+      sessionStorage.removeItem("flipiq_search_seed");
+      return seed;
+    }
+    // Check URL param
+    const urlQ = new URLSearchParams(window.location.search).get("q");
+    return urlQ || "";
+  });
   const [recentPills, setRecentPills] = useState<string[]>(() =>
     getRecentSearches()
   );
@@ -26,11 +37,19 @@ export default function SearchPage() {
   // Picked product (Step 1 complete)
   const [picked, setPicked] = useState<ProductSuggestion | null>(null);
 
-  // Step 2: Cost
-  const [cost, setCost] = useState("");
+  // Step 2: Cost (can be pre-filled from URL)
+  const [cost, setCost] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("cost") || "";
+  });
 
-  // Step 3: Condition
-  const [condition, setCondition] = useState("used");
+  // Step 3: Condition (can be pre-filled from URL)
+  const [condition, setCondition] = useState(() => {
+    if (typeof window === "undefined") return "used";
+    return (
+      new URLSearchParams(window.location.search).get("condition") || "used"
+    );
+  });
 
   // Analysis state
   const [analyzing, setAnalyzing] = useState(false);
