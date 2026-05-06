@@ -713,7 +713,9 @@ export function transformResponse(data: any): AnalysisResult {
 
   return {
     analysisId: typeof data.id === "number" ? data.id : null,
-    noCompsFound: Boolean(data.no_comps_found),
+    noCompsFound:
+      Boolean(data.no_comps_found) ||
+      (data.flip_score == null && data.estimated_sale_price == null),
     product,
     channels,
     flipScore: data.flip_score ?? 0,
