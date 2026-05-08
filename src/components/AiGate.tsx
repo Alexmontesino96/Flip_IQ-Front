@@ -77,7 +77,7 @@ export default function AiGate({ onUpgrade }: AiGateProps) {
             boxShadow: "0 4px 20px rgba(139,92,246,0.3)",
           }}
         >
-          Unlock for $14.99/mo
+          Unlock for $9.99/mo
         </button>
         <div style={{ fontSize: 11, color: "#475569" }}>
           7-day free trial · Cancel anytime

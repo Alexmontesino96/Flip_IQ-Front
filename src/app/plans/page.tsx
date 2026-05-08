@@ -250,7 +250,7 @@ export default function PlansPage() {
             tag: null,
             ai_unlocked: false,
             features: [
-              "eBay comps only",
+              "eBay + Amazon comps",
               "Keyword search",
               "Basic flip score",
               "1 watchlist",
