@@ -2599,95 +2599,711 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Right column — phone mockup placeholder */}
+          {/* Right column — two phones */}
           <div
             className="ln-ios-phone"
             style={{
               position: "relative",
-              height: 600,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              height: 700,
             }}
           >
-            <div
-              style={{
-                width: 280,
-                height: 560,
-                borderRadius: 40,
-                background: "#000",
-                border: "4px solid rgba(245,245,242,0.1)",
-                boxShadow:
-                  "0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(245,245,242,0.05)",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                overflow: "hidden",
-                position: "relative",
-              }}
-            >
-              {/* Dynamic island */}
+            <div style={{ position: "absolute", inset: 0 }}>
+              {/* Back phone: Scanner */}
               <div
+                className="ln-phone ln-phone-b"
                 style={{
                   position: "absolute",
-                  top: 12,
-                  width: 100,
-                  height: 28,
-                  borderRadius: 20,
-                  background: "#000",
+                  width: 280,
+                  height: 580,
+                  top: 70,
+                  left: "50%",
+                  transform: "translateX(-95%) rotate(-7deg)",
                   zIndex: 2,
+                  filter: "drop-shadow(0 30px 50px rgba(0,0,0,0.55))",
+                  animation: "lnPhoneFloatB 9s ease-in-out infinite",
                 }}
-              />
-              {/* Screen content placeholder */}
-              <div style={{ padding: 20, textAlign: "center" }}>
+              >
                 <div
                   style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 12,
-                    background: `${LIME}1A`,
-                    border: `1px solid ${LIME}40`,
-                    margin: "0 auto 16px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    position: "relative",
+                    width: "100%",
+                    height: "100%",
+                    background: "#0A0A0A",
+                    borderRadius: 42,
+                    padding: 8,
+                    boxShadow:
+                      "inset 0 0 0 1.5px #1d1d1d, inset 0 0 0 3px #0A0A0A, inset 0 0 0 4.5px #2a2a2a",
                   }}
                 >
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke={LIME}
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                  {/* Dynamic island */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 14,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      width: 96,
+                      height: 28,
+                      background: "#000",
+                      borderRadius: 16,
+                      zIndex: 4,
+                    }}
+                  />
+                  {/* Screen */}
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
+                      background: "#060606",
+                      borderRadius: 34,
+                      overflow: "hidden",
+                      color: INK,
+                    }}
                   >
-                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                    <circle cx="12" cy="13" r="4" />
-                  </svg>
+                    {/* Status bar */}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "14px 24px 6px",
+                        fontFamily: DISPLAY,
+                        fontWeight: 600,
+                        fontSize: 13,
+                        color: INK,
+                      }}
+                    >
+                      <span>9:41</span>
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5,
+                        }}
+                      >
+                        <svg
+                          width="18"
+                          height="11"
+                          viewBox="0 0 42 22"
+                          fill="currentColor"
+                        >
+                          <rect x="0" y="14" width="6" height="8" rx="1.5" />
+                          <rect x="11" y="9" width="6" height="13" rx="1.5" />
+                          <rect x="22" y="4" width="6" height="18" rx="1.5" />
+                          <rect x="33" y="0" width="6" height="22" rx="1.5" />
+                        </svg>
+                        <svg
+                          width="22"
+                          height="9"
+                          viewBox="0 0 26 12"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1"
+                        >
+                          <rect
+                            x="0.5"
+                            y="0.5"
+                            width="22"
+                            height="11"
+                            rx="2.5"
+                          />
+                          <rect
+                            x="2"
+                            y="2"
+                            width="18"
+                            height="8"
+                            rx="1.5"
+                            fill="currentColor"
+                          />
+                          <rect
+                            x="24"
+                            y="4"
+                            width="1.5"
+                            height="4"
+                            rx="0.5"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      </span>
+                    </div>
+                    {/* Scan stage */}
+                    <div
+                      className="ln-scan-stage"
+                      style={{
+                        position: "relative",
+                        margin: "22px 18px 0",
+                        height: 380,
+                        border: `1px solid rgba(212,255,58,0.18)`,
+                        borderRadius: 18,
+                        overflow: "hidden",
+                        background: `radial-gradient(ellipse at 50% 50%, rgba(212,255,58,0.04), transparent 70%), #060606`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {/* Corner brackets */}
+                      <div className="ln-scan-corners" />
+                      {/* Barcode bars */}
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-end",
+                          gap: 3,
+                          height: 130,
+                          padding: "0 28px",
+                        }}
+                      >
+                        {[
+                          62, 34, 88, 54, 72, 42, 90, 48, 66, 80, 38, 74, 84,
+                          46, 60, 88,
+                        ].map((h, i) => (
+                          <span
+                            key={i}
+                            style={{
+                              width: 4,
+                              height: `${h}%`,
+                              background: INK,
+                              borderRadius: 1,
+                            }}
+                          />
+                        ))}
+                      </div>
+                      {/* Scan line */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: 28,
+                          right: 28,
+                          top: "50%",
+                          height: 2,
+                          background: `linear-gradient(90deg, transparent, ${LIME}, transparent)`,
+                          boxShadow: `0 0 14px ${LIME}, 0 0 28px rgba(212,255,58,0.6)`,
+                          animation: "lnScanLine 2.4s ease-in-out infinite",
+                        }}
+                      />
+                      {/* Barcode number */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: 16,
+                          left: 0,
+                          right: 0,
+                          textAlign: "center",
+                          fontFamily: MONO,
+                          fontSize: 10,
+                          letterSpacing: 2,
+                          color: LIME,
+                        }}
+                      >
+                        4547777 061413
+                      </div>
+                    </div>
+                    {/* Toggle bar */}
+                    <div
+                      style={{
+                        padding: "22px 18px",
+                        display: "flex",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 4,
+                          padding: 4,
+                          border: `1px solid ${LINE}`,
+                          borderRadius: 999,
+                          background: "rgba(245,245,242,0.02)",
+                          fontFamily: MONO,
+                          fontSize: 10,
+                          letterSpacing: 1.5,
+                        }}
+                      >
+                        <span
+                          style={{
+                            padding: "7px 14px",
+                            borderRadius: 999,
+                            background: LIME,
+                            color: BG,
+                            fontWeight: 700,
+                          }}
+                        >
+                          UPC
+                        </span>
+                        <span
+                          style={{
+                            padding: "7px 14px",
+                            borderRadius: 999,
+                            color: DIMMER,
+                          }}
+                        >
+                          ASIN
+                        </span>
+                        <span
+                          style={{
+                            padding: "7px 14px",
+                            borderRadius: 999,
+                            color: DIMMER,
+                          }}
+                        >
+                          FOTO
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              </div>
+
+              {/* Front phone: Verdict */}
+              <div
+                className="ln-phone ln-phone-a"
+                style={{
+                  position: "absolute",
+                  width: 280,
+                  height: 580,
+                  top: 30,
+                  left: "50%",
+                  transform: "translateX(-30%) rotate(4deg)",
+                  zIndex: 3,
+                  filter: `drop-shadow(0 30px 60px rgba(0,0,0,0.6)) drop-shadow(0 0 40px rgba(212,255,58,0.08))`,
+                  animation: "lnPhoneFloatA 7s ease-in-out infinite",
+                }}
+              >
                 <div
                   style={{
-                    fontWeight: 800,
-                    fontSize: 22,
-                    letterSpacing: -0.8,
-                    marginBottom: 6,
+                    position: "relative",
+                    width: "100%",
+                    height: "100%",
+                    background: "#0A0A0A",
+                    borderRadius: 42,
+                    padding: 8,
+                    boxShadow:
+                      "inset 0 0 0 1.5px #1d1d1d, inset 0 0 0 3px #0A0A0A, inset 0 0 0 4.5px #2a2a2a",
                   }}
                 >
-                  Flip<span style={{ color: LIME }}>IQ</span>
+                  {/* Dynamic island */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 14,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      width: 96,
+                      height: 28,
+                      background: "#000",
+                      borderRadius: 16,
+                      zIndex: 4,
+                    }}
+                  />
+                  {/* Screen */}
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
+                      background:
+                        "linear-gradient(180deg, #0E0E0E 0%, #0A0A0A 60%)",
+                      borderRadius: 34,
+                      overflow: "hidden",
+                      color: INK,
+                    }}
+                  >
+                    {/* Status bar */}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "14px 24px 6px",
+                        fontFamily: DISPLAY,
+                        fontWeight: 600,
+                        fontSize: 13,
+                        color: INK,
+                      }}
+                    >
+                      <span>9:41</span>
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5,
+                        }}
+                      >
+                        <svg
+                          width="18"
+                          height="11"
+                          viewBox="0 0 42 22"
+                          fill="currentColor"
+                        >
+                          <rect x="0" y="14" width="6" height="8" rx="1.5" />
+                          <rect x="11" y="9" width="6" height="13" rx="1.5" />
+                          <rect x="22" y="4" width="6" height="18" rx="1.5" />
+                          <rect x="33" y="0" width="6" height="22" rx="1.5" />
+                        </svg>
+                        <svg
+                          width="22"
+                          height="9"
+                          viewBox="0 0 26 12"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1"
+                        >
+                          <rect
+                            x="0.5"
+                            y="0.5"
+                            width="22"
+                            height="11"
+                            rx="2.5"
+                          />
+                          <rect
+                            x="2"
+                            y="2"
+                            width="18"
+                            height="8"
+                            rx="1.5"
+                            fill="currentColor"
+                          />
+                          <rect
+                            x="24"
+                            y="4"
+                            width="1.5"
+                            height="4"
+                            rx="0.5"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      </span>
+                    </div>
+                    {/* Verdict content */}
+                    <div style={{ padding: "28px 18px 18px" }}>
+                      {/* Eyebrow */}
+                      <div
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          fontFamily: MONO,
+                          fontSize: 8.5,
+                          letterSpacing: 2,
+                          color: LIME,
+                          marginBottom: 14,
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 5,
+                            height: 5,
+                            borderRadius: "50%",
+                            background: LIME,
+                            boxShadow: `0 0 6px ${LIME}`,
+                          }}
+                        />
+                        ANALYSIS COMPLETE
+                      </div>
+                      {/* Title */}
+                      <div
+                        style={{
+                          fontFamily: DISPLAY,
+                          fontWeight: 700,
+                          fontSize: 19,
+                          lineHeight: 1.1,
+                          letterSpacing: -0.6,
+                          marginBottom: 4,
+                        }}
+                      >
+                        Sony WH-1000XM5
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: MONO,
+                          fontSize: 9.5,
+                          color: DIM,
+                          letterSpacing: 1,
+                          marginBottom: 16,
+                        }}
+                      >
+                        HEADPHONES · UPC 4548736
+                      </div>
+                      {/* BUY verdict card */}
+                      <div
+                        style={{
+                          background: LIME,
+                          color: BG,
+                          borderRadius: 14,
+                          padding: "14px 16px",
+                          marginBottom: 12,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginBottom: 6,
+                          }}
+                        >
+                          <div>
+                            <div
+                              style={{
+                                fontFamily: MONO,
+                                fontSize: 8.5,
+                                letterSpacing: 1.8,
+                                color: "rgba(10,10,10,0.55)",
+                                marginBottom: 2,
+                              }}
+                            >
+                              VERDICT
+                            </div>
+                            <div
+                              style={{
+                                fontFamily: DISPLAY,
+                                fontWeight: 800,
+                                fontSize: 30,
+                                letterSpacing: -1,
+                                lineHeight: 1,
+                              }}
+                            >
+                              BUY
+                            </div>
+                          </div>
+                          <svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 32 32"
+                            fill="none"
+                          >
+                            <circle
+                              cx="16"
+                              cy="16"
+                              r="16"
+                              fill="rgba(10,10,10,0.12)"
+                            />
+                            <path
+                              d="M10 16.5L14 20.5L22 12.5"
+                              stroke={BG}
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <div
+                          style={{
+                            fontFamily: MONO,
+                            fontSize: 10,
+                            color: "rgba(10,10,10,0.7)",
+                            letterSpacing: 0.5,
+                            fontWeight: 600,
+                          }}
+                        >
+                          +$127.40 profit · 89% ROI
+                        </div>
+                      </div>
+                      {/* Metrics grid */}
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(3, 1fr)",
+                          gap: 1,
+                          background: LINE,
+                          border: `1px solid ${LINE}`,
+                          borderRadius: 10,
+                          overflow: "hidden",
+                          marginBottom: 12,
+                        }}
+                      >
+                        {[
+                          { k: "FLIP SCORE", v: "87" },
+                          { k: "SELL PRICE", v: "$269" },
+                          { k: "SAFETY", v: "94%" },
+                        ].map((m) => (
+                          <div
+                            key={m.k}
+                            style={{
+                              background: BG,
+                              padding: "10px 8px",
+                              textAlign: "center",
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontFamily: MONO,
+                                fontSize: 8,
+                                letterSpacing: 1.5,
+                                color: DIM,
+                                marginBottom: 4,
+                              }}
+                            >
+                              {m.k}
+                            </div>
+                            <div
+                              style={{
+                                fontFamily: DISPLAY,
+                                fontWeight: 700,
+                                fontSize: 14,
+                                letterSpacing: -0.3,
+                                fontVariantNumeric: "tabular-nums",
+                              }}
+                            >
+                              {m.v}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Channels */}
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 6,
+                          marginBottom: 14,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            padding: "9px 12px",
+                            border: `1px solid rgba(212,255,58,0.35)`,
+                            borderRadius: 8,
+                            background: "rgba(212,255,58,0.05)",
+                            fontFamily: DISPLAY,
+                            fontSize: 12,
+                          }}
+                        >
+                          <span style={{ color: INK, fontWeight: 500 }}>
+                            eBay
+                          </span>
+                          <span
+                            style={{
+                              color: LIME,
+                              fontFamily: MONO,
+                              fontSize: 10.5,
+                              fontVariantNumeric: "tabular-nums",
+                              fontWeight: 600,
+                            }}
+                          >
+                            $269.99
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            padding: "9px 12px",
+                            border: `1px solid ${LINE}`,
+                            borderRadius: 8,
+                            fontFamily: DISPLAY,
+                            fontSize: 12,
+                          }}
+                        >
+                          <span style={{ color: INK, fontWeight: 500 }}>
+                            Amazon
+                          </span>
+                          <span
+                            style={{
+                              color: DIM,
+                              fontFamily: MONO,
+                              fontSize: 10.5,
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            $248.00
+                          </span>
+                        </div>
+                      </div>
+                      {/* CTA button */}
+                      <div
+                        style={{
+                          width: "100%",
+                          padding: 12,
+                          background: INK,
+                          color: BG,
+                          borderRadius: 10,
+                          fontFamily: MONO,
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: 1.5,
+                          textTransform: "uppercase",
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
+                      >
+                        VIEW FULL ANALYSIS{" "}
+                        <span style={{ fontFamily: DISPLAY, fontSize: 14 }}>
+                          →
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              </div>
+
+              {/* Floating pop badges */}
+              <div
+                className="ln-ios-pop"
+                style={{
+                  position: "absolute",
+                  zIndex: 5,
+                  top: 10,
+                  right: 10,
+                  padding: "10px 14px",
+                  border: `1px solid ${LINE2}`,
+                  borderRadius: 12,
+                  background: "rgba(14,14,14,0.85)",
+                  backdropFilter: "blur(10px)",
+                  fontFamily: MONO,
+                  fontSize: 9.5,
+                  letterSpacing: 1.5,
+                }}
+              >
+                <div style={{ color: DIM, marginBottom: 3 }}>OFFLINE READY</div>
                 <div
                   style={{
-                    fontFamily: MONO,
-                    fontSize: 9,
-                    color: DIM,
-                    letterSpacing: 1,
-                    textTransform: "uppercase",
+                    fontFamily: DISPLAY,
+                    fontWeight: 700,
+                    fontSize: 14,
+                    letterSpacing: -0.3,
+                    color: LIME,
                   }}
                 >
-                  Scan · Analyze · Decide
+                  ~ 8s / scan
+                </div>
+              </div>
+              <div
+                className="ln-ios-pop"
+                style={{
+                  position: "absolute",
+                  zIndex: 5,
+                  bottom: 30,
+                  left: 0,
+                  padding: "10px 14px",
+                  border: `1px solid ${LINE2}`,
+                  borderRadius: 12,
+                  background: "rgba(14,14,14,0.85)",
+                  backdropFilter: "blur(10px)",
+                  fontFamily: MONO,
+                  fontSize: 9.5,
+                  letterSpacing: 1.5,
+                }}
+              >
+                <div style={{ color: DIM, marginBottom: 3 }}>FEATURED</div>
+                <div
+                  style={{
+                    fontFamily: DISPLAY,
+                    fontWeight: 700,
+                    fontSize: 14,
+                    letterSpacing: -0.3,
+                    color: LIME,
+                  }}
+                >
+                  App Store
                 </div>
               </div>
             </div>
@@ -2987,6 +3603,46 @@ export default function Landing() {
     80% { opacity: 0; }
   }
   @keyframes landing-blink { 50% { opacity: 0; } }
+  @keyframes lnPhoneFloatA {
+    0%, 100% { transform: translateX(-30%) rotate(4deg) translateY(0); }
+    50% { transform: translateX(-30%) rotate(4deg) translateY(-10px); }
+  }
+  @keyframes lnPhoneFloatB {
+    0%, 100% { transform: translateX(-95%) rotate(-7deg) translateY(0); }
+    50% { transform: translateX(-95%) rotate(-7deg) translateY(8px); }
+  }
+  @keyframes lnScanLine {
+    0%, 100% { transform: translateY(-90px); opacity: 0; }
+    20% { opacity: 1; }
+    50% { transform: translateY(90px); opacity: 1; }
+    80% { opacity: 0; }
+  }
+
+  .ln-scan-corners { position: absolute; inset: 12px; pointer-events: none; }
+  .ln-scan-corners::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 24px; height: 24px;
+    border-top: 2px solid #D4FF3A; border-left: 2px solid #D4FF3A;
+    border-top-left-radius: 6px; z-index: 3;
+  }
+  .ln-scan-corners::after {
+    content: ''; position: absolute; top: 0; right: 0;
+    width: 24px; height: 24px;
+    border-top: 2px solid #D4FF3A; border-right: 2px solid #D4FF3A;
+    border-top-right-radius: 6px; z-index: 3;
+  }
+  .ln-scan-stage::before {
+    content: ''; position: absolute; bottom: 12px; left: 12px;
+    width: 24px; height: 24px;
+    border-bottom: 2px solid #D4FF3A; border-left: 2px solid #D4FF3A;
+    border-bottom-left-radius: 6px; z-index: 3;
+  }
+  .ln-scan-stage::after {
+    content: ''; position: absolute; bottom: 12px; right: 12px;
+    width: 24px; height: 24px;
+    border-bottom: 2px solid #D4FF3A; border-right: 2px solid #D4FF3A;
+    border-bottom-right-radius: 6px; z-index: 3;
+  }
 
   /* Sticky CTA - hidden by default, shown on mobile */
   .ln-sticky {
@@ -3007,7 +3663,10 @@ export default function Landing() {
     .ln-foot-cols { grid-template-columns: repeat(2, auto) !important; gap: 32px !important; }
     .ln-ios-inner { grid-template-columns: 1fr !important; gap: 56px !important; }
     .ln-ios-feats { grid-template-columns: 1fr !important; }
-    .ln-ios-phone { height: 500px !important; }
+    .ln-ios-phone { height: 600px !important; }
+    .ln-phone { width: 240px !important; height: 500px !important; }
+    .ln-phone-a { left: 55% !important; }
+    .ln-phone-b { left: 45% !important; }
   }
 
   /* ═══ Mobile ═══ */
@@ -3086,6 +3745,13 @@ export default function Landing() {
     .ln-final-h2 { font-size: 36px !important; letter-spacing: -1.5px !important; }
     .ln-final .actions { flex-direction: column !important; }
     .ln-final .actions a { width: 100%; text-align: center; justify-content: center; }
+
+    /* iOS phones */
+    .ln-ios-phone { height: 500px !important; }
+    .ln-phone { width: 200px !important; height: 420px !important; }
+    .ln-phone-a { left: 55% !important; transform: translateX(-30%) rotate(3deg) !important; }
+    .ln-phone-b { left: 40% !important; transform: translateX(-95%) rotate(-5deg) !important; }
+    .ln-ios-pop { display: none !important; }
 
     /* Footer */
     .ln-foot-inner { flex-direction: column !important; }
