@@ -91,6 +91,24 @@ const T = {
     teamF4: "Export CSV",
     teamF5: "Alertas push + email + soporte prioritario",
     teamCta: "Empezar Premium",
+    iosTag: "iOS APP · DISPONIBLE",
+    iosH1: "El veredicto,",
+    iosH2: "en tu bolsillo.",
+    iosSub:
+      "Estas en una garage sale, abris FlipIQ, escaneas. En 8 segundos sabes si lo compras, donde lo vendes y cuanto ganas.",
+    iosFeat1t: "Camara como scanner",
+    iosFeat1d:
+      "UPC, ASIN, etiqueta o foto. Reconocimiento en menos de un segundo.",
+    iosFeat2t: "Decision sin abrir el browser",
+    iosFeat2d: "13 motores corren del lado del server. Tu celu queda fresco.",
+    iosFeat3t: "Modo offline en thrift",
+    iosFeat3d:
+      "Si pierdes senal, FlipIQ guarda los scans y los analiza al volver online.",
+    iosFeat4t: "Historial sincronizado",
+    iosFeat4d:
+      "Cada flip se guarda en tu cuenta. Lo abris en el desktop cuando llegas a casa.",
+    iosDownload: "Descarga en la",
+    iosMeta: "Requiere iOS 17+ · iPhone · iPad · Gratis · v1.4",
     finalH2a: "El proximo producto barato",
     finalH2b: "que te cambia la semana.",
     finalP: "Arranca gratis. Escanea los primeros 10 sin tarjeta.",
@@ -184,6 +202,24 @@ const T = {
     teamF4: "CSV export",
     teamF5: "Push + email alerts + priority support",
     teamCta: "Start Premium",
+    iosTag: "iOS APP · AVAILABLE NOW",
+    iosH1: "The verdict,",
+    iosH2: "in your pocket.",
+    iosSub:
+      "You're at a garage sale. Open FlipIQ, scan. In 8 seconds you know if you buy, where to sell, and how much you make.",
+    iosFeat1t: "Camera as scanner",
+    iosFeat1d: "UPC, ASIN, label, or photo. Recognition in under a second.",
+    iosFeat2t: "Decide without leaving the app",
+    iosFeat2d:
+      "13 engines run server-side. Your phone stays cool; battery, too.",
+    iosFeat3t: "Offline mode at thrift stores",
+    iosFeat3d:
+      "No signal? Scans queue locally and run as soon as you're back online.",
+    iosFeat4t: "History in sync",
+    iosFeat4d:
+      "Every flip syncs to your account. Open it on desktop when you get home.",
+    iosDownload: "Download on the",
+    iosMeta: "Requires iOS 17+ · iPhone · iPad · Free · v1.4",
     finalH2a: "The next cheap find",
     finalH2b: "that changes your week.",
     finalP: "Start free. Scan your first 10 with no card.",
@@ -2328,6 +2364,337 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ═══ iOS APP ═══ */}
+      <section
+        id="ios"
+        style={{
+          position: "relative",
+          overflow: "hidden",
+          padding: "140px 40px",
+          borderTop: `1px solid ${LINE}`,
+          borderBottom: `1px solid ${LINE}`,
+          background: BG2,
+        }}
+      >
+        {/* Background */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            background: `radial-gradient(ellipse 1100px 500px at 80% 0%, rgba(212,255,58,0.08), transparent 60%), radial-gradient(ellipse 800px 600px at 10% 100%, rgba(212,255,58,0.04), transparent 60%)`,
+          }}
+        />
+
+        <div
+          className="ln-ios-inner"
+          style={{
+            position: "relative",
+            maxWidth: 1360,
+            margin: "0 auto",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 80,
+            alignItems: "center",
+          }}
+        >
+          {/* Left column */}
+          <div>
+            <div
+              style={{
+                fontFamily: MONO,
+                fontSize: 10,
+                color: LIME,
+                letterSpacing: 3,
+                textTransform: "uppercase",
+                marginBottom: 16,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <span
+                style={{
+                  width: 24,
+                  height: 1,
+                  background: LIME,
+                  display: "inline-block",
+                }}
+              />
+              {t.iosTag}
+            </div>
+
+            <h2
+              style={{
+                margin: "0 0 24px",
+                fontWeight: 800,
+                fontSize: "clamp(40px, 4.6vw, 64px)",
+                lineHeight: 1,
+                letterSpacing: -2.4,
+              }}
+            >
+              {t.iosH1}{" "}
+              <em
+                style={{
+                  fontStyle: "normal",
+                  color: LIME,
+                  fontWeight: 500,
+                  letterSpacing: -1.6,
+                }}
+              >
+                {t.iosH2}
+              </em>
+            </h2>
+
+            <p
+              style={{
+                margin: "0 0 36px",
+                fontSize: 17,
+                color: DIM,
+                lineHeight: 1.55,
+                maxWidth: 520,
+              }}
+            >
+              {t.iosSub}
+            </p>
+
+            {/* Features 2x2 */}
+            <ul
+              className="ln-ios-feats"
+              style={{
+                listStyle: "none",
+                padding: 0,
+                margin: "0 0 40px",
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "24px 28px",
+              }}
+            >
+              {[
+                { n: "01", t: t.iosFeat1t, d: t.iosFeat1d },
+                { n: "02", t: t.iosFeat2t, d: t.iosFeat2d },
+                { n: "03", t: t.iosFeat3t, d: t.iosFeat3d },
+                { n: "04", t: t.iosFeat4t, d: t.iosFeat4d },
+              ].map((f) => (
+                <li
+                  key={f.n}
+                  style={{
+                    display: "flex",
+                    gap: 14,
+                    alignItems: "flex-start",
+                    paddingTop: 16,
+                    borderTop: `1px solid ${LINE}`,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 10,
+                      letterSpacing: 2,
+                      color: LIME,
+                      flexShrink: 0,
+                      paddingTop: 1,
+                    }}
+                  >
+                    {f.n}
+                  </span>
+                  <div>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: 15,
+                        letterSpacing: -0.3,
+                        color: INK,
+                        marginBottom: 5,
+                      }}
+                    >
+                      {f.t}
+                    </div>
+                    <div style={{ fontSize: 13, color: DIM, lineHeight: 1.5 }}>
+                      {f.d}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {/* App Store button */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 24,
+                flexWrap: "wrap",
+                marginBottom: 22,
+              }}
+            >
+              <a
+                href="https://apps.apple.com/us/app/flipiq-resale-tracker/id6764068503"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "13px 24px 13px 20px",
+                  background: INK,
+                  color: BG,
+                  borderRadius: 14,
+                  textDecoration: "none",
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
+                  transition: "transform 0.15s ease",
+                }}
+              >
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M16.365 1.43c0 1.14-.42 2.21-1.13 3.02-.82.94-2.16 1.66-3.27 1.58-.14-1.12.41-2.27 1.1-3.04.78-.86 2.16-1.51 3.3-1.56zM20.5 17.34c-.55 1.27-.81 1.84-1.52 2.96-1 1.57-2.4 3.52-4.14 3.54-1.55.02-1.95-1-4.05-.99-2.1.02-2.54 1.01-4.09.99-1.74-.02-3.07-1.78-4.07-3.34-2.79-4.4-3.08-9.55-1.36-12.3 1.22-1.95 3.15-3.09 4.96-3.09 1.84 0 3 1.01 4.52 1.01 1.48 0 2.38-1.01 4.51-1.01 1.61 0 3.32.88 4.54 2.39-3.99 2.19-3.34 7.9.7 8.84z" />
+                </svg>
+                <span
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    lineHeight: 1,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 9,
+                      letterSpacing: 1.5,
+                      textTransform: "uppercase",
+                      color: "rgba(10,10,10,0.6)",
+                      marginBottom: 3,
+                    }}
+                  >
+                    {t.iosDownload}
+                  </span>
+                  <span
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 19,
+                      letterSpacing: -0.6,
+                    }}
+                  >
+                    App Store
+                  </span>
+                </span>
+              </a>
+            </div>
+
+            {/* Meta */}
+            <div
+              style={{
+                fontFamily: MONO,
+                fontSize: 10,
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                color: DIMMER,
+              }}
+            >
+              {t.iosMeta}
+            </div>
+          </div>
+
+          {/* Right column — phone mockup placeholder */}
+          <div
+            className="ln-ios-phone"
+            style={{
+              position: "relative",
+              height: 600,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              style={{
+                width: 280,
+                height: 560,
+                borderRadius: 40,
+                background: "#000",
+                border: "4px solid rgba(245,245,242,0.1)",
+                boxShadow:
+                  "0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(245,245,242,0.05)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
+                position: "relative",
+              }}
+            >
+              {/* Dynamic island */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 12,
+                  width: 100,
+                  height: 28,
+                  borderRadius: 20,
+                  background: "#000",
+                  zIndex: 2,
+                }}
+              />
+              {/* Screen content placeholder */}
+              <div style={{ padding: 20, textAlign: "center" }}>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 12,
+                    background: `${LIME}1A`,
+                    border: `1px solid ${LIME}40`,
+                    margin: "0 auto 16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={LIME}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                  </svg>
+                </div>
+                <div
+                  style={{
+                    fontWeight: 800,
+                    fontSize: 22,
+                    letterSpacing: -0.8,
+                    marginBottom: 6,
+                  }}
+                >
+                  Flip<span style={{ color: LIME }}>IQ</span>
+                </div>
+                <div
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 9,
+                    color: DIM,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Scan · Analyze · Decide
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ═══ FINAL CTA ═══ */}
       <section
         className="ln-final"
@@ -2638,6 +3005,9 @@ export default function Landing() {
     .ln-plans { grid-template-columns: 1fr !important; }
     .ln-sec-head { flex-direction: column !important; align-items: flex-start !important; }
     .ln-foot-cols { grid-template-columns: repeat(2, auto) !important; gap: 32px !important; }
+    .ln-ios-inner { grid-template-columns: 1fr !important; gap: 56px !important; }
+    .ln-ios-feats { grid-template-columns: 1fr !important; }
+    .ln-ios-phone { height: 500px !important; }
   }
 
   /* ═══ Mobile ═══ */
