@@ -3,10 +3,6 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import {
-  submitProductRequest,
-  buildSupportMailto,
-} from "@/lib/product-requests";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
 import Link from "next/link";
 
@@ -23,17 +19,11 @@ function ProductNotFoundContent() {
   const upc = params.get("upc") || "";
   const cost = params.get("cost") || "";
   const condition = params.get("condition") || "new";
+  const analysisId = params.get("analysis_id") || "";
 
-  // Option 1: keyword search
   const [keyword, setKeyword] = useState("");
-
-  // Option 2: submit to support
   const [email, setEmail] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [submitError, setSubmitError] = useState(false);
 
-  // Auto-fill email from Supabase session
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -45,24 +35,21 @@ function ProductNotFoundContent() {
     const trimmed = keyword.trim();
     if (!trimmed) return;
     sessionStorage.setItem("flipiq_search_seed", trimmed);
-    const params = new URLSearchParams();
-    if (cost) params.set("cost", cost);
-    if (condition) params.set("condition", condition);
-    const qs = params.toString();
+    const p = new URLSearchParams();
+    if (cost) p.set("cost", cost);
+    if (condition) p.set("condition", condition);
+    const qs = p.toString();
     router.push(`/search${qs ? `?${qs}` : ""}`);
   };
 
-  const handleSubmit = async () => {
-    if (!email || !upc) return;
-    setSubmitting(true);
-    setSubmitError(false);
-    const ok = await submitProductRequest(upc, email);
-    setSubmitting(false);
-    if (ok) {
-      setSubmitted(true);
-    } else {
-      setSubmitError(true);
-    }
+  const handleProvideDetails = () => {
+    const p = new URLSearchParams();
+    if (analysisId) p.set("analysis_id", analysisId);
+    if (upc) p.set("upc", upc);
+    if (cost) p.set("cost", cost);
+    if (condition) p.set("condition", condition);
+    const qs = p.toString();
+    router.push(`/product-not-found/details${qs ? `?${qs}` : ""}`);
   };
 
   return (
@@ -79,7 +66,7 @@ function ProductNotFoundContent() {
         padding: "40px 20px",
       }}
     >
-      {/* Illustration */}
+      {/* Orbital glyph */}
       <div
         style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}
       >
@@ -87,13 +74,26 @@ function ProductNotFoundContent() {
           <circle
             cx="80"
             cy="80"
-            r="40"
-            fill="rgba(245,245,242,0.03)"
-            stroke={LINE2}
+            r="60"
+            fill="none"
+            stroke={ACCENT}
+            strokeOpacity="0.15"
+            strokeWidth="1"
+            strokeDasharray="2 6"
+          />
+          <circle
+            cx="80"
+            cy="80"
+            r="38"
+            fill="none"
+            stroke="rgba(245,245,242,0.15)"
             strokeWidth="1"
           />
+          <circle cx="80" cy="20" r="3" fill={ACCENT} opacity="0.6" />
+          <circle cx="140" cy="72" r="2.5" fill="rgba(245,245,242,0.3)" />
+          <circle cx="32" cy="110" r="2" fill="rgba(245,245,242,0.2)" />
           <path
-            d="M 62 100 A 18 18 0 1 1 98 100"
+            d="M 62 80 A 18 18 0 1 1 98 80"
             fill="none"
             stroke={ACCENT}
             strokeWidth="2"
@@ -101,7 +101,7 @@ function ProductNotFoundContent() {
           />
           <text
             x="80"
-            y="108"
+            y="90"
             textAnchor="middle"
             fontFamily="JetBrains Mono"
             fontSize="32"
@@ -113,26 +113,38 @@ function ProductNotFoundContent() {
           <line
             x1="80"
             y1="80"
-            x2="130"
-            y2="60"
-            stroke={LINE2}
+            x2="140"
+            y2="72"
+            stroke="rgba(245,245,242,0.1)"
             strokeWidth="1"
             strokeDasharray="2 3"
           />
           <line
             x1="80"
             y1="80"
-            x2="35"
+            x2="32"
             y2="110"
-            stroke={LINE2}
+            stroke="rgba(245,245,242,0.1)"
             strokeWidth="1"
             strokeDasharray="2 3"
           />
         </svg>
       </div>
 
-      {/* Apology */}
-      <div style={{ textAlign: "center", marginBottom: 32 }}>
+      {/* Badge + Title */}
+      <div style={{ textAlign: "center", marginBottom: 24 }}>
+        <div
+          style={{
+            fontFamily: MONO,
+            fontSize: 9,
+            letterSpacing: 2,
+            color: ACCENT,
+            textTransform: "uppercase",
+            marginBottom: 10,
+          }}
+        >
+          ● Not enough data
+        </div>
         <h1
           style={{
             fontSize: 24,
@@ -142,28 +154,124 @@ function ProductNotFoundContent() {
             lineHeight: 1.2,
           }}
         >
-          We&apos;re sorry — we couldn&apos;t find this one
+          We couldn&apos;t analyze this one
         </h1>
         <p style={{ fontSize: 14, color: DIM, lineHeight: 1.5, margin: 0 }}>
-          {upc ? (
-            <>
-              The barcode{" "}
-              <span style={{ fontFamily: MONO, color: INK, fontWeight: 600 }}>
-                {upc}
-              </span>{" "}
-              isn&apos;t in our database yet. Here&apos;s how we can help:
-            </>
-          ) : (
-            <>
-              This product isn&apos;t in our database yet. Here&apos;s how we
-              can help:
-            </>
-          )}
+          We couldn&apos;t find reliable comps for your search. You can try
+          searching by name or provide details for manual review.
         </p>
       </div>
 
-      {/* ═══ OPTION 1: Search by name ═══ */}
+      {/* Query echo */}
+      {upc && (
+        <div style={{ marginBottom: 20 }}>
+          <div
+            style={{
+              padding: "12px 14px",
+              borderRadius: 10,
+              background: "rgba(245,245,242,0.04)",
+              border: `1px solid ${LINE}`,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: MONO,
+                fontSize: 9,
+                letterSpacing: 1.5,
+                color: DIMMER,
+                textTransform: "uppercase",
+                flexShrink: 0,
+              }}
+            >
+              Query
+            </span>
+            <span
+              style={{
+                fontFamily: MONO,
+                fontSize: 13,
+                color: INK,
+                fontWeight: 500,
+                flex: 1,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              &ldquo;{upc}&rdquo;
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* ETA bar */}
       <div style={{ marginBottom: 24 }}>
+        <div
+          style={{
+            padding: 16,
+            borderRadius: 14,
+            background: `linear-gradient(135deg, ${ACCENT}12 0%, rgba(245,245,242,0.02) 100%)`,
+            border: `1px solid ${ACCENT}33`,
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+          }}
+        >
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              border: `1.5px solid ${ACCENT}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              fontFamily: MONO,
+              fontSize: 10,
+              fontWeight: 700,
+              color: ACCENT,
+              letterSpacing: 0.5,
+            }}
+          >
+            24h
+          </div>
+          <div style={{ flex: 1 }}>
+            <div
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: INK,
+                letterSpacing: -0.2,
+                marginBottom: 2,
+              }}
+            >
+              Your request was submitted automatically
+            </div>
+            <div
+              style={{
+                fontSize: 12,
+                color: DIM,
+                lineHeight: 1.4,
+              }}
+            >
+              No cost to you. Doesn&apos;t count against your quota.
+              {email && (
+                <>
+                  {" "}
+                  We&apos;ll notify{" "}
+                  <strong style={{ color: INK }}>{email}</strong>.
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Option 1: Search by name */}
+      <div style={{ marginBottom: 20 }}>
         <div
           style={{
             fontFamily: MONO,
@@ -243,7 +351,7 @@ function ProductNotFoundContent() {
           display: "flex",
           alignItems: "center",
           gap: 14,
-          marginBottom: 24,
+          marginBottom: 20,
         }}
       >
         <div style={{ flex: 1, height: 1, background: LINE }} />
@@ -261,7 +369,7 @@ function ProductNotFoundContent() {
         <div style={{ flex: 1, height: 1, background: LINE }} />
       </div>
 
-      {/* ═══ OPTION 2: Send to support ═══ */}
+      {/* Option 2: Provide details */}
       <div style={{ marginBottom: 32 }}>
         <div
           style={{
@@ -292,152 +400,37 @@ function ProductNotFoundContent() {
           >
             2
           </span>
-          Send to support
+          Help us find it faster
         </div>
-
-        {submitted ? (
-          /* Success state */
-          <div
-            style={{
-              padding: "20px",
-              borderRadius: 14,
-              background: `${ACCENT}0A`,
-              border: `1px solid ${ACCENT}33`,
-              textAlign: "center",
-            }}
-          >
-            <div style={{ fontSize: 28, marginBottom: 8 }}>✓</div>
-            <div
-              style={{
-                fontSize: 15,
-                fontWeight: 600,
-                color: INK,
-                marginBottom: 4,
-              }}
-            >
-              Got it! We&apos;ll analyze this product manually.
-            </div>
-            <div style={{ fontSize: 13, color: DIM, lineHeight: 1.5 }}>
-              You&apos;ll receive an email at{" "}
-              <strong style={{ color: INK }}>{email}</strong> within 24 hours
-              with the full analysis.
+        <button
+          onClick={handleProvideDetails}
+          disabled={!analysisId}
+          style={{
+            width: "100%",
+            padding: "16px",
+            borderRadius: 14,
+            border: `1px solid ${LINE2}`,
+            background: "rgba(245,245,242,0.04)",
+            color: INK,
+            fontFamily: DISPLAY,
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: analysisId ? "pointer" : "default",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            opacity: analysisId ? 1 : 0.5,
+          }}
+        >
+          <span style={{ fontSize: 20 }}>📋</span>
+          <div style={{ textAlign: "left", flex: 1 }}>
+            <div style={{ marginBottom: 2 }}>Provide product details</div>
+            <div style={{ fontSize: 12, color: DIM, fontWeight: 400 }}>
+              Name, category, and photo to speed up manual review
             </div>
           </div>
-        ) : (
-          <div
-            style={{
-              padding: "18px",
-              borderRadius: 14,
-              background: "rgba(245,245,242,0.03)",
-              border: `1px solid ${LINE2}`,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 12,
-                marginBottom: 14,
-              }}
-            >
-              <span style={{ fontSize: 20, flexShrink: 0 }}>📋</span>
-              <div>
-                <div
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 600,
-                    color: INK,
-                    marginBottom: 3,
-                  }}
-                >
-                  We&apos;ll analyze this UPC manually
-                </div>
-                <div style={{ fontSize: 12, color: DIM, lineHeight: 1.5 }}>
-                  Our team will look up this product and deliver the full
-                  analysis to your email within 24 hours. No charge.
-                </div>
-              </div>
-            </div>
-
-            {/* Email input — only show if not auto-filled */}
-            {!email && (
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your email (for notification)"
-                style={{
-                  width: "100%",
-                  padding: "12px 14px",
-                  borderRadius: 10,
-                  border: `1px solid ${LINE2}`,
-                  background: "rgba(245,245,242,0.04)",
-                  color: INK,
-                  fontFamily: DISPLAY,
-                  fontSize: 14,
-                  outline: "none",
-                  marginBottom: 12,
-                }}
-              />
-            )}
-
-            {email && (
-              <div
-                style={{
-                  fontFamily: MONO,
-                  fontSize: 10,
-                  color: DIM,
-                  marginBottom: 12,
-                  letterSpacing: 0.3,
-                }}
-              >
-                We&apos;ll notify:{" "}
-                <span style={{ color: INK, fontWeight: 600 }}>{email}</span>
-              </div>
-            )}
-
-            {submitError && (
-              <div style={{ marginBottom: 12 }}>
-                <div
-                  style={{ fontSize: 12, color: "#FF6464", marginBottom: 6 }}
-                >
-                  Couldn&apos;t submit. Try emailing us directly:
-                </div>
-                <a
-                  href={buildSupportMailto(upc)}
-                  style={{
-                    fontFamily: MONO,
-                    fontSize: 11,
-                    color: ACCENT,
-                    textDecoration: "none",
-                  }}
-                >
-                  Email support@getflipiq.com →
-                </a>
-              </div>
-            )}
-
-            <button
-              onClick={handleSubmit}
-              disabled={!email || submitting}
-              style={{
-                width: "100%",
-                padding: "13px",
-                borderRadius: 11,
-                border: `1px solid ${LINE2}`,
-                background: email ? "rgba(245,245,242,0.06)" : "transparent",
-                color: email ? INK : DIMMER,
-                fontFamily: DISPLAY,
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: email && !submitting ? "pointer" : "default",
-                opacity: submitting ? 0.6 : 1,
-              }}
-            >
-              {submitting ? "Submitting..." : "Submit for review →"}
-            </button>
-          </div>
-        )}
+          <span style={{ color: DIMMER }}>→</span>
+        </button>
       </div>
 
       {/* Back link */}

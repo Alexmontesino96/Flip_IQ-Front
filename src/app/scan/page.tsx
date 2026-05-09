@@ -59,6 +59,8 @@ export default function ScanPage() {
         // If no comps found, redirect to product-not-found page
         if (streamResult.noCompsFound) {
           const params = new URLSearchParams({ upc: barcode, cost, condition });
+          if (streamResult.analysisId)
+            params.set("analysis_id", String(streamResult.analysisId));
           router.replace(`/product-not-found?${params.toString()}`);
         }
       },

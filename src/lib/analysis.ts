@@ -127,6 +127,7 @@ export interface SampleComp {
 
 export interface AnalysisResult {
   analysisId: number | null;
+  manualReviewId: number | null;
   noCompsFound: boolean;
   product: ResultProduct;
   channels: Channel[];
@@ -713,6 +714,8 @@ export function transformResponse(data: any): AnalysisResult {
 
   return {
     analysisId: typeof data.id === "number" ? data.id : null,
+    manualReviewId:
+      typeof data.manual_review_id === "number" ? data.manual_review_id : null,
     noCompsFound:
       Boolean(data.no_comps_found) ||
       (data.flip_score == null && data.estimated_sale_price == null),

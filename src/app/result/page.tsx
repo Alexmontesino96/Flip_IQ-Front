@@ -742,6 +742,8 @@ function ResultPageInner() {
     // Try to get cost from URL or derived values
     const costVal = parseFloat(result.maxBuy) - parseFloat(result.headroom);
     if (costVal > 0) notFoundParams.set("cost", costVal.toFixed(0));
+    if (result.analysisId)
+      notFoundParams.set("analysis_id", String(result.analysisId));
     const qs = notFoundParams.toString();
     router.replace(`/product-not-found${qs ? `?${qs}` : ""}`);
     return (

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
+import { fetchPlans, BillingPlan } from "@/lib/billing";
 
 /* ─── Design tokens (match iOS + existing theme) ─── */
 const LIME = "#D4FF3A";
@@ -452,6 +453,12 @@ export default function Landing() {
     median: "0.00",
     eng: "0/13",
   });
+
+  // Plans from API
+  const [apiPlans, setApiPlans] = useState<BillingPlan[]>([]);
+  useEffect(() => {
+    fetchPlans().then(setApiPlans);
+  }, []);
   const startTimeRef = useRef(0);
 
   // Nav scroll
@@ -2327,40 +2334,84 @@ export default function Landing() {
             alignItems: "stretch",
           }}
         >
-          {/* Free */}
-          <PlanCard
-            tier={t.freeTier}
-            price="0"
-            perMonth={t.perMonth}
-            tagline={t.freeTag}
-            features={[t.freeF1, t.freeF2, t.freeF3, t.freeF4]}
-            cta={t.freeCta}
-            href="/free"
-            featured={false}
-          />
-          {/* Starter */}
-          <PlanCard
-            tier={t.proTier}
-            price="9.99"
-            perMonth={t.perMonth}
-            tagline={t.proTag}
-            features={[t.proF1, t.proF2, t.proF3, t.proF4, t.proF5]}
-            cta={t.proCta}
-            href="/checkout/account?plan=starter"
-            featured
-            ribbon={t.proRibbon}
-          />
-          {/* Pro */}
-          <PlanCard
-            tier={t.teamTier}
-            price="19.99"
-            perMonth={t.perMonth}
-            tagline={t.teamTag}
-            features={[t.teamF1, t.teamF2, t.teamF3, t.teamF4, t.teamF5]}
-            cta={t.teamCta}
-            href="/checkout/account?plan=pro"
-            featured={false}
-          />
+          {(apiPlans.length > 0
+            ? apiPlans
+            : [
+                {
+                  id: "free",
+                  name: "Free",
+                  price: 0,
+                  original_price: null,
+                  daily_limit: 5,
+                  stripe_price_id: null,
+                  tag: null,
+                  ai_unlocked: false,
+                  features: [t.freeF1, t.freeF2, t.freeF3, t.freeF4],
+                },
+                {
+                  id: "starter",
+                  name: "Starter",
+                  price: 9.99,
+                  original_price: 14.99,
+                  daily_limit: 30,
+                  stripe_price_id: null,
+                  tag: "Launch price",
+                  ai_unlocked: true,
+                  features: [t.proF1, t.proF2, t.proF3, t.proF4, t.proF5],
+                },
+                {
+                  id: "pro",
+                  name: "Pro",
+                  price: 19.99,
+                  original_price: 29.99,
+                  daily_limit: 100,
+                  stripe_price_id: null,
+                  tag: "Launch price",
+                  ai_unlocked: true,
+                  features: [t.teamF1, t.teamF2, t.teamF3, t.teamF4, t.teamF5],
+                },
+              ]
+          ).map((plan) => (
+            <PlanCard
+              key={plan.id}
+              tier={plan.name}
+              price={
+                plan.price === 0
+                  ? "0"
+                  : plan.price % 1 === 0
+                    ? String(plan.price)
+                    : plan.price.toFixed(2)
+              }
+              originalPrice={
+                plan.original_price ? plan.original_price.toFixed(2) : undefined
+              }
+              perMonth={t.perMonth}
+              tagline={
+                plan.id === "free"
+                  ? t.freeTag
+                  : plan.id === "starter"
+                    ? t.proTag
+                    : t.teamTag
+              }
+              features={plan.features}
+              cta={
+                plan.id === "free"
+                  ? t.freeCta
+                  : plan.id === "starter"
+                    ? t.proCta
+                    : t.teamCta
+              }
+              href={
+                plan.id === "free"
+                  ? "/free"
+                  : `/checkout/account?plan=${plan.id}`
+              }
+              featured={plan.id === "starter"}
+              ribbon={plan.id === "starter" ? t.proRibbon : undefined}
+              tag={plan.tag ?? undefined}
+              limit={`${plan.daily_limit} ${lang === "es" ? "escaneos/día" : "scans/day"}`}
+            />
+          ))}
         </div>
       </section>
 
@@ -3786,6 +3837,7 @@ export default function Landing() {
 function PlanCard({
   tier,
   price,
+  originalPrice,
   perMonth,
   tagline,
   features,
@@ -3793,9 +3845,12 @@ function PlanCard({
   href,
   featured,
   ribbon,
+  tag,
+  limit,
 }: {
   tier: string;
   price: string;
+  originalPrice?: string;
   perMonth: string;
   tagline: string;
   features: string[];
@@ -3803,6 +3858,8 @@ function PlanCard({
   href: string;
   featured: boolean;
   ribbon?: string;
+  tag?: string;
+  limit?: string;
 }) {
   return (
     <div
@@ -3853,37 +3910,79 @@ function PlanCard({
       >
         {tier}
       </div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          gap: 6,
-          fontWeight: 800,
-          letterSpacing: -2,
-        }}
-      >
-        <span style={{ fontSize: 24, color: DIM, fontWeight: 500 }}>$</span>
-        <span
+      <div>
+        <div
           style={{
-            fontSize: 64,
-            lineHeight: 1,
-            fontVariantNumeric: "tabular-nums",
+            display: "flex",
+            alignItems: "baseline",
+            gap: 6,
+            fontWeight: 800,
+            letterSpacing: -2,
           }}
         >
-          {price}
-        </span>
-        <span
-          style={{
-            fontSize: 14,
-            color: DIM,
-            fontWeight: 500,
-            letterSpacing: 0,
-            marginLeft: 4,
-          }}
-        >
-          {perMonth}
-        </span>
+          {originalPrice && (
+            <span
+              style={{
+                fontSize: 28,
+                color: DIM,
+                fontWeight: 500,
+                textDecoration: "line-through",
+                opacity: 0.5,
+                letterSpacing: -1,
+              }}
+            >
+              ${originalPrice}
+            </span>
+          )}
+          <span style={{ fontSize: 24, color: DIM, fontWeight: 500 }}>$</span>
+          <span
+            style={{
+              fontSize: 64,
+              lineHeight: 1,
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {price}
+          </span>
+          <span
+            style={{
+              fontSize: 14,
+              color: DIM,
+              fontWeight: 500,
+              letterSpacing: 0,
+              marginLeft: 4,
+            }}
+          >
+            {perMonth}
+          </span>
+        </div>
+        {tag && (
+          <div
+            style={{
+              fontFamily: MONO,
+              fontSize: 10,
+              letterSpacing: 1,
+              color: LIME,
+              marginTop: 6,
+            }}
+          >
+            {tag}
+          </div>
+        )}
       </div>
+      {limit && (
+        <div
+          style={{
+            fontFamily: MONO,
+            fontSize: 10,
+            letterSpacing: 1.5,
+            textTransform: "uppercase",
+            color: DIM,
+          }}
+        >
+          {limit}
+        </div>
+      )}
       <div style={{ color: DIM, fontSize: 14, lineHeight: 1.5, minHeight: 44 }}>
         {tagline}
       </div>
