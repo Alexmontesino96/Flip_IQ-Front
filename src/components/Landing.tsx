@@ -133,6 +133,47 @@ const T = {
     privacy: "Privacidad",
     cookies: "Cookies",
     productsAnalyzed: "productos analizados",
+    truecompsNav: "TrueComps™",
+    problemTag: "EL PROBLEMA · PROMEDIOS QUE MIENTEN",
+    problemH2a: "Otros cuentan listings. Nosotros contamos",
+    problemH2b: "comparables reales",
+    problemAside:
+      "Cuando escaneás un Switch OLED en otra app, 65% de los resultados no son tu producto. Mové el toggle.",
+    tcSearching: "Buscando:",
+    tcNoFilter: "Sin filtro",
+    tcShowing: "Mostrando",
+    tcCompsLabel: "comparables · ventas últimos 60 días",
+    tcNoFilterMode: "SIN FILTRO",
+    tcDirtyAvg: "Promedio sucio",
+    tcCleanAvg: "Precio real",
+    tcAvgLabel: "Promedio",
+    tcMedianLabel: "Mediana",
+    tcCompsUsed: "Comps usados",
+    tcAiValidated: "Validados IA",
+    tcDirtyTruth:
+      "Si comprás basado en este promedio, vas a pagar de más. El precio real está inflado por bundles ($339–$460) y deflado por accesorios sueltos ($25–$65).",
+    tcCleanTruth:
+      "Precio real del Switch OLED. Activá TrueComps™ y comprás con la confianza de saber qué pagar máximo.",
+    tcDiffLabel: "Diferencia",
+    tcDirtyDelta: "−$80 / unidad perdido",
+    tcCleanDelta: "+$80 / unidad recuperado",
+    compareTag: "POR QUÉ FLIPIQ",
+    compareH2a: "Menos",
+    compareH2b: "resultados.",
+    compareH2c: "Más precisión.",
+    compareSub:
+      "La mayoría de scanners tira 50 listings crudos y se lava las manos. Nosotros validamos cada uno con Gemini 2.5 y mostramos solo los que son realmente tu producto.",
+    cmpFeature: "Característica",
+    cmpOthers: "Otros scanners",
+    cmpCompsShown: "Comparables mostrados",
+    cmpOthersComps: "50+ crudos",
+    cmpOursComps: "15–25 verificados",
+    cmpBundles: "Filtra bundles",
+    cmpAccessories: "Filtra accesorios sueltos",
+    cmpVariants: "Detecta variantes incorrectas",
+    cmpAiValidation: "Validación IA por comparable",
+    cmpLatam: "Marketplace LatAm (MercadoLibre)",
+    cmpNoise: "Ruido eliminado",
   },
   en: {
     how: "How it works",
@@ -244,6 +285,47 @@ const T = {
     privacy: "Privacy",
     cookies: "Cookies",
     productsAnalyzed: "products analyzed",
+    truecompsNav: "TrueComps™",
+    problemTag: "THE PROBLEM · LYING AVERAGES",
+    problemH2a: "Others count listings. We count",
+    problemH2b: "real comparables",
+    problemAside:
+      "When you scan a Switch OLED in another app, 65% of results aren't your product. Flip the toggle.",
+    tcSearching: "Searching:",
+    tcNoFilter: "No filter",
+    tcShowing: "Showing",
+    tcCompsLabel: "comparables · last 60 days sales",
+    tcNoFilterMode: "NO FILTER",
+    tcDirtyAvg: "Dirty average",
+    tcCleanAvg: "Real price",
+    tcAvgLabel: "Average",
+    tcMedianLabel: "Median",
+    tcCompsUsed: "Comps used",
+    tcAiValidated: "AI validated",
+    tcDirtyTruth:
+      "If you buy based on this average, you'll overpay. The real price is inflated by bundles ($339–$460) and deflated by loose accessories ($25–$65).",
+    tcCleanTruth:
+      "Real Switch OLED price. With TrueComps™ on, you buy knowing the max you should pay.",
+    tcDiffLabel: "Difference",
+    tcDirtyDelta: "−$80 / unit lost",
+    tcCleanDelta: "+$80 / unit gained",
+    compareTag: "WHY FLIPIQ",
+    compareH2a: "Fewer",
+    compareH2b: "results.",
+    compareH2c: "More precision.",
+    compareSub:
+      "Most scanners dump 50 raw listings and call it done. We validate each one with Gemini 2.5 and only show what's actually your product.",
+    cmpFeature: "Feature",
+    cmpOthers: "Other scanners",
+    cmpCompsShown: "Comparables shown",
+    cmpOthersComps: "50+ raw",
+    cmpOursComps: "15–25 verified",
+    cmpBundles: "Filters bundles",
+    cmpAccessories: "Filters loose accessories",
+    cmpVariants: "Detects wrong variants",
+    cmpAiValidation: "AI validation per comparable",
+    cmpLatam: "LatAm marketplace (MercadoLibre)",
+    cmpNoise: "Noise removed",
   },
 } as const;
 
@@ -419,6 +501,99 @@ const BARCODE_HEIGHTS = [
   28,
 ];
 
+/* ─── TrueComps demo rows ─── */
+const TC_ROWS: {
+  valid: boolean;
+  title: string;
+  reason: string | null;
+  price: number;
+}[] = [
+  {
+    valid: false,
+    title: "Switch OLED + 5 juegos + case bundle",
+    reason: "Bundle",
+    price: 460,
+  },
+  {
+    valid: false,
+    title: "Joy-Con par (Neon Blue/Red)",
+    reason: "Accesorio",
+    price: 65,
+  },
+  {
+    valid: false,
+    title: "Case oficial Nintendo OLED",
+    reason: "Accesorio",
+    price: 25,
+  },
+  {
+    valid: false,
+    title: "Nintendo Switch v2 (HAC-001)",
+    reason: "Variante",
+    price: 195,
+  },
+  {
+    valid: true,
+    title: "Nintendo Switch OLED 64GB Blanco — usado completo",
+    reason: null,
+    price: 285,
+  },
+  {
+    valid: false,
+    title: "Switch OLED + Mario Kart 8 Deluxe bundle",
+    reason: "Bundle",
+    price: 410,
+  },
+  {
+    valid: true,
+    title: "Switch OLED Neon Blue/Red — like new",
+    reason: null,
+    price: 289,
+  },
+  {
+    valid: false,
+    title: "Dock + cables HDMI (sin consola)",
+    reason: "Accesorio",
+    price: 42,
+  },
+  {
+    valid: false,
+    title: "Nintendo Switch Lite Gris",
+    reason: "Variante",
+    price: 145,
+  },
+  {
+    valid: true,
+    title: "Switch OLED White — console only",
+    reason: null,
+    price: 278,
+  },
+  {
+    valid: false,
+    title: "Switch OLED + 4 juegos + grip",
+    reason: "Bundle",
+    price: 339,
+  },
+  {
+    valid: false,
+    title: "Joy-Con grip + Pro Controller bundle",
+    reason: "Accesorio",
+    price: 35,
+  },
+  {
+    valid: true,
+    title: "Switch OLED Pokemon Scarlet/Violet Edition",
+    reason: null,
+    price: 304,
+  },
+  {
+    valid: false,
+    title: "AC Adapter + dock + HDMI oficial",
+    reason: "Accesorio",
+    price: 58,
+  },
+];
+
 /* ═══════════════════════════════════════════════════════════════════════
    Component
    ═══════════════════════════════════════════════════════════════════════ */
@@ -454,6 +629,10 @@ export default function Landing() {
     eng: "0/13",
   });
 
+  // TrueComps demo toggle
+  const [tcMode, setTcMode] = useState<"dirty" | "clean">("dirty");
+  const tcDemoRef = useRef<HTMLDivElement>(null);
+
   // Plans from API
   const [apiPlans, setApiPlans] = useState<BillingPlan[]>([]);
   useEffect(() => {
@@ -469,6 +648,24 @@ export default function Landing() {
     };
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
+  }, []);
+
+  // TrueComps auto-trigger on scroll into view
+  useEffect(() => {
+    const el = tcDemoRef.current;
+    if (!el) return;
+    let triggered = false;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !triggered) {
+          triggered = true;
+          setTimeout(() => setTcMode("clean"), 1400);
+        }
+      },
+      { threshold: 0.4 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
   }, []);
 
   // Pipeline animation loop
@@ -687,6 +884,12 @@ export default function Landing() {
             color: DIM,
           }}
         >
+          <a
+            href="#problem"
+            style={{ color: "inherit", textDecoration: "none" }}
+          >
+            {t.truecompsNav}
+          </a>
           <a href="#how" style={{ color: "inherit", textDecoration: "none" }}>
             {t.how}
           </a>
@@ -1320,6 +1523,750 @@ export default function Landing() {
           ))}
         </div>
       </div>
+
+      {/* ═══ TRUECOMPS DEMO ═══ */}
+      <section
+        id="problem"
+        style={{
+          padding: "140px 40px 100px",
+          maxWidth: 1360,
+          margin: "0 auto",
+          position: "relative",
+        }}
+      >
+        {/* Section header */}
+        <div
+          className="ln-sec-head"
+          style={{
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            marginBottom: 72,
+            gap: 40,
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontFamily: MONO,
+                fontSize: 10,
+                color: LIME,
+                letterSpacing: 3,
+                textTransform: "uppercase",
+                marginBottom: 16,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <span
+                style={{
+                  width: 24,
+                  height: 1,
+                  background: LIME,
+                  display: "inline-block",
+                }}
+              />
+              {t.problemTag}
+            </div>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: "clamp(40px, 5vw, 64px)",
+                fontWeight: 800,
+                letterSpacing: -2.5,
+                lineHeight: 1,
+              }}
+            >
+              {t.problemH2a}{" "}
+              <em style={{ fontStyle: "normal", color: LIME, fontWeight: 500 }}>
+                {t.problemH2b}
+              </em>
+              .
+            </h2>
+          </div>
+          <div
+            className="ln-sec-aside"
+            style={{ maxWidth: 320, color: DIM, fontSize: 15, lineHeight: 1.6 }}
+          >
+            {t.problemAside}
+          </div>
+        </div>
+
+        {/* Demo grid */}
+        <div
+          ref={tcDemoRef}
+          className="ln-tc-demo"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.4fr 1fr",
+            gap: 28,
+            alignItems: "stretch",
+          }}
+        >
+          {/* Left panel: comparable list */}
+          <div
+            style={{
+              background: BG2,
+              border: `1px solid ${LINE}`,
+              borderRadius: 16,
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 540,
+            }}
+          >
+            {/* Panel header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "14px 18px",
+                borderBottom: `1px solid ${LINE}`,
+                background: "rgba(255,255,255,0.015)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  fontFamily: MONO,
+                  fontSize: 11,
+                  color: DIM,
+                }}
+              >
+                <span>{t.tcSearching}</span>
+                <span
+                  style={{
+                    color: INK,
+                    fontWeight: 500,
+                    background: "rgba(255,255,255,0.04)",
+                    padding: "4px 10px",
+                    borderRadius: 6,
+                    border: `1px solid ${LINE}`,
+                  }}
+                >
+                  Nintendo Switch OLED · 64GB
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  background: "rgba(255,255,255,0.03)",
+                  border: `1px solid ${LINE}`,
+                  borderRadius: 999,
+                  padding: 3,
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                }}
+              >
+                <button
+                  onClick={() => setTcMode("dirty")}
+                  style={{
+                    background: tcMode === "dirty" ? LIME : "transparent",
+                    border: 0,
+                    color: tcMode === "dirty" ? BG : DIMMER,
+                    padding: "7px 14px",
+                    borderRadius: 999,
+                    cursor: "pointer",
+                    fontFamily: MONO,
+                    fontSize: 10,
+                    letterSpacing: 1.5,
+                    fontWeight: tcMode === "dirty" ? 700 : 400,
+                    transition: "all 0.25s",
+                  }}
+                >
+                  {t.tcNoFilter}
+                </button>
+                <button
+                  onClick={() => setTcMode("clean")}
+                  style={{
+                    background: tcMode === "clean" ? LIME : "transparent",
+                    border: 0,
+                    color: tcMode === "clean" ? BG : DIMMER,
+                    padding: "7px 14px",
+                    borderRadius: 999,
+                    cursor: "pointer",
+                    fontFamily: MONO,
+                    fontSize: 10,
+                    letterSpacing: 1.5,
+                    fontWeight: tcMode === "clean" ? 700 : 400,
+                    transition: "all 0.25s",
+                  }}
+                >
+                  TrueComps™
+                </button>
+              </div>
+            </div>
+
+            {/* Rows */}
+            <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  padding: "6px 0",
+                }}
+              >
+                {TC_ROWS.map((row, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "28px 1fr auto",
+                      gap: 14,
+                      alignItems: "center",
+                      padding:
+                        tcMode === "clean" && !row.valid
+                          ? "0 18px"
+                          : "11px 18px",
+                      borderBottom:
+                        tcMode === "clean" && !row.valid
+                          ? "none"
+                          : "1px solid rgba(255,255,255,0.03)",
+                      fontSize: 13,
+                      maxHeight: tcMode === "clean" && !row.valid ? 0 : 60,
+                      opacity: tcMode === "clean" && !row.valid ? 0 : 1,
+                      overflow: "hidden",
+                      transition: "all 0.45s ease",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 6,
+                        display: "grid",
+                        placeItems: "center",
+                        fontFamily: MONO,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        background: row.valid
+                          ? tcMode === "dirty"
+                            ? "rgba(255,255,255,0.04)"
+                            : "rgba(212,255,58,0.12)"
+                          : "rgba(255,107,90,0.12)",
+                        color: row.valid
+                          ? tcMode === "dirty"
+                            ? DIM
+                            : LIME
+                          : PASS,
+                      }}
+                    >
+                      {row.valid ? "✓" : "✕"}
+                    </div>
+                    <div
+                      style={{
+                        color: row.valid
+                          ? tcMode === "dirty"
+                            ? DIM
+                            : INK
+                          : DIMMER,
+                        lineHeight: 1.35,
+                        textDecoration: !row.valid ? "line-through" : "none",
+                        textDecorationColor: "rgba(255,107,90,0.35)",
+                      }}
+                    >
+                      {row.title}
+                      {row.reason && (
+                        <span
+                          style={{
+                            display: "inline-block",
+                            fontFamily: MONO,
+                            fontSize: 9,
+                            letterSpacing: 1.5,
+                            textTransform: "uppercase",
+                            padding: "2px 7px",
+                            borderRadius: 4,
+                            marginLeft: 8,
+                            verticalAlign: 1,
+                            color: PASS,
+                            background: "rgba(255,107,90,0.1)",
+                            border: "1px solid rgba(255,107,90,0.22)",
+                            textDecoration: "none",
+                          }}
+                        >
+                          {row.reason}
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: MONO,
+                        fontVariantNumeric: "tabular-nums",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: row.valid
+                          ? tcMode === "dirty"
+                            ? DIM
+                            : LIME
+                          : DIM,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      ${row.price}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Panel footer */}
+            <div
+              style={{
+                borderTop: `1px solid ${LINE}`,
+                padding: "12px 18px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                fontFamily: MONO,
+                fontSize: 10,
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                color: tcMode === "clean" ? LIME : DIMMER,
+              }}
+            >
+              <span>
+                {t.tcShowing}{" "}
+                <b style={{ fontWeight: 600 }}>{tcMode === "clean" ? 4 : 14}</b>{" "}
+                {t.tcCompsLabel}
+              </span>
+              <span>
+                {tcMode === "clean" ? "TRUECOMPS™ ON" : t.tcNoFilterMode}
+              </span>
+            </div>
+          </div>
+
+          {/* Right panel: summary card */}
+          <div
+            style={{
+              background: BG2,
+              border: `1px solid ${LINE}`,
+              borderRadius: 16,
+              padding: 24,
+              display: "flex",
+              flexDirection: "column",
+              gap: 18,
+            }}
+          >
+            {/* Mode indicator */}
+            <div
+              style={{
+                fontFamily: MONO,
+                fontSize: 10,
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                color: tcMode === "clean" ? LIME : DIMMER,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: tcMode === "clean" ? LIME : PASS,
+                  boxShadow:
+                    tcMode === "clean"
+                      ? `0 0 8px ${LIME}`
+                      : `0 0 8px rgba(255,107,90,0.5)`,
+                  transition: "all 0.3s",
+                }}
+              />
+              {tcMode === "clean" ? t.tcCleanAvg : t.tcDirtyAvg}
+            </div>
+
+            {/* Stats 2x2 grid */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 12,
+              }}
+            >
+              {[
+                {
+                  k: t.tcAvgLabel,
+                  v: tcMode === "clean" ? 289 : 209,
+                  highlight: true,
+                },
+                {
+                  k: t.tcMedianLabel,
+                  v: tcMode === "clean" ? 287 : 220,
+                  highlight: false,
+                },
+                {
+                  k: t.tcCompsUsed,
+                  v: tcMode === "clean" ? 4 : 14,
+                  highlight: false,
+                },
+                { k: t.tcAiValidated, v: 4, highlight: false, suffix: "/14" },
+              ].map((cell) => (
+                <div
+                  key={cell.k}
+                  style={{
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid rgba(255,255,255,0.04)",
+                    borderRadius: 10,
+                    padding: "12px 14px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 9,
+                      letterSpacing: 1.8,
+                      textTransform: "uppercase",
+                      color: DIMMER,
+                      marginBottom: 6,
+                    }}
+                  >
+                    {cell.k}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: DISPLAY,
+                      fontWeight: 700,
+                      fontSize: 22,
+                      letterSpacing: -0.5,
+                      color: cell.highlight
+                        ? tcMode === "dirty"
+                          ? PASS
+                          : LIME
+                        : INK,
+                      fontVariantNumeric: "tabular-nums",
+                      transition: "color 0.3s",
+                    }}
+                  >
+                    {cell.k === t.tcAvgLabel || cell.k === t.tcMedianLabel
+                      ? "$"
+                      : ""}
+                    {cell.v}
+                    {"suffix" in cell && cell.suffix && (
+                      <span
+                        style={{ color: DIMMER, fontWeight: 500, fontSize: 16 }}
+                      >
+                        {cell.suffix}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Truth callout */}
+            <div
+              style={{
+                background:
+                  tcMode === "clean"
+                    ? "linear-gradient(135deg, rgba(212,255,58,0.05), rgba(212,255,58,0.02))"
+                    : "linear-gradient(135deg, rgba(255,107,90,0.04), rgba(255,107,90,0.02))",
+                border:
+                  tcMode === "clean"
+                    ? "1px solid rgba(212,255,58,0.2)"
+                    : "1px solid rgba(255,107,90,0.18)",
+                borderRadius: 12,
+                padding: "14px 16px",
+                fontSize: 13,
+                color: tcMode === "clean" ? INK : DIM,
+                lineHeight: 1.5,
+                transition: "all 0.3s",
+              }}
+            >
+              {tcMode === "clean" ? t.tcCleanTruth : t.tcDirtyTruth}
+            </div>
+
+            {/* Delta CTA */}
+            <div
+              style={{
+                marginTop: "auto",
+                display: "flex",
+                gap: 10,
+                alignItems: "center",
+                fontFamily: MONO,
+                fontSize: 10,
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                color: DIMMER,
+              }}
+            >
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: LIME,
+                  boxShadow: `0 0 8px ${LIME}`,
+                  animation: "landing-pulse 2s infinite",
+                }}
+              />
+              <span>
+                {t.tcDiffLabel}:{" "}
+                <b style={{ color: LIME, fontWeight: 700 }}>
+                  {tcMode === "clean" ? t.tcCleanDelta : t.tcDirtyDelta}
+                </b>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ COMPARATIVA ═══ */}
+      <section
+        id="compare"
+        className="ln-compare"
+        style={{
+          padding: "100px 40px",
+          maxWidth: 1360,
+          margin: "0 auto",
+        }}
+      >
+        <div
+          className="ln-cmp-grid"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.05fr 1.4fr",
+            gap: 60,
+            alignItems: "start",
+          }}
+        >
+          {/* Left: copy */}
+          <div>
+            <div
+              style={{
+                fontFamily: MONO,
+                fontSize: 10,
+                color: LIME,
+                letterSpacing: 3,
+                textTransform: "uppercase",
+                marginBottom: 16,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <span
+                style={{
+                  width: 24,
+                  height: 1,
+                  background: LIME,
+                  display: "inline-block",
+                }}
+              />
+              {t.compareTag}
+            </div>
+            <h2
+              style={{
+                fontFamily: DISPLAY,
+                fontWeight: 700,
+                fontSize: 44,
+                lineHeight: 1.05,
+                letterSpacing: -1.4,
+                color: INK,
+                marginBottom: 18,
+              }}
+            >
+              <em style={{ fontStyle: "normal", color: LIME, fontWeight: 500 }}>
+                {t.compareH2a}
+              </em>{" "}
+              {t.compareH2b}
+              <br />
+              {t.compareH2c}
+            </h2>
+            <p
+              style={{
+                color: DIM,
+                fontSize: 15,
+                lineHeight: 1.6,
+                maxWidth: 360,
+                margin: 0,
+              }}
+            >
+              {t.compareSub}
+            </p>
+          </div>
+
+          {/* Right: table */}
+          <div
+            style={{
+              background: BG2,
+              border: `1px solid ${LINE}`,
+              borderRadius: 18,
+              overflow: "hidden",
+            }}
+          >
+            {/* Header row */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.4fr 1fr 1fr",
+                alignItems: "center",
+                borderBottom: "1px solid rgba(255,255,255,0.04)",
+                background: "rgba(255,255,255,0.02)",
+              }}
+            >
+              <div
+                style={{
+                  padding: "18px 22px",
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  color: DIMMER,
+                }}
+              >
+                {t.cmpFeature}
+              </div>
+              <div
+                style={{
+                  padding: "18px 22px",
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  color: DIMMER,
+                  borderLeft: "1px solid rgba(255,255,255,0.04)",
+                }}
+              >
+                {t.cmpOthers}
+              </div>
+              <div
+                style={{
+                  padding: "18px 22px",
+                  fontFamily: MONO,
+                  fontSize: 10,
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  color: LIME,
+                  borderLeft: "1px solid rgba(255,255,255,0.04)",
+                  background: "rgba(212,255,58,0.04)",
+                }}
+              >
+                FlipIQ
+              </div>
+            </div>
+
+            {/* Data rows */}
+            {[
+              {
+                feat: t.cmpCompsShown,
+                others: t.cmpOthersComps,
+                ours: t.cmpOursComps,
+                type: "text",
+              },
+              { feat: t.cmpBundles, others: false, ours: true, type: "check" },
+              {
+                feat: t.cmpAccessories,
+                others: false,
+                ours: true,
+                type: "check",
+              },
+              { feat: t.cmpVariants, others: false, ours: true, type: "check" },
+              {
+                feat: t.cmpAiValidation,
+                others: false,
+                ours: "Gemini 2.5",
+                type: "mixed",
+              },
+              { feat: t.cmpLatam, others: false, ours: true, type: "check" },
+              { feat: t.cmpNoise, others: "0%", ours: "~35%", type: "text" },
+            ].map((row, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1.4fr 1fr 1fr",
+                  alignItems: "center",
+                  borderBottom:
+                    i < 6 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                }}
+              >
+                <div style={{ padding: "16px 22px", fontSize: 14, color: DIM }}>
+                  {row.feat}
+                </div>
+                <div
+                  style={{
+                    padding: "16px 22px",
+                    textAlign: "center",
+                    fontFamily: MONO,
+                    fontSize: 13,
+                    color: DIM,
+                    borderLeft: "1px solid rgba(255,255,255,0.04)",
+                  }}
+                >
+                  {row.type === "check" ||
+                  (row.type === "mixed" && row.others === false) ? (
+                    <span
+                      style={{
+                        display: "inline-grid",
+                        placeItems: "center",
+                        width: 22,
+                        height: 22,
+                        borderRadius: "50%",
+                        background: "rgba(255,107,90,0.08)",
+                        color: PASS,
+                        border: "1px solid rgba(255,107,90,0.18)",
+                        fontFamily: MONO,
+                        fontWeight: 700,
+                        fontSize: 11,
+                      }}
+                    >
+                      ✕
+                    </span>
+                  ) : (
+                    <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {row.others as string}
+                    </span>
+                  )}
+                </div>
+                <div
+                  style={{
+                    padding: "16px 22px",
+                    textAlign: "center",
+                    fontFamily: MONO,
+                    fontSize: 13,
+                    color: LIME,
+                    fontWeight: 600,
+                    borderLeft: "1px solid rgba(255,255,255,0.04)",
+                    background: "rgba(212,255,58,0.025)",
+                  }}
+                >
+                  {row.type === "check" && row.ours === true ? (
+                    <span
+                      style={{
+                        display: "inline-grid",
+                        placeItems: "center",
+                        width: 22,
+                        height: 22,
+                        borderRadius: "50%",
+                        background: "rgba(212,255,58,0.12)",
+                        color: LIME,
+                        border: `1px solid rgba(212,255,58,0.3)`,
+                        fontFamily: MONO,
+                        fontWeight: 700,
+                        fontSize: 11,
+                      }}
+                    >
+                      ✓
+                    </span>
+                  ) : (
+                    <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {row.ours as string}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ═══ HOW IT WORKS ═══ */}
       <section
@@ -3712,6 +4659,8 @@ export default function Landing() {
     .ln-plans { grid-template-columns: 1fr !important; }
     .ln-sec-head { flex-direction: column !important; align-items: flex-start !important; }
     .ln-foot-cols { grid-template-columns: repeat(2, auto) !important; gap: 32px !important; }
+    .ln-tc-demo { grid-template-columns: 1fr !important; }
+    .ln-cmp-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
     .ln-ios-inner { grid-template-columns: 1fr !important; gap: 56px !important; }
     .ln-ios-feats { grid-template-columns: 1fr !important; }
     .ln-ios-phone { height: 600px !important; }
@@ -3757,6 +4706,8 @@ export default function Landing() {
     .ln-sec-head { flex-direction: column !important; align-items: flex-start !important; margin-bottom: 28px !important; }
     .ln-sec-head h2 { font-size: 34px !important; letter-spacing: -1.4px !important; }
     .ln-sec-aside { font-size: 14px !important; }
+    .ln-tc-demo { grid-template-columns: 1fr !important; }
+    .ln-cmp-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
 
     /* How it works - steps */
     .ln-steps { grid-template-columns: 1fr !important; gap: 14px !important; border: none !important; border-radius: 0 !important; background: transparent !important; }
