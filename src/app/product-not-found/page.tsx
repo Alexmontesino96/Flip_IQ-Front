@@ -20,6 +20,7 @@ function ProductNotFoundContent() {
   const cost = params.get("cost") || "";
   const condition = params.get("condition") || "new";
   const analysisId = params.get("analysis_id") || "";
+  const manualReviewId = params.get("manual_review_id") || "";
 
   const [keyword, setKeyword] = useState("");
   const [email, setEmail] = useState("");
@@ -45,6 +46,7 @@ function ProductNotFoundContent() {
   const handleProvideDetails = () => {
     const p = new URLSearchParams();
     if (analysisId) p.set("analysis_id", analysisId);
+    if (manualReviewId) p.set("manual_review_id", manualReviewId);
     if (upc) p.set("upc", upc);
     if (cost) p.set("cost", cost);
     if (condition) p.set("condition", condition);
@@ -404,7 +406,7 @@ function ProductNotFoundContent() {
         </div>
         <button
           onClick={handleProvideDetails}
-          disabled={!analysisId}
+          disabled={!analysisId && !manualReviewId}
           style={{
             width: "100%",
             padding: "16px",
@@ -415,11 +417,11 @@ function ProductNotFoundContent() {
             fontFamily: DISPLAY,
             fontSize: 14,
             fontWeight: 600,
-            cursor: analysisId ? "pointer" : "default",
+            cursor: analysisId || manualReviewId ? "pointer" : "default",
             display: "flex",
             alignItems: "center",
             gap: 12,
-            opacity: analysisId ? 1 : 0.5,
+            opacity: analysisId || manualReviewId ? 1 : 0.5,
           }}
         >
           <span style={{ fontSize: 20 }}>📋</span>

@@ -744,6 +744,8 @@ function ResultPageInner() {
     if (costVal > 0) notFoundParams.set("cost", costVal.toFixed(0));
     if (result.analysisId)
       notFoundParams.set("analysis_id", String(result.analysisId));
+    if (result.manualReviewId)
+      notFoundParams.set("manual_review_id", String(result.manualReviewId));
     const qs = notFoundParams.toString();
     router.replace(`/product-not-found${qs ? `?${qs}` : ""}`);
     return (
@@ -1030,6 +1032,10 @@ function ResultPageInner() {
     return { ...ch, isRec, isBestProfit, isTest };
   });
 
+  // Execution note from the recommended (or first) channel
+  const primaryChannel = channels.find((ch) => ch.isRec) || channels[0] || null;
+  const executionNote = primaryChannel?.executionNote || null;
+
   return (
     <div
       style={{
@@ -1115,15 +1121,36 @@ function ResultPageInner() {
           <div>
             <div
               style={{
-                fontFamily: DISPLAY,
-                fontSize: 34,
-                fontWeight: 800,
-                color: "#0A0A0A",
-                lineHeight: 1,
-                letterSpacing: -1,
+                display: "flex",
+                alignItems: "baseline",
+                gap: 10,
               }}
             >
-              {r.recommendation}
+              <div
+                style={{
+                  fontFamily: DISPLAY,
+                  fontSize: 34,
+                  fontWeight: 800,
+                  color: "#0A0A0A",
+                  lineHeight: 1,
+                  letterSpacing: -1,
+                }}
+              >
+                {r.recommendation}
+              </div>
+              {executionNote && (
+                <div
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 10,
+                    letterSpacing: 0.5,
+                    color: "rgba(10,10,10,0.55)",
+                    fontWeight: 600,
+                  }}
+                >
+                  {executionNote}
+                </div>
+              )}
             </div>
             <div
               style={{
@@ -1607,6 +1634,18 @@ function ResultPageInner() {
                   }}
                 >
                   Competition
+                  {r.competition.marketplace && (
+                    <span
+                      style={{ marginLeft: 6, color: ACCENT, fontWeight: 600 }}
+                    >
+                      &middot;{" "}
+                      {r.competition.marketplace === "amazon_fba"
+                        ? "Amazon"
+                        : r.competition.marketplace === "ebay"
+                          ? "eBay"
+                          : r.competition.marketplace}
+                    </span>
+                  )}
                 </div>
                 <div
                   style={{
@@ -1650,6 +1689,18 @@ function ResultPageInner() {
                   }}
                 >
                   Trend
+                  {r.trend.marketplace && (
+                    <span
+                      style={{ marginLeft: 6, color: ACCENT, fontWeight: 600 }}
+                    >
+                      &middot;{" "}
+                      {r.trend.marketplace === "amazon_fba"
+                        ? "Amazon"
+                        : r.trend.marketplace === "ebay"
+                          ? "eBay"
+                          : r.trend.marketplace}
+                    </span>
+                  )}
                 </div>
                 <div
                   style={{
@@ -1703,6 +1754,7 @@ function ResultPageInner() {
                     alignItems: "center",
                     justifyContent: "space-between",
                     gap: 8,
+                    opacity: ch.isTest ? 0.55 : 1,
                   }}
                 >
                   {/* Left side */}
@@ -1754,6 +1806,21 @@ function ResultPageInner() {
                     >
                       Sale ${ch.salePrice} &nbsp;&middot;&nbsp; Fee ${ch.fees}
                     </div>
+                    {ch.executionNote && (
+                      <div
+                        style={{
+                          fontFamily: MONO,
+                          fontSize: 9,
+                          letterSpacing: 0.5,
+                          color: ch.isTest
+                            ? "rgba(255,184,77,0.7)"
+                            : "rgba(212,255,61,0.6)",
+                          marginTop: 3,
+                        }}
+                      >
+                        {ch.executionNote}
+                      </div>
+                    )}
                   </div>
 
                   {/* Right side */}

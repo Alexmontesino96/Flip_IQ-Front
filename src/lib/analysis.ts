@@ -86,12 +86,14 @@ export interface CompetitionInfo {
   dominantSellerShare: number;
   hhi: number;
   category: string;
+  marketplace?: string;
 }
 
 export interface TrendInfo {
   demandTrend: number;
   priceTrend: number;
   category: string;
+  marketplace?: string;
 }
 
 export interface FeeBreakdown {
@@ -760,6 +762,7 @@ export function transformResponse(data: any): AnalysisResult {
             primaryAnalysis.competition.dominant_seller_share ?? 0,
           hhi: primaryAnalysis.competition.hhi ?? 0,
           category: primaryAnalysis.competition.category || "unknown",
+          marketplace: primaryAnalysis.competition.marketplace || undefined,
         }
       : undefined,
     trend: primaryAnalysis?.trend
@@ -767,6 +770,7 @@ export function transformResponse(data: any): AnalysisResult {
           demandTrend: primaryAnalysis.trend.demand_trend ?? 50,
           priceTrend: primaryAnalysis.trend.price_trend ?? 0,
           category: primaryAnalysis.trend.category || "stable",
+          marketplace: primaryAnalysis.trend.marketplace || undefined,
         }
       : undefined,
     priceDistribution:
