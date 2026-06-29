@@ -127,6 +127,31 @@ export interface SampleComp {
   imageUrl: string | null;
 }
 
+export interface MultipackInfo {
+  bundleFactor: number | null; // cuántas unidades trae el pack
+  correctedProfit: number | null;
+  correctedRoiPct: number | null; // ROI real si hay que comprar el pack
+  reason: "fee_ratio" | "package_quantity" | "title_bundle" | null;
+}
+
+export interface CandidateAsin {
+  asin: string;
+  title: string;
+  brand: string;
+  packageQuantity: number | null;
+  isMultipack: boolean;
+  imageUrl: string | null;
+}
+
+export interface VariantPrice {
+  asin: string;
+  title: string;
+  brand: string;
+  imageUrl: string | null;
+  medianPrice: number | null;
+  buyBoxPrice: number | null;
+}
+
 export interface AnalysisResult {
   analysisId: number | null;
   manualReviewId: number | null;
@@ -171,6 +196,13 @@ export interface AnalysisResult {
   aiLocked?: boolean;
   detectedCategory?: string;
   sampleComps?: SampleComp[];
+  // ── Amazon: Multipack guard + Multi-ASIN (todos opcionales) ──
+  costPrice?: number; // costo unitario ingresado (para márgenes en el drawer)
+  isMultipack?: boolean;
+  multipack?: MultipackInfo;
+  candidateAsins?: CandidateAsin[]; // solo presente cuando hay >= 2 variantes
+  identityReview?: boolean; // marcas en conflicto → el user debe elegir
+  identityReason?: string;
 }
 
 export interface MarketplaceDetail {
@@ -248,14 +280,15 @@ export async function runAnalysisStream(
   onAnalysis: (result: AnalysisResult) => void,
   onAiComplete: (updates: AiCompleteUpdate) => void,
   onError: (error: ApiError) => void,
-  onProgress?: (progress: AnalysisProgress) => void
+  onProgress?: (progress: AnalysisProgress) => void,
+  marketplace: string = "ebay"
 ): Promise<void> {
   const isBarcode = /^\d{8,14}$/.test(query.trim());
 
   const body: Record<string, unknown> = {
     cost_price: costPrice,
     condition,
-    marketplace: "ebay",
+    marketplace,
     lang: "en",
   };
 
@@ -379,14 +412,15 @@ export async function runAnalysisStream(
 export async function runAnalysis(
   query: string,
   costPrice: number,
-  condition: string
+  condition: string,
+  marketplace: string = "ebay"
 ): Promise<AnalysisResult> {
   const isBarcode = /^\d{8,14}$/.test(query.trim());
 
   const body: Record<string, unknown> = {
     cost_price: costPrice,
     condition,
-    marketplace: "ebay",
+    marketplace,
     lang: "en",
   };
 
@@ -420,6 +454,80 @@ export async function runAnalysis(
 
   const data = await res.json();
   return transformResponse(data);
+}
+
+export async function runAsinAnalysis(
+  asin: string,
+  costPrice: number,
+  shippingCost: number = 0,
+  prepCost: number = 0
+): Promise<AnalysisResult> {
+  const body = {
+    asin: asin.toUpperCase(),
+    cost_price: costPrice,
+    shipping_cost: shippingCost,
+    prep_cost: prepCost,
+  };
+
+  const authHeaders = await getAuthHeaders();
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    "Content-Type": "application/json",
+  };
+
+  const res = await fetch(`${API_URL}/api/v1/analysis/asin`, {
+    method: "POST",
+    credentials: "include",
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new ApiError(
+      res.status,
+      error.detail || `Error ${res.status}`,
+      error.reason
+    );
+  }
+
+  const data = await res.json();
+  return transformResponse(data);
+}
+
+/**
+ * Precios por variante para el drawer Multi-ASIN.
+ * Una sola llamada para todos los candidatos (máx 20). Lazy: úsala al abrir el drawer.
+ */
+export async function fetchVariantPrices(
+  asins: string[]
+): Promise<VariantPrice[]> {
+  const authHeaders = await getAuthHeaders();
+  const res = await fetch(`${API_URL}/api/v1/analysis/variant-prices`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ asins: asins.slice(0, 20) }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, error.detail || `Error ${res.status}`);
+  }
+
+  const data = await res.json();
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  return (data.prices || []).map((p: any) => ({
+    asin: p.asin || "",
+    title: p.title || "",
+    brand: p.brand || "",
+    imageUrl: p.image_url ?? null,
+    medianPrice: p.median_price ?? null,
+    buyBoxPrice: p.buy_box_price ?? null,
+  }));
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -607,6 +715,21 @@ function formatEstimatedDaysToSell(value: unknown, confidence = 50): string {
 
 export function transformResponse(data: any): AnalysisResult {
   const primaryAnalysis = getPrimaryAnalysis(data);
+
+  // Multipack + Multi-ASIN viven SOLO dentro de amazon_analysis (no en el
+  // primaryAnalysis genérico), así que se leen directo de ahí.
+  const amazon = data.amazon_analysis;
+  const candidateAsins: CandidateAsin[] = Array.isArray(amazon?.candidate_asins)
+    ? amazon.candidate_asins.map((c: any) => ({
+        asin: c.asin || "",
+        title: c.title || "",
+        brand: c.brand || "",
+        packageQuantity: c.package_quantity ?? null,
+        isMultipack: Boolean(c.is_multipack),
+        imageUrl: c.image_url ?? null,
+      }))
+    : [];
+
   const primaryMarketplace =
     primaryAnalysis === data.amazon_analysis
       ? "amazon_fba"
@@ -827,6 +950,21 @@ export function transformResponse(data: any): AnalysisResult {
             imageUrl: c.image_url || null,
           }))
         : undefined,
+    // ── Amazon: Multipack guard + Multi-ASIN ──
+    costPrice:
+      typeof data.cost_price === "number" ? data.cost_price : maxBuy - headroom,
+    isMultipack: Boolean(amazon?.is_likely_multipack),
+    multipack: amazon?.is_likely_multipack
+      ? {
+          bundleFactor: amazon.bundle_factor ?? null,
+          correctedProfit: amazon.corrected_profit ?? null,
+          correctedRoiPct: amazon.corrected_roi_pct ?? null,
+          reason: amazon.multipack_reason ?? null,
+        }
+      : undefined,
+    candidateAsins: candidateAsins.length >= 2 ? candidateAsins : undefined,
+    identityReview: Boolean(amazon?.identity_review),
+    identityReason: amazon?.identity_reason ?? undefined,
   };
 }
 

@@ -3,3 +3,5 @@ export const MONO =
 export const DISPLAY =
   "var(--font-display), 'Inter Tight', -apple-system, system-ui, sans-serif";
 export const ACCENT = "#D4FF3D";
+export const WARN = "#FFB84D";
+export const BAD = "#FF6464";

@@ -8,7 +8,11 @@ import {
   registerSuggestionSelect,
   ProductSuggestion,
 } from "@/lib/search";
-import { runAnalysisStream, AnalysisResult } from "@/lib/analysis";
+import {
+  runAnalysisStream,
+  runAsinAnalysis,
+  AnalysisResult,
+} from "@/lib/analysis";
 import TopBar from "@/components/ui/TopBar";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
 
@@ -50,6 +54,19 @@ export default function SearchPage() {
       new URLSearchParams(window.location.search).get("condition") || "used"
     );
   });
+
+  // Step 4: Marketplaces
+  const [markets, setMarkets] = useState<{ ebay: boolean; amazon: boolean }>({
+    ebay: true,
+    amazon: true,
+  });
+  const toggleMarket = (id: "ebay" | "amazon") =>
+    setMarkets((m) => {
+      const next = { ...m, [id]: !m[id] };
+      if (!next.ebay && !next.amazon) return m;
+      return next;
+    });
+  const marketCount = (markets.ebay ? 1 : 0) + (markets.amazon ? 1 : 0);
 
   // Analysis state
   const [analyzing, setAnalyzing] = useState(false);
@@ -150,72 +167,121 @@ export default function SearchPage() {
   }, []);
 
   const executeAnalysis = useCallback(
-    (q: string, costStr: string, cond: string) => {
+    (
+      q: string,
+      costStr: string,
+      cond: string,
+      selectedMarkets: { ebay: boolean; amazon: boolean }
+    ) => {
       setAnalyzing(true);
       targetProgressRef.current = 3;
       setDisplayProgress(0);
       setAnalysisStage("Starting...");
       setAnalysisError(null);
 
-      runAnalysisStream(
-        q,
-        parseFloat(costStr),
-        cond,
-        (streamResult: AnalysisResult) => {
-          // Cache the full stream result (has sample_comps, fee breakdown, etc.)
-          try {
-            sessionStorage.setItem(
-              "flipiq_last_result",
-              JSON.stringify(streamResult)
-            );
-          } catch {
-            /* ignore */
-          }
-          // Don't navigate here — let the progress callback handle it
-          // so the animation has time to play (~1s minimum)
-        },
-        () => {
-          // AI complete — user already on result page
-        },
-        (err) => {
-          setAnalyzing(false);
-          setAnalysisError(err.message);
-        },
-        (progress) => {
-          // Scale 0-88 from backend to 0-100 for display (we navigate at 88%)
-          const scaled = Math.min(
-            100,
-            Math.round((progress.progress / 88) * 100)
+      const costNum = parseFloat(costStr);
+
+      // Helper to cache result + navigate
+      const handleResult = (streamResult: AnalysisResult) => {
+        try {
+          sessionStorage.setItem(
+            "flipiq_last_result",
+            JSON.stringify(streamResult)
           );
-          targetProgressRef.current = scaled; // lerp will smoothly chase this
-          setAnalysisStage(progress.message);
-          // Navigate when we get the analysis_id from progress details
-          // Add a small delay so the user sees the animation reach ~100%
-          const aid = progress.details?.analysis_id as number | undefined;
-          if (aid) {
-            targetProgressRef.current = 100;
-            setTimeout(() => {
-              router.push(`/result?id=${aid}`);
-            }, 800); // let animation finish smoothly
-            return;
-          }
-          // Fallback: if progress hits 100 without analysis_id
-          if (progress.progress >= 100) {
-            setTimeout(async () => {
-              try {
-                const { fetchHistory } = await import("@/lib/history");
-                const history = await fetchHistory(1);
-                if (history.length > 0) {
-                  router.push(`/result?id=${history[0].id}`);
-                } else {
-                  setAnalyzing(false);
-                }
-              } catch {
+        } catch {
+          /* ignore */
+        }
+      };
+
+      const handleError = (err: { message: string }) => {
+        setAnalyzing(false);
+        setAnalysisError(err.message);
+      };
+
+      const handleProgress = (progress: {
+        progress: number;
+        message: string;
+        details?: Record<string, unknown>;
+      }) => {
+        const scaled = Math.min(
+          100,
+          Math.round((progress.progress / 88) * 100)
+        );
+        targetProgressRef.current = scaled;
+        setAnalysisStage(progress.message);
+        const aid = progress.details?.analysis_id as number | undefined;
+        if (aid) {
+          targetProgressRef.current = 100;
+          setTimeout(() => {
+            router.push(`/result?id=${aid}`);
+          }, 800);
+          return;
+        }
+        if (progress.progress >= 100) {
+          setTimeout(async () => {
+            try {
+              const { fetchHistory } = await import("@/lib/history");
+              const history = await fetchHistory(1);
+              if (history.length > 0) {
+                router.push(`/result?id=${history[0].id}`);
+              } else {
                 setAnalyzing(false);
               }
-            }, 500);
-          }
+            } catch {
+              setAnalyzing(false);
+            }
+          }, 500);
         }
+      };
+
+      // If only Amazon is selected, use the ASIN endpoint
+      if (selectedMarkets.amazon && !selectedMarkets.ebay) {
+        // Check if query looks like an ASIN (10 alphanumeric chars)
+        const isAsin = /^[A-Za-z0-9]{10}$/.test(q.trim());
+        if (isAsin) {
+          setAnalysisStage("Analyzing Amazon ASIN...");
+          targetProgressRef.current = 30;
+          runAsinAnalysis(q.trim(), costNum)
+            .then((result) => {
+              handleResult(result);
+              targetProgressRef.current = 100;
+              if (result.analysisId) {
+                setTimeout(() => {
+                  router.push(`/result?id=${result.analysisId}`);
+                }, 800);
+                return;
+              }
+              // Fallback for non-persisted responses.
+              setTimeout(async () => {
+                try {
+                  const { fetchHistory } = await import("@/lib/history");
+                  const history = await fetchHistory(1);
+                  if (history.length > 0) {
+                    router.push(`/result?id=${history[0].id}`);
+                  } else {
+                    setAnalyzing(false);
+                  }
+                } catch {
+                  setAnalyzing(false);
+                }
+              }, 800);
+            })
+            .catch((err) => handleError(err));
+          return;
+        }
+      }
+
+      // Standard eBay stream analysis (also handles both marketplaces)
+      const marketplace = selectedMarkets.ebay ? "ebay" : "amazon_fba";
+      runAnalysisStream(
+        q,
+        costNum,
+        cond,
+        handleResult,
+        () => {},
+        handleError,
+        handleProgress,
+        marketplace
       ).catch((err) => {
         setAnalyzing(false);
         setAnalysisError(
@@ -231,16 +297,24 @@ export default function SearchPage() {
     const q = picked!.title;
     addRecentSearch(q);
     setRecentPills(getRecentSearches());
-    executeAnalysis(q, cost, condition);
-  }, [canAnalyze, analyzing, picked, cost, condition, executeAnalysis]);
+    executeAnalysis(q, cost, condition, markets);
+  }, [
+    canAnalyze,
+    analyzing,
+    picked,
+    cost,
+    condition,
+    markets,
+    executeAnalysis,
+  ]);
 
   const handleDirectAnalyze = useCallback(() => {
     const trimmed = query.trim();
     if (!trimmed || !costValue || costValue <= 0 || analyzing) return;
     addRecentSearch(trimmed);
     setRecentPills(getRecentSearches());
-    executeAnalysis(trimmed, cost, condition);
-  }, [query, cost, costValue, condition, analyzing, executeAnalysis]);
+    executeAnalysis(trimmed, cost, condition, markets);
+  }, [query, cost, costValue, condition, markets, analyzing, executeAnalysis]);
 
   const showSuggestions =
     picked === null && query.trim().length >= 2 && suggestions.length > 0;
@@ -1241,6 +1315,198 @@ export default function SearchPage() {
                 isActive={condition === "used"}
                 onClick={() => setCondition("used")}
               />
+            </div>
+
+            {/* ── Step 4: Marketplaces ── */}
+            <div
+              style={{
+                padding: "18px 20px 0",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  marginBottom: 10,
+                }}
+              >
+                <span
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: 9,
+                    background: ACCENT,
+                    color: "#0A0A0A",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontFamily: MONO,
+                    fontSize: 10,
+                    fontWeight: 700,
+                  }}
+                >
+                  4
+                </span>
+                <span
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 9,
+                    letterSpacing: 2,
+                    color: "rgba(245,245,242,0.55)",
+                    textTransform: "uppercase",
+                    flex: 1,
+                  }}
+                >
+                  Marketplaces
+                </span>
+                <span
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 9,
+                    letterSpacing: 1.5,
+                    color: "rgba(245,245,242,0.4)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {marketCount}/2 active
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {(
+                  [
+                    {
+                      id: "ebay" as const,
+                      name: "eBay",
+                      glyph: "eB",
+                      sub: "sold comps · 60d",
+                    },
+                    {
+                      id: "amazon" as const,
+                      name: "Amazon",
+                      glyph: "Am",
+                      sub: "FBA · Buy Box",
+                    },
+                  ] as const
+                ).map((m) => {
+                  const active = !!markets[m.id];
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => toggleMarket(m.id)}
+                      style={{
+                        flex: 1,
+                        padding: "12px 14px",
+                        borderRadius: 12,
+                        background: active
+                          ? `${ACCENT}14`
+                          : "rgba(245,245,242,0.03)",
+                        border: active
+                          ? `1px solid ${ACCENT}66`
+                          : "1px solid rgba(245,245,242,0.1)",
+                        color: "#F5F5F2",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        transition: "background 0.15s, border-color 0.15s",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          flexShrink: 0,
+                          display: "grid",
+                          placeItems: "center",
+                          background: active
+                            ? ACCENT
+                            : "rgba(245,245,242,0.06)",
+                          color: active ? "#0A0A0A" : "rgba(245,245,242,0.55)",
+                          fontFamily: MONO,
+                          fontSize: 10.5,
+                          fontWeight: 700,
+                          letterSpacing: -0.3,
+                        }}
+                      >
+                        {m.glyph}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontFamily: DISPLAY,
+                            fontSize: 14,
+                            fontWeight: 700,
+                            letterSpacing: -0.2,
+                            color: active ? "#F5F5F2" : "rgba(245,245,242,0.7)",
+                          }}
+                        >
+                          {m.name}
+                        </div>
+                        <div
+                          style={{
+                            fontFamily: MONO,
+                            fontSize: 8.5,
+                            letterSpacing: 1,
+                            textTransform: "uppercase",
+                            marginTop: 2,
+                            color: active ? ACCENT : "rgba(245,245,242,0.4)",
+                          }}
+                        >
+                          {m.sub}
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: 5,
+                          flexShrink: 0,
+                          border: active
+                            ? "none"
+                            : "1.5px solid rgba(245,245,242,0.25)",
+                          background: active ? ACCENT : "transparent",
+                          display: "grid",
+                          placeItems: "center",
+                        }}
+                      >
+                        {active && (
+                          <svg
+                            width="10"
+                            height="10"
+                            viewBox="0 0 10 10"
+                            fill="none"
+                          >
+                            <path
+                              d="M2 5.2 L4.2 7.2 L8 3"
+                              stroke="#0A0A0A"
+                              strokeWidth="1.6"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              {marketCount === 1 && (
+                <div
+                  style={{
+                    fontFamily: MONO,
+                    fontSize: 9,
+                    letterSpacing: 1.2,
+                    color: "rgba(245,245,242,0.4)",
+                    marginTop: 8,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  At least one marketplace required
+                </div>
+              )}
             </div>
           </>
         )}

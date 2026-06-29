@@ -4,10 +4,14 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import TopBar from "@/components/ui/TopBar";
 import TinyBadge from "@/components/ui/TinyBadge";
+import MultipackBanner from "@/components/result/MultipackBanner";
+import MultiAsinBadge from "@/components/result/MultiAsinBadge";
+import VariantDrawer from "@/components/result/VariantDrawer";
 import { MONO, DISPLAY, ACCENT } from "@/components/ui/theme";
 import {
   fetchAnalysisById,
   shareAnalysis,
+  runAsinAnalysis,
   AnalysisResult,
 } from "@/lib/analysis";
 import {
@@ -505,6 +509,47 @@ function ResultPageInner() {
   const [watchlistAdded, setWatchlistAdded] = useState(false);
   const [watchlistAdding, setWatchlistAdding] = useState(false);
   const [isPro, setIsPro] = useState(false);
+
+  // ── Multi-ASIN variant drawer ──
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [reanalyzing, setReanalyzing] = useState(false);
+  const [variantError, setVariantError] = useState<string | null>(null);
+
+  const handleVariantSelect = async (asin: string) => {
+    if (!result || reanalyzing) return;
+    const variantCost =
+      typeof result.costPrice === "number" && result.costPrice > 0
+        ? result.costPrice
+        : parseFloat(result.maxBuy) - parseFloat(result.headroom);
+    if (!Number.isFinite(variantCost) || variantCost <= 0) {
+      setVariantError(
+        "Cost price is missing. Start a new analysis to choose a variant."
+      );
+      return;
+    }
+    setVariantError(null);
+    setReanalyzing(true);
+    try {
+      const fresh = await runAsinAnalysis(asin, variantCost);
+      setResult(fresh);
+      try {
+        sessionStorage.setItem("flipiq_last_result", JSON.stringify(fresh));
+      } catch {
+        /* ignore */
+      }
+      setDrawerOpen(false);
+      if (fresh.analysisId) {
+        router.replace(`/result?id=${fresh.analysisId}`, { scroll: false });
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      setVariantError(
+        err instanceof Error ? err.message : "Failed to analyze variant."
+      );
+    } finally {
+      setReanalyzing(false);
+    }
+  };
 
   useEffect(() => {
     getSubscriptionStatus().then((sub) => {
@@ -1100,6 +1145,20 @@ function ResultPageInner() {
         </h1>
       </div>
 
+      {/* ── Multi-ASIN badge (Amazon) ─────────────────────────────────────── */}
+      {r.candidateAsins && (
+        <div style={{ padding: "0 20px" }}>
+          <MultiAsinBadge
+            count={r.candidateAsins.length}
+            identityReview={Boolean(r.identityReview)}
+            onOpen={() => {
+              setVariantError(null);
+              setDrawerOpen(true);
+            }}
+          />
+        </div>
+      )}
+
       {/* ═══════════════════════════════════════════════════════════════════
           1. VERDICT
       ════════════════════════════════════════════════════════════════════ */}
@@ -1515,6 +1574,15 @@ function ResultPageInner() {
           ))}
         </div>
       </section>
+
+      {/* ── Multipack guard (Amazon) ──────────────────────────────────────── */}
+      {r.multipack && (
+        <MultipackBanner
+          multipack={r.multipack}
+          nominalRoi={roi}
+          nominalProfit={profit}
+        />
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════
           5. SCORES
@@ -2814,6 +2882,21 @@ function ResultPageInner() {
           New analysis <span aria-hidden="true">&rarr;</span>
         </button>
       </div>
+
+      {/* ── Multi-ASIN variant drawer ─────────────────────────────────────── */}
+      {drawerOpen && r.candidateAsins && (
+        <VariantDrawer
+          variants={r.candidateAsins}
+          costPrice={r.costPrice ?? costPrice}
+          reanalyzing={reanalyzing}
+          error={variantError}
+          onSelect={handleVariantSelect}
+          onClose={() => {
+            setVariantError(null);
+            setDrawerOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
